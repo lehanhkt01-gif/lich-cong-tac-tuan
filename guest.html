@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tra Cứu Lịch Công Tác Tuần | UBND Xã Ea Súp - Tỉnh Đắk Lắk (Giao Diện Khách)</title>
+    
+    <!-- Google Fonts: Be Vietnam Pro & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ==========================================================================
+         PRINT-ONLY HEADER (CHUẨN NGHỊ ĐỊNH 30/2020/NĐ-CP)
+         ========================================================================== -->
+    <div class="print-only-header">
+        <table width="100%" style="border-collapse: collapse; margin-bottom: 12pt;">
+            <tr>
+                <td width="42%" align="center" style="vertical-align: top; font-size: 11pt;">
+                    <div>TỈNH ĐẮK LẮK</div>
+                    <div style="font-weight: bold;">UBND XÃ EA SÚP</div>
+                    <div style="border-bottom: 1px solid black; width: 45%; margin: 2pt auto;"></div>
+                    <div>Số: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /TB-UBND</div>
+                </td>
+                <td width="58%" align="center" style="vertical-align: top; font-size: 11pt;">
+                    <div style="font-weight: bold;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                    <div style="font-weight: bold;">Độc lập - Tự do - Hạnh phúc</div>
+                    <div style="border-bottom: 1px solid black; width: 50%; margin: 2pt auto;"></div>
+                    <div style="font-style: italic;">Ea Súp, ngày 24 tháng 08 năm 2026</div>
+                </td>
+            </tr>
+        </table>
+        <div style="text-align: center; margin-bottom: 14pt;">
+            <div style="font-size: 14pt; font-weight: bold;">THÔNG BÁO</div>
+            <div id="printScheduleTitle" style="font-size: 12.5pt; font-weight: bold; margin-top: 2pt;">LỊCH CÔNG TÁC TUẦN THỨ 35 NĂM 2026</div>
+            <div style="font-size: 11.5pt; font-weight: bold;">CỦA THƯỜNG TRỰC ĐẢNG ỦY - HĐND - UBND XÃ EA SÚP</div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         HEADER CHÍNH PHỦ & LOGO XÃ EA SÚP
+         ========================================================================== -->
+    <header class="gov-topbar">
+        <div class="topbar-container">
+            <!-- Brand & Logo Xã Ea Súp -->
+            <a href="guest.html" class="brand-section">
+                <img src="assets/logo-easup.png" alt="Logo Xã Ea Súp" class="national-crest">
+
+                <div class="brand-text">
+                    <span class="sub-gov-name">TỈNH ĐẮK LẮK</span>
+                    <span class="main-org-name">UBND XÃ EA SÚP</span>
+                    <span class="portal-title-tag">
+                        <span class="live-dot"></span> Cổng thông tin điều hành - Tra cứu lịch công tác tuần
+                    </span>
+                </div>
+            </a>
+
+            <!-- Header Phải: Đồng hồ & Nút Đăng nhập Quản trị -->
+            <div class="header-right-actions">
+                <!-- Đồng hồ thực -->
+                <div class="live-datetime">
+                    <span class="time-val" id="liveTime">08:00:00</span>
+                    <span id="liveDate">Thứ Hai, 24/08/2026</span>
+                </div>
+
+                <!-- Chế độ Khách & Link Quản Trị -->
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 9999px; font-size: 12.5px; color: #FFFFFF; display: flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.25);">
+                        <span>👤</span> <strong>Chế độ Khách tra cứu</strong>
+                    </div>
+
+                    <a href="index.html" style="background: #F59E0B; color: #FFFFFF; text-decoration: none; padding: 7px 16px; border-radius: 8px; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s;" title="Chuyển sang giao diện Quản trị viên">
+                        <span>🔐</span> Đăng Nhập Quản Trị
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==========================================================================
+         NAVIGATION TABS (CHỈ CÁC MỤC DÀNH CHO KHÁCH)
+         ========================================================================== -->
+    <nav class="portal-navbar">
+        <div class="navbar-container">
+            <ul class="nav-tabs">
+                <li class="nav-tab-item active" data-tab="schedule">
+                    <span>📅</span> Lịch Công Tác Tuần
+                </li>
+                <li class="nav-tab-item" data-tab="dashboard">
+                    <span>📊</span> Tổng Quan Tuần
+                </li>
+                <li class="nav-tab-item" data-tab="archive">
+                    <span>🗄️</span> Lưu Trữ & Tra Cứu
+                </li>
+            </ul>
+
+            <div style="font-size: 12.5px; color: #64748B; font-weight: 600;">
+                ℹ️ Tra cứu thông tin lịch họp & tải giấy mời công tác chính thức
+            </div>
+        </div>
+    </nav>
+
+    <!-- ==========================================================================
+         VIEW 1: LỊCH CÔNG TÁC TUẦN (CORE INTERACTIVE TABLE CHO KHÁCH)
+         ========================================================================== -->
+    <main class="main-wrapper">
+        <section id="view_schedule" class="view-section active">
+
+            <!-- BỘ LỌC VÀ TRA CỨU -->
+            <div class="controls-card">
+                <!-- Hàng 1: Năm, Tuần, Quick Nav -->
+                <div class="controls-row-top">
+                    <div class="filter-group-left">
+                        <!-- Chọn năm -->
+                        <div class="filter-select-box">
+                            <span>Năm:</span>
+                            <select id="yearSelect">
+                                <option value="2026" selected>2026</option>
+                                <option value="2025">2025</option>
+                            </select>
+                        </div>
+
+                        <!-- Chọn tuần -->
+                        <div class="filter-select-box">
+                            <span>Tuần:</span>
+                            <select id="weekSelect">
+                                <option value="36">Tuần 36 (31/08 - 06/09/2026)</option>
+                                <option value="35" selected>Tuần 35 (24/08 - 30/08/2026) • Hiện tại</option>
+                                <option value="34">Tuần 34 (17/08 - 23/08/2026)</option>
+                                <option value="33">Tuần 33 (10/08 - 16/08/2026)</option>
+                            </select>
+                        </div>
+
+                        <!-- Điều hướng nhanh tuần -->
+                        <div class="week-quick-nav">
+                            <button class="btn-nav-week" id="btnPrevWeek" title="Tuần trước">◀ Trước</button>
+                            <button class="btn-nav-week btn-current-week" id="btnCurrentWeek">Tuần Hiện Tại</button>
+                            <button class="btn-nav-week" id="btnNextWeek" title="Tuần sau">Sau ▶</button>
+                        </div>
+                    </div>
+
+                    <!-- Ô tìm kiếm tức thì -->
+                    <div class="search-input-box" style="min-width: 340px;">
+                        <span class="search-icon-pos">🔍</span>
+                        <input type="text" id="searchInput" placeholder="Tìm kiếm nội dung, lãnh đạo, địa điểm...">
+                    </div>
+                </div>
+
+                <!-- Hàng 2: Khối công tác Pills -->
+                <div class="controls-row-bottom">
+                    <div class="bloc-pills">
+                        <span style="font-size: 12.5px; font-weight: 700; color: #475569; margin-right: 4px;">Lọc theo khối:</span>
+                        <button class="bloc-pill-btn active" data-bloc="all">Tất cả khối</button>
+                        <button class="bloc-pill-btn" data-bloc="Đảng ủy">Đảng ủy</button>
+                        <button class="bloc-pill-btn" data-bloc="HĐND">HĐND</button>
+                        <button class="bloc-pill-btn" data-bloc="UBND">UBND</button>
+                        <button class="bloc-pill-btn" data-bloc="MTTQ">MTTQ</button>
+                        <button class="bloc-pill-btn" data-bloc="Khác">Khác</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- THÔNG TIN BANNER LỊCH TUẦN -->
+            <div class="schedule-meta-banner">
+                <div class="meta-title-area">
+                    <h2 id="scheduleBannerTitle">LỊCH CÔNG TÁC TUẦN 35 NĂM 2026</h2>
+                    <div class="meta-subtitle" id="scheduleBannerDates">Thời gian: Từ ngày 24/08/2026 đến ngày 30/08/2026</div>
+                </div>
+                <div id="scheduleBannerStatus" class="schedule-status-badge status-published">
+                    ✅ Đã Ban Hành Chính Thức
+                </div>
+            </div>
+
+            <!-- BẢNG HIỂN THỊ LỊCH CÔNG TÁC (TABLE VIEW) -->
+            <div class="schedule-table-card">
+                <div class="table-responsive">
+                    <table class="schedule-table" id="mainScheduleTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 110px;">Thứ / Ngày</th>
+                                <th style="width: 85px; text-align: center;">Giờ</th>
+                                <th style="width: 100px;">Khối</th>
+                                <th>Nội dung công tác & Địa điểm</th>
+                                <th style="width: 180px;">Lãnh đạo dự / Chủ trì</th>
+                                <th style="width: 230px;">Thành phần tham dự</th>
+                                <th style="width: 100px; text-align: center;">Phương tiện</th>
+                                <th style="width: 120px; text-align: center;">Giấy mời</th>
+                                <th style="width: 70px; text-align: center;">Chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTableBody">
+                            <!-- Dữ liệu render động từ js/guest.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ==========================================================================
+             VIEW 2: BẢNG TỔNG QUAN (DASHBOARD)
+             ========================================================================== -->
+        <section id="view_dashboard" class="view-section">
+            <h2 style="font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: var(--gov-primary-dark); margin-bottom: 16px;">
+                📊 TỔNG QUAN LỊCH HỌP & CÔNG TÁC TRỌNG TÂM
+            </h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon-wrap" style="background: #EFF6FF; color: #2563EB;">📅</div>
+                    <div class="stat-info">
+                        <div class="stat-num" id="statTotalMeetings">13</div>
+                        <div class="stat-label">Tổng số cuộc họp / Sự kiện tuần</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon-wrap" style="background: #F0FDF4; color: #16A34A;">📄</div>
+                    <div class="stat-info">
+                        <div class="stat-num" id="statTotalDocs">3</div>
+                        <div class="stat-label">Giấy mời & Văn bản đã đính kèm</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm);">
+                <h3 style="font-size: 15px; font-weight: 700; color: #0F4C81; margin-bottom: 14px;">
+                    📌 Lịch họp trọng tâm trong tuần
+                </h3>
+                <div id="dashboardTodayMeetings">
+                    <!-- Dữ liệu render động -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==========================================================================
+             VIEW 3: LƯU TRỮ & TRA CỨU CÁC TUẦN
+             ========================================================================== -->
+        <section id="view_archive" class="view-section">
+            <h2 style="font-family: var(--font-heading); font-size: 20px; font-weight: 800; color: var(--gov-primary-dark); margin-bottom: 16px;">
+                🗄️ TRA CỨU LỊCH CÔNG TÁC CÁC TUẦN TRƯỚC ĐÂY
+            </h2>
+            <div id="archiveWeeksList">
+                <!-- Danh sách render động -->
+            </div>
+        </section>
+    </main>
+
+    <!-- ==========================================================================
+         THANH ĐIỀU KHIỂN NỔI DÀNH CHO KHÁCH (CHỈ CÓ XUẤT BẢN / IN / XEM LỊCH SỬ)
+         ========================================================================== -->
+    <div class="bottom-floating-bar">
+        <div class="bottom-bar-container">
+            <div class="bottom-info-left">
+                <span style="font-weight: 700; color: var(--gov-primary);">UBND XÃ EA SÚP</span>
+                <span>• Lịch Công Tác Tuần</span>
+                <span class="schedule-status-badge status-published">Chính Thức</span>
+            </div>
+
+            <div class="bottom-actions-right">
+                <!-- Xem lịch sử sửa (Audit Diff) -->
+                <button class="btn-bottom btn-history-audit" id="btnHistoryAudit" title="Xem lịch sử điều chỉnh">
+                    <span>📜</span> XEM LỊCH SỬ THAY ĐỔI
+                </button>
+
+                <!-- Xuất Word chuẩn Nghị định 30 -->
+                <button class="btn-bottom btn-export-word" id="btnExportWord" title="Tải file Word chuẩn thể thức Nghị định 30/2020/NĐ-CP">
+                    <span>📥</span> XUẤT FILE WORD (.DOC)
+                </button>
+
+                <!-- In lịch / Lưu PDF -->
+                <button class="btn-bottom btn-export-pdf" id="btnExportPDF" title="In trực tiếp hoặc Lưu file PDF">
+                    <span>🖨️</span> IN LỊCH TUẦN / LƯU PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL: XEM CHI TIẾT MỤC CÔNG TÁC
+         ========================================================================== -->
+    <div class="modal-backdrop" id="modalViewItemDetail">
+        <div class="modal-container">
+            <div class="modal-header">
+                <div class="modal-header-title">
+                    <span>👁️</span> Chi tiết mục công tác
+                </div>
+                <button class="btn-close-modal" onclick="GuestApp.closeModal('modalViewItemDetail')">✕</button>
+            </div>
+            <div class="modal-body" id="viewDetailContent">
+                <!-- Render chi tiết -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-bottom btn-history-audit" onclick="GuestApp.closeModal('modalViewItemDetail')">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL: AUDIT TRAIL DIFF (XEM LỊCH SỬ SỬA ĐỔI)
+         ========================================================================== -->
+    <div class="modal-backdrop" id="modalAuditHistory">
+        <div class="modal-container modal-lg">
+            <div class="modal-header">
+                <div class="modal-header-title">
+                    <span>📜</span> Lịch Sử Điều Chỉnh Lịch Công Tác (Minh Bạch & Công Khai)
+                </div>
+                <button class="btn-close-modal" onclick="GuestApp.closeModal('modalAuditHistory')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 13px; color: #475569; margin-bottom: 16px;">
+                    Bảng đối soát: <span class="diff-tag diff-tag-old" style="display: inline-block;">Dữ liệu cũ (gạch đỏ)</span> so sánh với <span class="diff-tag diff-tag-new" style="display: inline-block;">Dữ liệu mới (xanh lá)</span>.
+                </p>
+                <div id="auditLogListArea">
+                    <!-- Danh sách logs -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-bottom btn-history-audit" onclick="GuestApp.closeModal('modalAuditHistory')">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL: TRÌNH XEM GIẤY MỜI / PDF (DOCUMENT VIEWER)
+         ========================================================================== -->
+    <div class="modal-backdrop" id="modalDocPreview">
+        <div class="modal-container modal-lg">
+            <div class="modal-header">
+                <div class="modal-header-title" id="docPreviewTitle">
+                    <span>📄</span> Giấy mời họp
+                </div>
+                <button class="btn-close-modal" onclick="GuestApp.closeModal('modalDocPreview')">✕</button>
+            </div>
+            <div class="modal-body" id="docPreviewBody" style="background-color: #525659; padding: 20px;">
+                <!-- Render mô phỏng văn bản PDF -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-bottom btn-export-pdf" onclick="window.print()">🖨️ In Giấy Mời</button>
+                <button type="button" class="btn-bottom btn-history-audit" onclick="GuestApp.closeModal('modalDocPreview')">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Module -->
+    <script src="js/data.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/audit.js"></script>
+    <script src="js/export-service.js"></script>
+    <script src="js/guest.js"></script>
+</body>
+</html>
