@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Lịch Công Tác Tuần | UBND Xã Ea Súp (Giao Diện Mobile)</title>
+    
+    <!-- Google Fonts: Be Vietnam Pro & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Mobile CSS Stylesheet -->
+    <link rel="stylesheet" href="css/mobile.css">
+</head>
+<body class="desktop-preview-mode">
+
+    <!-- Thanh điều khiển trên màn hình máy tính (Desktop Switcher) -->
+    <div class="desktop-controls-bar">
+        <span style="color: #94a3b8; font-size: 11.5px; font-weight: 600;">📱 XEM TRÊN MÁY TÍNH:</span>
+        <button onclick="MobileApp.toggleFrameMode()" title="Chuyển đổi giữa chế độ khung điện thoại và toàn màn hình">
+            <span>🔄</span> Bật/Tắt Khung Điện Thoại
+        </button>
+        <a href="index.html" title="Quay lại giao diện Máy tính đầy đủ">
+            <span>🖥️</span> Bản Máy Tính (Admin)
+        </a>
+        <a href="guest.html" title="Chuyển sang giao diện Khách tra cứu">
+            <span>👤</span> Bản Khách (Desktop)
+        </a>
+    </div>
+
+    <!-- Khung mô phỏng điện thoại cao cấp -->
+    <div class="device-frame-wrapper">
+        <div class="device-notch">
+            <div class="notch-speaker"></div>
+            <div class="notch-camera"></div>
+        </div>
+
+        <div class="device-screen">
+            <div class="mobile-app-container">
+
+                <!-- ==========================================================================
+                     HEADER MOBILE & STATUS BAR
+                     ========================================================================== -->
+                <header class="mobile-header">
+                    <!-- Status Bar chuẩn iOS/Android -->
+                    <div class="mobile-status-bar">
+                        <span class="status-left" id="mobileStatusTime">13:30</span>
+                        <div class="status-right">
+                            <span class="status-icon">📶</span>
+                            <span class="status-icon">📡</span>
+                            <span class="status-icon" style="font-weight: 700;">100% 🔋</span>
+                        </div>
+                    </div>
+
+                    <!-- App Bar: Logo Quốc huy / Xã Ea Súp + Tiêu đề -->
+                    <div class="mobile-nav-bar">
+                        <div class="mobile-brand">
+                            <div class="brand-emblem-wrap">
+                                <img src="assets/logo-easup.png" alt="Quốc huy / Logo Ea Súp" class="brand-emblem" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Emblem_of_Vietnam.svg/240px-Emblem_of_Vietnam.svg.png'">
+                            </div>
+                            <div class="brand-titles">
+                                <span class="brand-sub">HĐND & UBND XÃ EA SÚP</span>
+                                <span class="brand-main">LỊCH CÔNG TÁC TUẦN</span>
+                            </div>
+                        </div>
+
+                        <div class="mobile-header-actions">
+                            <button class="btn-header-icon" onclick="MobileApp.loadCurrentWeekData(); MobileApp.renderAll(); MobileApp.showToast('Đã làm mới dữ liệu 🔄');" title="Làm mới">
+                                🔄
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- ==========================================================================
+                     VIEW 1: LỊCH TUẦN (MÀN HÌNH CHÍNH - THẺ NGÀY CARDS)
+                     ========================================================================== -->
+                <main class="mobile-view active" id="view_schedule">
+                    
+                    <!-- Khung chọn tuần -->
+                    <section class="week-control-section">
+                        <div class="week-selector-card">
+                            <button class="btn-nav-week" id="btnPrevWeek" title="Tuần trước">
+                                ‹
+                            </button>
+
+                            <div class="week-display-center" id="weekDisplayCenter" title="Nhấn để chọn tuần khác">
+                                <div class="week-title-text" id="weekDisplayTitle">Tuần 35: 24/08/2026 - 30/08/2026</div>
+                                <div class="week-dates-sub" id="weekDisplayDates">Năm 2026 • Đã ban hành chính thức</div>
+                            </div>
+
+                            <button class="btn-nav-week" id="btnNextWeek" title="Tuần tiếp theo">
+                                ›
+                            </button>
+
+                            <button class="btn-calendar-picker" id="btnPickWeek" title="Mở danh sách tuần">
+                                📅
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- Thanh công cụ nhanh: Cuộn ngày (T2 -> CN) & Tìm kiếm -->
+                    <section class="quick-tools-strip">
+                        <!-- Danh sách nút ngày ngang -->
+                        <div class="day-chips-scroll" id="dayChipsContainer">
+                            <!-- Được render động bởi MobileApp.renderDayChips() -->
+                        </div>
+
+                        <!-- Bộ lọc khối & Ô tìm kiếm nhanh -->
+                        <div class="filter-pills-bar">
+                            <div class="filter-pill-search">
+                                <span>🔍</span>
+                                <input type="text" id="mobileSearchInput" placeholder="Tìm nội dung, chủ trì, địa điểm...">
+                            </div>
+
+                            <button class="filter-pill active" data-bloc="all">Tất cả</button>
+                            <button class="filter-pill" data-bloc="UBND">UBND</button>
+                            <button class="filter-pill" data-bloc="Đảng ủy">Đảng ủy</button>
+                            <button class="filter-pill" data-bloc="HĐND">HĐND</button>
+                            <button class="filter-pill" data-bloc="MTTQ">MTTQ</button>
+                        </div>
+                    </section>
+
+                    <!-- Danh sách các thẻ ngày (Day Cards List) -->
+                    <section class="schedule-cards-list" id="scheduleCardsList">
+                        <!-- Nội dung các thẻ ngày được MobileApp.renderScheduleCards() hiển thị tại đây -->
+                    </section>
+                </main>
+
+                <!-- ==========================================================================
+                     VIEW 2: TRANG CHỦ / TỔNG QUAN
+                     ========================================================================== -->
+                <main class="mobile-view" id="view_home">
+                    <div class="home-summary-container">
+                        <!-- Thẻ chào & Thống kê nhanh -->
+                        <div class="home-greeting-card">
+                            <div class="greeting-date-time" id="homeLiveDate">Thứ Hai, 24/08/2026</div>
+                            <div class="greeting-title">Lịch Điều Hành Công Tác</div>
+                            <div style="font-size: 12px; opacity: 0.9;">Cổng thông tin chỉ đạo & điều hành điện tử xã Ea Súp</div>
+
+                            <div class="greeting-quick-stats">
+                                <div class="stat-pill">
+                                    <div class="stat-num" id="homeStatTotal">13</div>
+                                    <div class="stat-desc">Mục tuần này</div>
+                                </div>
+                                <div class="stat-pill">
+                                    <div class="stat-num" id="homeStatTodayCount">3</div>
+                                    <div class="stat-desc">Hôm nay</div>
+                                </div>
+                                <div class="stat-pill">
+                                    <div class="stat-num" id="homeStatStatus" style="font-size:13px; margin-top:2px;">Ban hành</div>
+                                    <div class="stat-desc">Trạng thái</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cuộc họp / Sự kiện trọng tâm -->
+                        <div class="section-block-title">
+                            <span>📌 Lịch Trọng Tâm / Hôm Nay</span>
+                            <a href="#" onclick="MobileApp.switchTab('schedule'); return false;">Xem tất cả ›</a>
+                        </div>
+
+                        <div id="homeUpcomingList">
+                            <!-- Render bởi MobileApp.renderHomeSummary() -->
+                        </div>
+                    </div>
+                </main>
+
+                <!-- ==========================================================================
+                     VIEW 3: THÔNG BÁO & NHẬT KÝ THAY ĐỔI
+                     ========================================================================== -->
+                <main class="mobile-view" id="view_notifications">
+                    <div class="notifications-list" id="notificationsList">
+                        <!-- Render bởi MobileApp.renderNotifications() -->
+                    </div>
+                </main>
+
+                <!-- ==========================================================================
+                     VIEW 4: TÀI KHOẢN & CÀI ĐẶT
+                     ========================================================================== -->
+                <main class="mobile-view" id="view_account">
+                    <div class="account-view-wrap">
+                        <!-- Thông tin cá nhân -->
+                        <div class="account-profile-card">
+                            <div class="profile-avatar-box" id="accountUserAvatar">👩‍💼</div>
+                            <div class="profile-info-box">
+                                <div class="profile-name" id="accountUserName">Hà Tường Vi</div>
+                                <div class="profile-role-tag" id="accountUserRole">Super Admin (Chánh Văn phòng)</div>
+                                <div class="profile-email" id="accountUserEmail">vyht.vp@easup.daklak.gov.vn</div>
+                            </div>
+                        </div>
+
+                        <!-- Danh mục tùy chọn -->
+                        <div class="account-menu-group">
+                            <div class="account-menu-item" onclick="MobileApp.toggleAccountLogin()" id="btnAccountLogin">
+                                <div class="menu-item-left">
+                                    <span class="menu-item-icon">🔐</span>
+                                    <span>Đổi Tài Khoản / Đăng Nhập</span>
+                                </div>
+                                <span>›</span>
+                            </div>
+
+                            <a href="index.html" class="account-menu-item">
+                                <div class="menu-item-left">
+                                    <span class="menu-item-icon">🖥️</span>
+                                    <span>Chuyển Sang Bản Máy Tính</span>
+                                </div>
+                                <span>›</span>
+                            </a>
+
+                            <div class="account-menu-item" onclick="if(confirm('Bạn có chắc muốn khôi phục dữ liệu mẫu ban đầu?')){ StorageService.resetToDefault(); MobileApp.loadCurrentWeekData(); MobileApp.renderAll(); MobileApp.showToast('Đã khôi phục dữ liệu mẫu!'); }">
+                                <div class="menu-item-left">
+                                    <span class="menu-item-icon">🔄</span>
+                                    <span>Khôi Phục Dữ Liệu Gốc</span>
+                                </div>
+                                <span>›</span>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+
+                <!-- ==========================================================================
+                     BOTTOM NAVIGATION BAR (THANH ĐIỀU HƯỚNG DƯỚI)
+                     ========================================================================== -->
+                <nav class="mobile-bottom-nav">
+                    <button class="nav-item-btn" data-tab="home">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-label">Trang chủ</span>
+                    </button>
+
+                    <button class="nav-item-btn active" data-tab="schedule">
+                        <span class="nav-icon">📅</span>
+                        <span class="nav-label">Lịch tuần</span>
+                    </button>
+
+                    <button class="nav-item-btn" data-tab="notifications">
+                        <span class="nav-icon">🔔</span>
+                        <span class="nav-label">Thông báo</span>
+                        <span class="nav-badge-count">2</span>
+                    </button>
+
+                    <button class="nav-item-btn" data-tab="account">
+                        <span class="nav-icon">👤</span>
+                        <span class="nav-label">Tài khoản</span>
+                    </button>
+                </nav>
+
+                <!-- Bottom Sheet: Chi tiết cuộc họp / công việc -->
+                <div class="modal-overlay" id="detailBottomSheet">
+                    <div class="bottom-sheet-content">
+                        <div class="sheet-handle-bar"></div>
+                        <div class="sheet-header">
+                            <div class="sheet-title">Chi Tiết Lịch Công Tác</div>
+                            <button class="btn-close-sheet" onclick="MobileApp.closeModals()">✕</button>
+                        </div>
+                        <div id="detailSheetBody">
+                            <!-- Nội dung chi tiết được render động -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Sheet: Chọn tuần nhanh -->
+                <div class="modal-overlay" id="weekPickerModal">
+                    <div class="bottom-sheet-content">
+                        <div class="sheet-handle-bar"></div>
+                        <div class="sheet-header">
+                            <div class="sheet-title">Chọn Tuần Công Tác</div>
+                            <button class="btn-close-sheet" onclick="MobileApp.closeModals()">✕</button>
+                        </div>
+                        <div id="weekListContainer" style="display: flex; flex-direction: column; gap: 6px;">
+                            <!-- Danh sách các tuần -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toast thông báo nổi -->
+                <div class="mobile-toast" id="mobileToast">
+                    Thông báo
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts cần thiết -->
+    <script src="js/data.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/mobile.js"></script>
+</body>
+</html>
