@@ -143,7 +143,7 @@ const StorageService = {
                 ) || (s.approvedBy && s.approvedBy.includes("Hoàng Minh Đức"))
             );
 
-            const SYNC_VERSION_KEY = "easup_portal_auth_6_users_v9";
+            const SYNC_VERSION_KEY = "easup_portal_auth_6_users_v10";
             const hasCorrect6Users = users.length === 6 && users.some(u => u.username === "vyhatuong" && u.aliases) && users.some(u => u.username === "linhtranvan");
 
             if (hasOldLeaderInCadres || hasOldUser || hasOldLeaderInSchedule || !hasCorrect6Users || !localStorage.getItem(SYNC_VERSION_KEY)) {
