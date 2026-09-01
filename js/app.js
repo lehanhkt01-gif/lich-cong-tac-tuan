@@ -13,8 +13,11 @@ const App = {
     editingItemId: null,
 
     init() {
-        this.currentYear = 2026;
-        this.currentWeek = 35;
+        const currentInfo = StorageService.getCurrentWeekInfo(new Date());
+        this.currentYear = currentInfo.year;
+        this.currentWeek = currentInfo.weekNumber;
+
+        this.populateWeekOptions();
         this.loadCurrentSchedule();
         this.setupLiveClock();
         this.setupEventListeners();
@@ -22,30 +25,19 @@ const App = {
         this.renderAll();
     },
 
+    populateWeekOptions() {
+        const weekSelect = document.getElementById("weekSelect");
+        if (weekSelect) {
+            StorageService.populateWeekSelect(weekSelect, this.currentWeek, this.currentYear);
+        }
+        const yearSelect = document.getElementById("yearSelect");
+        if (yearSelect) {
+            yearSelect.value = this.currentYear;
+        }
+    },
+
     loadCurrentSchedule() {
         this.currentSchedule = StorageService.getScheduleByWeek(this.currentYear, this.currentWeek);
-        if (!this.currentSchedule) {
-            // Nếu chưa có lịch tuần này, tạo lịch rỗng mẫu
-            const startMonday = this.getMondayOfWeek(this.currentWeek, this.currentYear);
-            const endSunday = new Date(startMonday);
-            endSunday.setDate(startMonday.getDate() + 6);
-
-            this.currentSchedule = {
-                id: `sched_${this.currentYear}_w${this.currentWeek}`,
-                year: this.currentYear,
-                weekNumber: this.currentWeek,
-                title: `Lịch công tác tuần ${this.currentWeek} năm ${this.currentYear}`,
-                startDate: startMonday.toISOString().split('T')[0],
-                endDate: endSunday.toISOString().split('T')[0],
-                status: "draft",
-                lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 16),
-                updatedBy: (AuthService.getCurrentUser() ? AuthService.getCurrentUser().fullName : "Hà Tường Vi"),
-                approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
-                note: "Dự thảo lịch công tác tuần mới.",
-                items: []
-            };
-            StorageService.saveSchedule(this.currentSchedule);
-        }
     },
 
     getMondayOfWeek(weekNo, year) {
@@ -139,7 +131,8 @@ const App = {
         const yearSelect = document.getElementById("yearSelect");
         if (yearSelect) {
             yearSelect.addEventListener("change", (e) => {
-                this.currentYear = parseInt(e.target.value);
+                this.currentYear = parseInt(e.target.value, 10);
+                this.populateWeekOptions();
                 this.loadCurrentSchedule();
                 this.renderAll();
             });
@@ -148,7 +141,7 @@ const App = {
         const weekSelect = document.getElementById("weekSelect");
         if (weekSelect) {
             weekSelect.addEventListener("change", (e) => {
-                this.currentWeek = parseInt(e.target.value);
+                this.currentWeek = parseInt(e.target.value, 10);
                 this.loadCurrentSchedule();
                 this.renderAll();
             });
@@ -158,7 +151,7 @@ const App = {
         document.getElementById("btnPrevWeek")?.addEventListener("click", () => {
             if (this.currentWeek > 1) {
                 this.currentWeek--;
-                if (weekSelect) weekSelect.value = this.currentWeek;
+                this.populateWeekOptions();
                 this.loadCurrentSchedule();
                 this.renderAll();
             }
@@ -167,17 +160,17 @@ const App = {
         document.getElementById("btnNextWeek")?.addEventListener("click", () => {
             if (this.currentWeek < 52) {
                 this.currentWeek++;
-                if (weekSelect) weekSelect.value = this.currentWeek;
+                this.populateWeekOptions();
                 this.loadCurrentSchedule();
                 this.renderAll();
             }
         });
 
         document.getElementById("btnCurrentWeek")?.addEventListener("click", () => {
-            this.currentWeek = 35;
-            this.currentYear = 2026;
-            if (weekSelect) weekSelect.value = 35;
-            if (yearSelect) yearSelect.value = 2026;
+            const currentInfo = StorageService.getCurrentWeekInfo(new Date());
+            this.currentWeek = currentInfo.weekNumber;
+            this.currentYear = currentInfo.year;
+            this.populateWeekOptions();
             this.loadCurrentSchedule();
             this.renderAll();
         });

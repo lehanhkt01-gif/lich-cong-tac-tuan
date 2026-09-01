@@ -109,6 +109,72 @@ const StorageService = {
         });
     },
 
+    // Tính toán thông tin Tuần hiện tại theo thời gian thực tế (Chuẩn ISO-8601)
+    getCurrentWeekInfo(date = new Date()) {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        const year = d.getUTCFullYear();
+
+        const monday = this.getMondayOfWeek(weekNo, year);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+
+        const mStr = `${monday.getDate().toString().padStart(2, '0')}/${(monday.getMonth() + 1).toString().padStart(2, '0')}`;
+        const sStr = `${sunday.getDate().toString().padStart(2, '0')}/${(sunday.getMonth() + 1).toString().padStart(2, '0')}/${sunday.getFullYear()}`;
+
+        return {
+            year,
+            weekNumber: weekNo,
+            startDate: monday.toISOString().split('T')[0],
+            endDate: sunday.toISOString().split('T')[0],
+            label: `Tuần ${weekNo} (${mStr} - ${sStr})`
+        };
+    },
+
+    // Lấy ngày Thứ Hai đầu tuần cho bất kỳ tuần nào trong năm
+    getMondayOfWeek(weekNo, year) {
+        const simple = new Date(year, 0, 1 + (weekNo - 1) * 7);
+        const dayOfWeek = simple.getDay() || 7;
+        const monday = new Date(simple);
+        monday.setDate(simple.getDate() - dayOfWeek + 1);
+        return monday;
+    },
+
+    // Lấy chuỗi khoảng ngày định dạng DD/MM - DD/MM/YYYY cho tuần bất kỳ
+    getWeekDateRangeString(weekNo, year) {
+        const monday = this.getMondayOfWeek(weekNo, year);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        const mStr = `${monday.getDate().toString().padStart(2, '0')}/${(monday.getMonth() + 1).toString().padStart(2, '0')}`;
+        const sStr = `${sunday.getDate().toString().padStart(2, '0')}/${(sunday.getMonth() + 1).toString().padStart(2, '0')}/${sunday.getFullYear()}`;
+        return `${mStr} - ${sStr}`;
+    },
+
+    // Điền động danh sách tuần vào phần tử <select> và gắn nhãn "• Hiện tại" chính xác
+    populateWeekSelect(weekSelectEl, selectedWeek, selectedYear) {
+        if (!weekSelectEl) return;
+        const currentInfo = this.getCurrentWeekInfo(new Date());
+        const realCurrentWeek = currentInfo.weekNumber;
+        const realCurrentYear = currentInfo.year;
+
+        const selYear = parseInt(selectedYear || realCurrentYear, 10);
+        const selWeek = parseInt(selectedWeek || realCurrentWeek, 10);
+
+        let html = "";
+        for (let w = 52; w >= 1; w--) {
+            const rangeStr = this.getWeekDateRangeString(w, selYear);
+            const isRealCurrent = (w === realCurrentWeek && selYear === realCurrentYear);
+            const isSelected = (w === selWeek);
+            const currentTag = isRealCurrent ? " • Hiện tại" : "";
+            html += `<option value="${w}" ${isSelected ? "selected" : ""}>Tuần ${w} (${rangeStr})${currentTag}</option>`;
+        }
+        weekSelectEl.innerHTML = html;
+        weekSelectEl.value = selWeek;
+    },
+
     // Tính toán ngày dương lịch chính xác từ ngày bắt đầu tuần (Thứ 2) và thứ trong tuần
     calculateDateForDay(startDateStr, dayOfWeek) {
         if (!startDateStr) return "";
@@ -360,10 +426,35 @@ const StorageService = {
         return schedules;
     },
 
-    // Lấy lịch của tuần cụ thể
+    // Lấy lịch của tuần cụ thể (Tự động khởi tạo lịch rỗng nếu chưa tồn tại)
     getScheduleByWeek(year, weekNumber) {
+        const y = parseInt(year, 10);
+        const w = parseInt(weekNumber, 10);
         const schedules = this.getAllSchedules();
-        const sched = schedules.find(s => s.year === parseInt(year) && s.weekNumber === parseInt(weekNumber));
+        let sched = schedules.find(s => s.year === y && s.weekNumber === w);
+
+        if (!sched) {
+            const monday = this.getMondayOfWeek(w, y);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            sched = {
+                id: `sched_${y}_w${w}`,
+                year: y,
+                weekNumber: w,
+                title: `Lịch công tác tuần ${w} năm ${y}`,
+                startDate: monday.toISOString().split('T')[0],
+                endDate: sunday.toISOString().split('T')[0],
+                status: "published",
+                lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                updatedBy: (this.getCurrentUser() ? this.getCurrentUser().fullName : "Hà Tường Vi"),
+                approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
+                note: "Lịch công tác tuần.",
+                items: []
+            };
+            this.saveSchedule(sched);
+        }
+
         if (sched && sched.items) sched.items = this.sortScheduleItems(sched.items);
         return sched;
     },

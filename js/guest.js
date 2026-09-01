@@ -13,24 +13,30 @@ const GuestApp = {
     currentSchedule: null,
 
     init() {
-        this.currentYear = 2026;
-        this.currentWeek = 35;
+        const currentInfo = StorageService.getCurrentWeekInfo(new Date());
+        this.currentYear = currentInfo.year;
+        this.currentWeek = currentInfo.weekNumber;
+
+        this.populateWeekOptions();
         this.loadCurrentSchedule();
         this.setupLiveClock();
         this.setupEventListeners();
         this.renderAll();
     },
 
+    populateWeekOptions() {
+        const weekSelect = document.getElementById("weekSelect");
+        if (weekSelect) {
+            StorageService.populateWeekSelect(weekSelect, this.currentWeek, this.currentYear);
+        }
+        const yearSelect = document.getElementById("yearSelect");
+        if (yearSelect) {
+            yearSelect.value = this.currentYear;
+        }
+    },
+
     loadCurrentSchedule() {
         this.currentSchedule = StorageService.getScheduleByWeek(this.currentYear, this.currentWeek);
-        if (!this.currentSchedule) {
-            const all = StorageService.getAllSchedules();
-            if (all && all.length > 0) {
-                this.currentSchedule = all[0];
-                this.currentYear = this.currentSchedule.year;
-                this.currentWeek = this.currentSchedule.weekNumber;
-            }
-        }
     },
 
     setupLiveClock() {
@@ -55,7 +61,8 @@ const GuestApp = {
         const yearSelect = document.getElementById("yearSelect");
         if (yearSelect) {
             yearSelect.addEventListener("change", (e) => {
-                this.currentYear = parseInt(e.target.value);
+                this.currentYear = parseInt(e.target.value, 10);
+                this.populateWeekOptions();
                 this.loadCurrentSchedule();
                 this.renderAll();
             });
@@ -64,7 +71,7 @@ const GuestApp = {
         const weekSelect = document.getElementById("weekSelect");
         if (weekSelect) {
             weekSelect.addEventListener("change", (e) => {
-                this.currentWeek = parseInt(e.target.value);
+                this.currentWeek = parseInt(e.target.value, 10);
                 this.loadCurrentSchedule();
                 this.renderAll();
             });
@@ -74,7 +81,7 @@ const GuestApp = {
         document.getElementById("btnPrevWeek")?.addEventListener("click", () => {
             if (this.currentWeek > 1) {
                 this.currentWeek--;
-                if (weekSelect) weekSelect.value = this.currentWeek;
+                this.populateWeekOptions();
                 this.loadCurrentSchedule();
                 this.renderAll();
             }
@@ -83,17 +90,17 @@ const GuestApp = {
         document.getElementById("btnNextWeek")?.addEventListener("click", () => {
             if (this.currentWeek < 52) {
                 this.currentWeek++;
-                if (weekSelect) weekSelect.value = this.currentWeek;
+                this.populateWeekOptions();
                 this.loadCurrentSchedule();
                 this.renderAll();
             }
         });
 
         document.getElementById("btnCurrentWeek")?.addEventListener("click", () => {
-            this.currentWeek = 35;
-            this.currentYear = 2026;
-            if (weekSelect) weekSelect.value = 35;
-            if (yearSelect) yearSelect.value = 2026;
+            const currentInfo = StorageService.getCurrentWeekInfo(new Date());
+            this.currentWeek = currentInfo.weekNumber;
+            this.currentYear = currentInfo.year;
+            this.populateWeekOptions();
             this.loadCurrentSchedule();
             this.renderAll();
         });

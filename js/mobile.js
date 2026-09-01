@@ -21,6 +21,9 @@ const MobileApp = {
         if (typeof StorageService !== 'undefined') {
             StorageService.init();
             this.currentUser = StorageService.getCurrentUser();
+            const currentInfo = StorageService.getCurrentWeekInfo(new Date());
+            this.currentYear = currentInfo.year;
+            this.currentWeek = currentInfo.weekNumber;
         }
 
         // Tải lịch hiện tại
@@ -67,14 +70,6 @@ const MobileApp = {
     loadCurrentWeekData() {
         if (typeof StorageService !== 'undefined') {
             this.currentSchedule = StorageService.getScheduleByWeek(this.currentYear, this.currentWeek);
-            if (!this.currentSchedule) {
-                const all = StorageService.getAllSchedules();
-                if (all && all.length > 0) {
-                    this.currentSchedule = all[0];
-                    this.currentWeek = this.currentSchedule.weekNumber;
-                    this.currentYear = this.currentSchedule.year;
-                }
-            }
         }
     },
 
@@ -581,24 +576,32 @@ const MobileApp = {
         const listEl = document.getElementById('weekListContainer');
         if (!modal || !listEl) return;
 
-        const allSchedules = StorageService.getAllSchedules();
-        let html = '';
+        const currentInfo = StorageService.getCurrentWeekInfo(new Date());
+        const realCurrentWeek = currentInfo.weekNumber;
+        const realCurrentYear = currentInfo.year;
 
-        allSchedules.forEach(s => {
-            const isSelected = s.weekNumber === this.currentWeek && s.year === this.currentYear;
+        let html = '';
+        for (let w = 52; w >= 1; w--) {
+            const rangeStr = StorageService.getWeekDateRangeString(w, this.currentYear);
+            const isRealCurrent = (w === realCurrentWeek && this.currentYear === realCurrentYear);
+            const isSelected = (w === this.currentWeek);
+
+            const sched = StorageService.getScheduleByWeek(this.currentYear, w);
+            const count = (sched && sched.items) ? sched.items.length : 0;
+
             html += `
-                <div class="account-menu-item" style="padding: 12px 14px; ${isSelected ? 'background: #eff6ff; font-weight: 700; color: #1d4ed8;' : ''}" onclick="MobileApp.selectWeek(${s.year}, ${s.weekNumber})">
+                <div class="account-menu-item" style="padding: 12px 14px; ${isSelected ? 'background: #eff6ff; font-weight: 700; color: #1d4ed8;' : ''}" onclick="MobileApp.selectWeek(${this.currentYear}, ${w})">
                     <div class="menu-item-left">
                         <span class="menu-item-icon">📅</span>
                         <div>
-                            <div>Tuần ${s.weekNumber} (${this.formatDateShort(s.startDate)} - ${this.formatDateShort(s.endDate)} / ${s.year})</div>
-                            <div style="font-size: 11px; color: #64748b; font-weight: normal;">${s.items ? s.items.length : 0} mục công tác • ${s.status === 'published' ? 'Đã ban hành' : 'Dự thảo'}</div>
+                            <div>Tuần ${w} (${rangeStr})${isRealCurrent ? ' <span style="color:#059669; font-weight:bold;">• Hiện tại</span>' : ''}</div>
+                            <div style="font-size: 11px; color: #64748b; font-weight: normal;">${count} mục công tác • ${sched?.status === 'published' ? 'Đã ban hành' : 'Dự thảo'}</div>
                         </div>
                     </div>
                     <span>${isSelected ? '✓' : '›'}</span>
                 </div>
             `;
-        });
+        }
 
         listEl.innerHTML = html;
         modal.classList.add('active');

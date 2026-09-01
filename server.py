@@ -11,7 +11,7 @@ import json
 import os
 import mimetypes
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timedelta
 
 PORT = int(os.environ.get("PORT", 80))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -28,17 +28,22 @@ ORGANIZATION_FILE = os.path.join(DATA_DIR, "organization.json")
 
 # Đảm bảo có sẵn các tệp JSON khởi tạo nếu chưa có
 def init_data_files():
+    now = datetime.now()
+    year, week_no, day = now.isocalendar()
+    monday = now - timedelta(days=day - 1)
+    sunday = monday + timedelta(days=6)
+
     if not os.path.exists(SCHEDULES_FILE):
         default_schedules = [
             {
-                "id": "sched_2026_w35",
-                "year": 2026,
-                "weekNumber": 35,
-                "title": "Lịch công tác tuần 35 năm 2026",
-                "startDate": "2026-08-24",
-                "endDate": "2026-08-30",
+                "id": f"sched_{year}_w{week_no}",
+                "year": year,
+                "weekNumber": week_no,
+                "title": f"Lịch công tác tuần {week_no} năm {year}",
+                "startDate": monday.strftime("%Y-%m-%d"),
+                "endDate": sunday.strftime("%Y-%m-%d"),
                 "status": "published",
-                "lastUpdated": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "lastUpdated": now.strftime("%Y-%m-%d %H:%M"),
                 "updatedBy": "Hà Tường Vi (Chánh Văn phòng)",
                 "approvedBy": "Nguyễn Bá Bân (Chủ tịch UBND xã)",
                 "note": "Lịch công tác tuần.",
@@ -101,6 +106,28 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
 
         if path == "/api/schedules":
             schedules = read_json_file(SCHEDULES_FILE, [])
+            now = datetime.now()
+            year, week_no, day = now.isocalendar()
+            curr_id = f"sched_{year}_w{week_no}"
+            if not any(s.get("id") == curr_id or (s.get("year") == year and s.get("weekNumber") == week_no) for s in schedules):
+                monday = now - timedelta(days=day - 1)
+                sunday = monday + timedelta(days=6)
+                curr_sched = {
+                    "id": curr_id,
+                    "year": year,
+                    "weekNumber": week_no,
+                    "title": f"Lịch công tác tuần {week_no} năm {year}",
+                    "startDate": monday.strftime("%Y-%m-%d"),
+                    "endDate": sunday.strftime("%Y-%m-%d"),
+                    "status": "published",
+                    "lastUpdated": now.strftime("%Y-%m-%d %H:%M"),
+                    "updatedBy": "Hà Tường Vi (Chánh Văn phòng)",
+                    "approvedBy": "Nguyễn Bá Bân (Chủ tịch UBND xã)",
+                    "note": "Lịch công tác tuần.",
+                    "items": []
+                }
+                schedules.insert(0, curr_sched)
+                write_json_file(SCHEDULES_FILE, schedules)
             self.send_json_response(schedules)
             return
 
