@@ -15,6 +15,100 @@ const STORAGE_KEYS = {
 };
 
 const StorageService = {
+    // Chuyển đổi chuỗi thời gian (vd: "07h00", "08:30", "14h", "Chiều 14h30", "Sáng") thành số phút trong ngày để so sánh
+    parseTimeToMinutes(timeStr) {
+        if (!timeStr || typeof timeStr !== 'string') return 9999;
+        const str = timeStr.trim().toLowerCase();
+        if (!str) return 9999;
+
+        // Chỉ lấy mốc bắt đầu nếu là khoảng thời gian (vd: "07h30 - 09h00")
+        const firstPart = str.split('-')[0].trim();
+
+        // Khớp định dạng giờ:phút hoặc giờ"h"phút (vd: "07h30", "7h", "14:00", "7g30", "8 giờ 15")
+        const match = firstPart.match(/(\d{1,2})\s*(?:h|g|:|\bgio\b|\bgiờ\b)\s*(\d{1,2})?/);
+        if (match) {
+            let hours = parseInt(match[1], 10);
+            let minutes = match[2] ? parseInt(match[2], 10) : 0;
+
+            // Nếu người dùng ghi "chiều" / "tối" / "pm" mà giờ < 12 (vd: "chiều 2h30") -> cộng 12
+            if ((firstPart.includes('chiều') || firstPart.includes('tối') || firstPart.includes('pm')) && hours < 12) {
+                hours += 12;
+            }
+            return hours * 60 + minutes;
+        }
+
+        // Khớp định dạng số thập phân hoặc dấu chấm (vd: "07.30", "8.00")
+        const matchAlt = firstPart.match(/^.*?(\d{1,2})[:\.](\d{1,2})/);
+        if (matchAlt) {
+            let hours = parseInt(matchAlt[1], 10);
+            let minutes = parseInt(matchAlt[2], 10);
+            if ((firstPart.includes('chiều') || firstPart.includes('tối') || firstPart.includes('pm')) && hours < 12) {
+                hours += 12;
+            }
+            return hours * 60 + minutes;
+        }
+
+        // Khớp số đứng đầu (vd: "7", "14")
+        const matchNum = firstPart.match(/(\d{1,2})/);
+        if (matchNum) {
+            let hours = parseInt(matchNum[1], 10);
+            if ((firstPart.includes('chiều') || firstPart.includes('tối') || firstPart.includes('pm')) && hours < 12) {
+                hours += 12;
+            }
+            return hours * 60;
+        }
+
+        // Các từ khóa buổi trong ngày
+        if (str.includes('cả ngày')) return 6 * 60;       // 06:00
+        if (str.includes('sáng')) return 7 * 60;           // 07:00
+        if (str.includes('trưa')) return 11 * 60 + 30;     // 11:30
+        if (str.includes('chiều')) return 13 * 60 + 30;    // 13:30
+        if (str.includes('tối')) return 18 * 60;           // 18:00
+
+        return 9999;
+    },
+
+    // So sánh thứ tự 2 mốc thời gian (sự kiện nào trước thì đứng trước)
+    compareTime(timeA, timeB) {
+        const tA = this.parseTimeToMinutes(timeA);
+        const tB = this.parseTimeToMinutes(timeB);
+        if (tA !== tB) return tA - tB;
+        return (timeA || "").localeCompare(timeB || "");
+    },
+
+    // Lấy thứ tự ngày trong tuần (Thứ Hai: 1 -> Chủ Nhật: 7)
+    getDayOrder(dayOfWeek) {
+        if (!dayOfWeek) return 99;
+        const d = dayOfWeek.trim().toLowerCase();
+        if (d.includes('hai') || d.includes('2')) return 1;
+        if (d.includes('ba') || d.includes('3')) return 2;
+        if (d.includes('tư') || d.includes('tu') || d.includes('4')) return 3;
+        if (d.includes('năm') || d.includes('nam') || d.includes('5')) return 4;
+        if (d.includes('sáu') || d.includes('sau') || d.includes('6')) return 5;
+        if (d.includes('bảy') || d.includes('bay') || d.includes('7')) return 6;
+        if (d.includes('nhật') || d.includes('nhat') || d.includes('cn') || d.includes('8')) return 7;
+        return 99;
+    },
+
+    // Sắp xếp danh sách mục công tác chuẩn trình tự: theo Ngày rồi theo Thời gian (sớm trước, muộn sau)
+    sortScheduleItems(items) {
+        if (!items || !Array.isArray(items)) return [];
+        return [...items].sort((a, b) => {
+            // 1. So sánh ngày cụ thể (YYYY-MM-DD) nếu cả 2 đều có
+            if (a.date && b.date && a.date !== b.date) {
+                return a.date.localeCompare(b.date);
+            }
+            // 2. So sánh thứ trong tuần
+            const orderA = this.getDayOrder(a.dayOfWeek);
+            const orderB = this.getDayOrder(b.dayOfWeek);
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+            // 3. So sánh thời gian trong ngày (sự kiện nào trước nằm trên)
+            return this.compareTime(a.time, b.time);
+        });
+    },
+
     // Khởi tạo dữ liệu nếu chưa có trong LocalStorage
     init() {
         if (!localStorage.getItem(STORAGE_KEYS.SCHEDULES)) {
@@ -75,6 +169,19 @@ const StorageService = {
                 if (schedChanged) {
                     localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
                 }
+            }
+
+            // Tự động sắp xếp lại trình tự theo thời gian cho tất cả lịch hiện có trong localStorage
+            let currentSchedules = this.getAllSchedules();
+            let hasAnySortChange = false;
+            currentSchedules.forEach(s => {
+                if (s.items && s.items.length > 0) {
+                    s.items = this.sortScheduleItems(s.items);
+                    hasAnySortChange = true;
+                }
+            });
+            if (hasAnySortChange) {
+                localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(currentSchedules));
             }
         }
     },
@@ -173,22 +280,35 @@ const StorageService = {
     // Lấy tất cả lịch tuần
     getAllSchedules() {
         const data = localStorage.getItem(STORAGE_KEYS.SCHEDULES);
-        return data ? JSON.parse(data) : INITIAL_DATA.schedules;
+        const schedules = data ? JSON.parse(data) : INITIAL_DATA.schedules;
+        if (Array.isArray(schedules)) {
+            schedules.forEach(s => {
+                if (s && s.items) s.items = this.sortScheduleItems(s.items);
+            });
+        }
+        return schedules;
     },
 
     // Lấy lịch của tuần cụ thể
     getScheduleByWeek(year, weekNumber) {
         const schedules = this.getAllSchedules();
-        return schedules.find(s => s.year === parseInt(year) && s.weekNumber === parseInt(weekNumber));
+        const sched = schedules.find(s => s.year === parseInt(year) && s.weekNumber === parseInt(weekNumber));
+        if (sched && sched.items) sched.items = this.sortScheduleItems(sched.items);
+        return sched;
     },
 
     getScheduleById(id) {
         const schedules = this.getAllSchedules();
-        return schedules.find(s => s.id === id);
+        const sched = schedules.find(s => s.id === id);
+        if (sched && sched.items) sched.items = this.sortScheduleItems(sched.items);
+        return sched;
     },
 
     // Lưu hoặc cập nhật lịch tuần
     saveSchedule(schedule) {
+        if (schedule.items) {
+            schedule.items = this.sortScheduleItems(schedule.items);
+        }
         const schedules = this.getAllSchedules();
         const index = schedules.findIndex(s => s.id === schedule.id);
         
@@ -228,6 +348,7 @@ const StorageService = {
             schedule.items.push(item);
         }
 
+        schedule.items = this.sortScheduleItems(schedule.items);
         this.saveSchedule(schedule);
         return { schedule, oldItem, newItem: item };
     },

@@ -216,6 +216,9 @@ const GuestApp = {
 
         daysOrder.forEach(dayName => {
             const dayItems = grouped[dayName];
+            // Sắp xếp theo trình tự thời gian: sự kiện nào trước thì nằm trên
+            dayItems.sort((a, b) => StorageService.compareTime(a.time, b.time));
+
             if (dayItems.length === 0 && (this.currentBloc !== "all" || this.searchQuery)) {
                 return;
             }

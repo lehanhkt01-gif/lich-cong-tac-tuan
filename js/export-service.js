@@ -18,7 +18,8 @@ const ExportService = {
         const formattedEnd = `${endDateParts[2]}/${endDateParts[1]}/${endDateParts[0]}`;
 
         let rowsHTML = "";
-        (weekSchedule.items || []).forEach((item, index) => {
+        const sortedItems = StorageService.sortScheduleItems(weekSchedule.items || []);
+        sortedItems.forEach((item, index) => {
             rowsHTML += `
                 <tr style="mso-yfti-irow:${index + 1};">
                     <td style="border:1.0pt solid windowtext; padding:5pt; text-align:center; font-weight:bold; width:12%;">

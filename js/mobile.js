@@ -341,6 +341,9 @@ const MobileApp = {
             }
 
             const dayItems = grouped[dayName];
+            // Sắp xếp theo trình tự thời gian: sự kiện nào trước thì nằm trên
+            dayItems.sort((a, b) => StorageService.compareTime(a.time, b.time));
+
             if (dayItems.length === 0 && (this.activeBloc !== 'all' || this.searchQuery)) {
                 return;
             }
@@ -628,6 +631,7 @@ const MobileApp = {
         let todayItems = [];
         if (s && s.items) {
             todayItems = s.items.filter(it => this.checkIsToday(it.date));
+            todayItems.sort((a, b) => StorageService.compareTime(a.time, b.time));
         }
         if (todayCountEl) todayCountEl.textContent = todayItems.length;
 

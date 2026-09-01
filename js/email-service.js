@@ -17,7 +17,8 @@ const EmailService = {
 
         // Tạo bảng tóm tắt thay đổi hoặc toàn bộ lịch
         let itemsHTML = "";
-        const displayItems = (recentChanges && recentChanges.length > 0) ? recentChanges : (weekSchedule.items || []);
+        const rawItems = (recentChanges && recentChanges.length > 0) ? recentChanges : (weekSchedule.items || []);
+        const displayItems = StorageService.sortScheduleItems(rawItems);
 
         displayItems.forEach((item, index) => {
             const isChanged = recentChanges && recentChanges.some(rc => rc.id === item.id);
