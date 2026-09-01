@@ -748,7 +748,7 @@ const App = {
                                 <strong>TL. CHỦ TỊCH</strong><br>
                                 <strong>CHÁNH VĂN PHÒNG</strong><br>
                                 <div style="height: 50px;"></div>
-                                <strong>Nguyễn Văn Hùng</strong>
+                                <strong>Hà Tường Vi</strong>
                             </td>
                         </tr>
                     </table>

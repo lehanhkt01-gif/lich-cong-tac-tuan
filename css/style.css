@@ -278,6 +278,46 @@ body {
     font-size: 16px;
 }
 
+/* Guest header badges */
+.guest-header-badge-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.guest-mode-pill {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 12.5px;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+}
+
+.btn-guest-login {
+    background: #F59E0B;
+    color: #FFFFFF;
+    text-decoration: none;
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: var(--transition);
+}
+
+.btn-guest-login:hover {
+    background: #D97706;
+    transform: translateY(-1px);
+}
+
 .role-info-name {
     font-size: 13px;
     font-weight: 700;
@@ -1360,9 +1400,736 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes modalSlideUpMobile {
+    from { opacity: 0; transform: translateY(100%); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes slideInRight {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
+}
+
+/* ==========================================================================
+   RESPONSIVE STYLES FOR MOBILE & TABLET (TỐI ƯU HÓA GIAO DIỆN ĐIỆN THOẠI)
+   ========================================================================== */
+@media (max-width: 992px) {
+    .topbar-container {
+        padding: 10px 16px;
+    }
+
+    .main-wrapper {
+        padding: 16px 14px 85px 14px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    /* 1. Header Chính Phủ trên điện thoại */
+    .topbar-container {
+        padding: 8px 12px;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .brand-section {
+        gap: 10px;
+    }
+
+    .national-crest {
+        width: 42px;
+        height: 42px;
+    }
+
+    .sub-gov-name {
+        font-size: 9.5px;
+        letter-spacing: 0.8px;
+    }
+
+    .main-org-name {
+        font-size: 15px;
+        letter-spacing: 0.2px;
+    }
+
+    .portal-title-tag {
+        font-size: 11px;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .header-right-actions {
+        gap: 8px;
+    }
+
+    .live-datetime {
+        display: none; /* Ẩn đồng hồ trên mobile để tiết kiệm diện tích */
+    }
+
+    .user-card-pill {
+        padding: 4px 10px;
+        gap: 6px;
+    }
+
+    .user-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 15px;
+    }
+
+    .user-name {
+        font-size: 12px;
+        max-width: 90px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .user-role-label {
+        font-size: 10px;
+        max-width: 90px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .role-dropdown-menu {
+        position: fixed;
+        top: 56px;
+        right: 8px;
+        left: 8px;
+        width: auto;
+        max-width: 360px;
+        margin-left: auto;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+        z-index: 2500;
+    }
+
+    /* 2. Thanh Tabs Điều Hướng (Vuốt ngang mượt mà) */
+    .portal-navbar {
+        position: sticky;
+        top: 58px;
+        z-index: 950;
+        background: #FFFFFF;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .navbar-container {
+        padding: 0;
+    }
+
+    .nav-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        display: flex;
+        flex-wrap: nowrap;
+        padding: 6px 10px;
+        gap: 6px;
+    }
+
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-tab-item {
+        flex-shrink: 0;
+        padding: 7px 12px;
+        font-size: 12px;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+
+    /* 3. Khung Điều Khiển Tuần & Bộ Lọc Trên Điện Thoại */
+    .main-wrapper {
+        padding: 10px 10px 90px 10px;
+    }
+
+    .controls-card {
+        padding: 12px;
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
+    }
+
+    .controls-bar-inner {
+        gap: 10px;
+    }
+
+    .controls-row-top {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .week-selector-group {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+    }
+
+    .btn-nav-week {
+        width: 40px;
+        height: 40px;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .week-selector-group .current-week-badge {
+        flex: 1;
+        justify-content: center;
+        font-size: 13px;
+        height: 40px;
+        padding: 0 10px;
+    }
+
+    .controls-quick-actions {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-primary-create,
+    .btn-secondary-action {
+        width: 100%;
+        justify-content: center;
+        min-height: 44px;
+        font-size: 13.5px;
+        font-weight: 700;
+        border-radius: 8px;
+    }
+
+    .controls-row-bottom {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .bloc-pills {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        display: flex;
+        flex-wrap: nowrap;
+        padding-bottom: 4px;
+        gap: 6px;
+    }
+
+    .bloc-pills::-webkit-scrollbar {
+        display: none;
+    }
+
+    .bloc-pill-btn {
+        flex-shrink: 0;
+        padding: 6px 12px;
+        font-size: 12px;
+        border-radius: 6px;
+        white-space: nowrap;
+    }
+
+    .search-input-box {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    .search-input-box input {
+        height: 42px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+
+    /* 4. Banner Tiêu Đề Lịch */
+    .schedule-meta-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 12px;
+        border-radius: var(--radius-md);
+        margin-bottom: 12px;
+    }
+
+    .meta-title-area h2 {
+        font-size: 16px;
+    }
+
+    .meta-subtitle {
+        font-size: 12px;
+    }
+
+    .schedule-status-badge {
+        font-size: 11px;
+        padding: 4px 10px;
+        align-self: flex-start;
+    }
+
+    /* 5. GIAO DIỆN LỊCH DẠNG THẺ (CARD VIEW) THÔNG MINH CHO ĐIỆN THOẠI */
+    .schedule-table-card {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        overflow: visible;
+    }
+
+    .table-responsive {
+        overflow: visible;
+    }
+
+    .schedule-table,
+    .schedule-table tbody,
+    .schedule-table tr,
+    .schedule-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .schedule-table thead {
+        display: none; /* Ẩn thead 10 cột trên điện thoại */
+    }
+
+    /* Tiêu đề từng ngày trong tuần */
+    .day-divider-row {
+        display: block;
+        margin: 16px 0 10px 0;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #BAE6FD;
+        background: linear-gradient(90deg, #E0F2FE 0%, #F0F9FF 100%);
+    }
+
+    .day-divider-content {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px !important;
+        gap: 6px;
+    }
+
+    .day-divider-content .day-name {
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .day-divider-content .day-date {
+        font-size: 12px;
+    }
+
+    .day-divider-content .day-item-count {
+        margin-left: auto;
+        font-size: 11px;
+    }
+
+    /* Thẻ mục công tác (Item Card) */
+    .item-row {
+        display: flex;
+        flex-direction: column;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 14px;
+        margin-bottom: 12px;
+        padding: 14px;
+        box-shadow: 0 2px 6px rgba(15, 76, 129, 0.05);
+        gap: 8px;
+    }
+
+    .item-row td {
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    /* Ẩn cột Ngày (đã có ở day-divider) */
+    .col-day-cell {
+        display: none !important;
+    }
+
+    /* Hàng trên cùng của Thẻ: Giờ + Khối */
+    .col-time-cell {
+        display: inline-flex !important;
+        align-items: center;
+        width: auto !important;
+        text-align: left !important;
+        margin-right: 8px;
+    }
+
+    .time-pill {
+        font-size: 13px;
+        padding: 4px 10px;
+        font-weight: 800;
+        border-radius: 6px;
+    }
+
+    .badge-bloc {
+        display: inline-block;
+        padding: 4px 10px;
+        font-size: 12px;
+        border-radius: 6px;
+        margin-bottom: 4px;
+    }
+
+    /* Nội dung cuộc họp */
+    .content-title {
+        font-size: 14.5px;
+        font-weight: 700;
+        color: #0F172A;
+        line-height: 1.45;
+        margin-top: 2px;
+    }
+
+    /* Địa điểm */
+    .content-location {
+        font-size: 12.5px;
+        color: #0F4C81;
+        background: #F0F9FF;
+        padding: 6px 10px;
+        border-radius: 8px;
+        border-left: 3px solid #0284C7;
+        font-weight: 600;
+        display: block;
+        margin-top: 4px;
+    }
+
+    /* Lãnh đạo chủ trì */
+    .col-leader-cell {
+        margin-top: 2px;
+    }
+
+    .leader-name {
+        font-size: 13px;
+        font-weight: 700;
+        color: #047857;
+        background: #F0FDF4;
+        padding: 6px 10px;
+        border-radius: 8px;
+        border-left: 3px solid #10B981;
+        display: block;
+    }
+
+    /* Thành phần tham dự */
+    .col-participants-cell {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.35;
+        padding: 6px 10px;
+        background: #F8FAFC;
+        border-radius: 8px;
+        border-left: 3px solid #CBD5E1;
+    }
+
+    /* Phương tiện */
+    .col-vehicle-cell {
+        font-size: 12px;
+        color: #64748B;
+        font-weight: 600;
+        padding: 2px 0;
+    }
+
+    /* Giấy mời đính kèm */
+    .col-attachment-cell {
+        margin-top: 2px;
+    }
+
+    .btn-attachment-badge {
+        width: 100%;
+        justify-content: center;
+        padding: 8px 12px;
+        font-size: 12.5px;
+        font-weight: 700;
+        border-radius: 8px;
+    }
+
+    /* Thao tác (Nút Xem, Sửa, Xóa dưới cùng thẻ) */
+    .col-actions-cell {
+        border-top: 1px dashed #E2E8F0 !important;
+        padding-top: 10px !important;
+        margin-top: 4px;
+        width: 100%;
+    }
+
+    .action-buttons-group {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        width: 100%;
+    }
+
+    .btn-action-icon {
+        width: 100%;
+        height: 40px;
+        font-size: 16px;
+        border-radius: 8px;
+        justify-content: center;
+        background: #F8FAFC;
+    }
+
+    /* 6. MODAL & DIALOGS CHUẨN FORM ĐIỆN THOẠI (BOTTOM SHEET DIALOG) */
+    .modal-backdrop {
+        padding: 0;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .modal-container {
+        width: 100%;
+        max-width: 100%;
+        height: 92vh;
+        max-height: 92vh;
+        border-radius: 20px 20px 0 0;
+        margin: 0;
+        border: none;
+        box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.35);
+        animation: modalSlideUpMobile 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-container.modal-lg {
+        max-width: 100%;
+    }
+
+    .modal-header {
+        padding: 14px 18px;
+        border-radius: 20px 20px 0 0;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .modal-header::before {
+        content: "";
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 9999px;
+    }
+
+    .modal-header-title {
+        font-size: 15.5px;
+        font-weight: 700;
+    }
+
+    .btn-close-modal {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-body {
+        padding: 16px 16px 20px 16px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        flex: 1;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .form-grid-full {
+        grid-column: span 1;
+    }
+
+    .form-group {
+        gap: 6px;
+    }
+
+    .form-label {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #1E293B;
+    }
+
+    /* Cực kỳ quan trọng: font-size 16px tránh trình duyệt iOS tự động zoom màn hình khi nhập */
+    .form-input,
+    .form-select,
+    .form-textarea {
+        font-size: 16px !important;
+        min-height: 48px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1.5px solid #CBD5E1;
+        background-color: #FFFFFF;
+        box-sizing: border-box;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        border-color: var(--gov-primary);
+        box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.15);
+        outline: none;
+    }
+
+    .form-textarea {
+        min-height: 100px;
+        line-height: 1.45;
+    }
+
+    .file-upload-box {
+        padding: 16px 12px;
+        border-radius: 10px;
+    }
+
+    .file-attached-preview {
+        padding: 12px;
+        border-radius: 10px;
+    }
+
+    .modal-footer {
+        position: sticky;
+        bottom: 0;
+        background: #FFFFFF;
+        border-top: 1px solid #E2E8F0;
+        padding: 12px 16px;
+        padding-bottom: max(14px, env(safe-area-inset-bottom));
+        display: flex;
+        gap: 10px;
+        width: 100%;
+        flex-shrink: 0;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+        z-index: 15;
+    }
+
+    .modal-footer .btn-bottom {
+        flex: 1;
+        height: 48px;
+        font-size: 14.5px;
+        font-weight: 700;
+        border-radius: 10px;
+        justify-content: center;
+    }
+
+    /* 7. THANH THAO TÁC CỐ ĐỊNH PHÍA DƯỚI (BOTTOM FLOATING BAR) */
+    .bottom-floating-bar {
+        padding: 8px 10px;
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+        background: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid #CBD5E1;
+    }
+
+    .bottom-bar-container {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .bottom-info-left {
+        display: none; /* Ẩn thông tin để các nút hành động chiếm trọn chiều ngang */
+    }
+
+    .bottom-actions-right {
+        width: 100%;
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+    }
+
+    .bottom-actions-right::-webkit-scrollbar {
+        display: none;
+    }
+
+    .btn-bottom {
+        flex-shrink: 0;
+        padding: 8px 12px;
+        font-size: 12px;
+        height: 40px;
+        border-radius: 8px;
+        white-space: nowrap;
+    }
+
+    /* 8. DANH BẠ CÁN BỘ DẠNG THẺ TRÊN ĐIỆN THOẠI */
+    .cadres-table-card {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        overflow: visible;
+    }
+
+    .cadres-table,
+    .cadres-table tbody,
+    .cadres-table tr,
+    .cadres-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .cadres-table thead {
+        display: none;
+    }
+
+    .cadres-table tr {
+        display: flex;
+        flex-direction: column;
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 14px;
+        margin-bottom: 12px;
+        padding: 14px;
+        box-shadow: 0 2px 6px rgba(15, 76, 129, 0.05);
+        gap: 6px;
+    }
+
+    .cadres-table td {
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    .cadres-search-dept-wrapper {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    /* 9. THÔNG BÁO TOAST TRÊN ĐIỆN THOẠI */
+    .toast-container {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+    }
+
+    .toast {
+        width: 100%;
+        font-size: 13px;
+        padding: 10px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-org-name {
+        font-size: 13.5px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .action-buttons-group {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+
+    .btn-action-icon {
+        height: 38px;
+        font-size: 15px;
+    }
 }
 
 /* ==========================================================================

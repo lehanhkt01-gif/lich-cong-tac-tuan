@@ -151,7 +151,7 @@ const ExportService = {
                                 <p style="font-weight:bold; font-size:12pt; text-transform:uppercase;">TL. CHỦ TỊCH</p>
                                 <p style="font-weight:bold; font-size:13pt; text-transform:uppercase;">CHÁNH VĂN PHÒNG</p>
                                 <div style="height:60pt;"></div>
-                                <p style="font-weight:bold; font-size:13pt;">Nguyễn Văn Hùng</p>
+                                <p style="font-weight:bold; font-size:13pt;">Hà Tường Vi</p>
                             </td>
                         </tr>
                     </table>

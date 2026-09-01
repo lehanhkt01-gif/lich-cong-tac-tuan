@@ -22,23 +22,34 @@ const INITIAL_DATA = {
             id: "u_admin",
             username: "admin.chanhvp",
             fullName: "Hà Tường Vi",
-            position: "Phó Chánh Văn phòng HĐND & UBND xã",
+            position: "Chánh Văn phòng HĐND & UBND xã",
             role: "super_admin",
-            roleName: "Super Admin (Lãnh đạo Văn phòng)",
+            roleName: "Super Admin (Chánh Văn phòng)",
             email: "viht.vp@easup.daklak.gov.vn",
             avatar: "👩‍💼",
             phone: "077 951 5547"
         },
         {
+            id: "u_deputy",
+            username: "deputy.phochanhvp",
+            fullName: "Trần Minh Hải",
+            position: "Phó Chánh Văn phòng HĐND & UBND xã",
+            role: "super_admin",
+            roleName: "Super Admin (Phó Chánh VP)",
+            email: "haitm.vp@easup.daklak.gov.vn",
+            avatar: "👨‍💼",
+            phone: "091 610 5051"
+        },
+        {
             id: "u_editor",
             username: "editor.chuyenvien",
-            fullName: "Hoàng Nhật Lệ",
+            fullName: "Nguyễn Thị Thoản",
             position: "Chuyên viên Văn phòng HĐND & UBND xã",
             role: "editor",
             roleName: "Editor (Chuyên viên nhập liệu)",
-            email: "lehn.vp@easup.daklak.gov.vn",
+            email: "thoannt.vp@easup.daklak.gov.vn",
             avatar: "👩‍💼",
-            phone: "032 7029408"
+            phone: "077 951 5547"
         },
         {
             id: "u_viewer",
@@ -143,25 +154,35 @@ const INITIAL_DATA = {
         {
             id: "cadre_vp_01",
             fullName: "Hà Tường Vi",
-            position: "Phó Chánh Văn phòng HĐND và UBND xã",
+            position: "Chánh Văn phòng HĐND và UBND xã",
             department: "Văn phòng HĐND & UBND",
             email: "viht.vp@easup.daklak.gov.vn",
             phone: "077 951 5547",
             bloc: "UBND",
-            note: "Tham mưu hoạt động HĐND và UBND xã; xử lý văn bản đến; kiểm tra hồ sơ, thủ tục, thể thức tất cả các văn bản trình ký UBND xã."
+            note: "Phụ trách chung công tác Văn phòng HĐND và UBND xã; tham mưu hoạt động chỉ đạo điều hành của Thường trực HĐND và UBND xã; kiểm tra thể thức văn bản trình ký."
         },
         {
             id: "cadre_vp_02",
-            fullName: "Hoàng Nhật Lệ",
-            position: "Chuyên viên Văn phòng HĐND và UBND xã",
+            fullName: "Trần Minh Hải",
+            position: "Phó Chánh Văn phòng HĐND và UBND xã",
             department: "Văn phòng HĐND & UBND",
-            email: "lehn.vp@easup.daklak.gov.vn",
-            phone: "032 7029408",
-            bloc: "HĐND",
-            note: "Chuyên viên tổng hợp phụ trách KT - VHXH; phụ trách tham mưu hoạt động Thường trực HĐND xã."
+            email: "haitm.vp@easup.daklak.gov.vn",
+            phone: "091 610 5051",
+            bloc: "UBND",
+            note: "Phó Chánh Văn phòng; giúp Chánh Văn phòng quản lý, điều hành các hoạt động tổng hợp, chuyển đổi số và cải cách hành chính."
         },
         {
             id: "cadre_vp_03",
+            fullName: "Nguyễn Thị Thoản",
+            position: "Chuyên viên Văn phòng HĐND và UBND xã",
+            department: "Văn phòng HĐND & UBND",
+            email: "thoannt.vp@easup.daklak.gov.vn",
+            phone: "077 951 5547",
+            bloc: "UBND",
+            note: "Chuyên viên phụ trách công tác Văn thư - Lưu trữ và tiếp nhận, xử lý văn bản của HĐND, UBND xã."
+        },
+        {
+            id: "cadre_vp_04",
             fullName: "Nguyễn Thị Diệp",
             position: "Chuyên viên Văn phòng HĐND và UBND xã",
             department: "Văn phòng HĐND & UBND",
@@ -171,7 +192,7 @@ const INITIAL_DATA = {
             note: "Chuyên viên tiếp công dân, xử lý đơn thư khiếu nại, tố cáo, kiến nghị, phản ánh; phụ trách AN - QP."
         },
         {
-            id: "cadre_vp_04",
+            id: "cadre_vp_05",
             fullName: "Trần Trung Kiên",
             position: "Chuyên viên Văn phòng HĐND và UBND xã",
             department: "Văn phòng HĐND & UBND",
@@ -179,16 +200,6 @@ const INITIAL_DATA = {
             phone: "098 909 5645",
             bloc: "UBND",
             note: "Chuyên viên phụ trách lĩnh vực Tư pháp hộ tịch, công chứng, chứng thực."
-        },
-        {
-            id: "cadre_vp_05",
-            fullName: "Nguyễn Thị Thoản",
-            position: "Chuyên viên Văn phòng HĐND và UBND xã",
-            department: "Văn phòng HĐND & UBND",
-            email: "thoannt.vp@easup.daklak.gov.vn",
-            phone: "077 951 5547",
-            bloc: "UBND",
-            note: "Chuyên viên phụ trách công tác Văn thư của HĐND, UBND xã."
         },
         {
             id: "cadre_vp_06",
@@ -404,16 +415,6 @@ const INITIAL_DATA = {
         },
         {
             id: "cadre_hcc_04",
-            fullName: "Trần Minh Hải",
-            position: "Chuyên viên Trung tâm Hành chính công",
-            department: "Trung tâm Hành chính công",
-            email: "haitm.hcc@easup.daklak.gov.vn",
-            phone: "091 610 5051",
-            bloc: "UBND",
-            note: "Tiếp nhận Xây dựng, ĐKKD - Trả kết quả TTHC."
-        },
-        {
-            id: "cadre_hcc_05",
             fullName: "H' Đem Siu",
             position: "Chuyên viên Trung tâm Hành chính công",
             department: "Trung tâm Hành chính công",
@@ -730,7 +731,7 @@ const INITIAL_DATA = {
             size: "342 KB",
             type: "application/pdf",
             uploadDate: "2026-08-23 16:30",
-            uploader: "Hà Tường Vi (Phó Chánh VP)",
+            uploader: "Hà Tường Vi (Chánh Văn phòng)",
             url: "#",
             contentSummary: "Giấy mời số 89/GM-UBND ngày 23/8/2026 của UBND xã Ea Súp về việc họp Giao ban công tác tuần 35/2026."
         },
@@ -741,7 +742,7 @@ const INITIAL_DATA = {
             size: "520 KB",
             type: "application/pdf",
             uploadDate: "2026-08-24 09:15",
-            uploader: "Hà Tường Vi (Phó Chánh VP)",
+            uploader: "Hà Tường Vi (Chánh Văn phòng)",
             url: "#",
             contentSummary: "Giấy mời số 91/GM-UBND kiểm tra tiến độ giải ngân vốn đầu tư công và bồi thường GPMB."
         },
@@ -752,7 +753,7 @@ const INITIAL_DATA = {
             size: "280 KB",
             type: "application/pdf",
             uploadDate: "2026-08-24 14:00",
-            uploader: "Hoàng Nhật Lệ (Chuyên viên)",
+            uploader: "Nguyễn Thị Thoản (Chuyên viên)",
             url: "#",
             contentSummary: "Thông báo số 45/TB-UBND về việc tiếp công dân định kỳ tháng 8/2026 của Chủ tịch UBND xã."
         }
@@ -768,7 +769,7 @@ const INITIAL_DATA = {
             endDate: "2026-08-30",
             status: "published",
             lastUpdated: "2026-08-31 08:30",
-            updatedBy: "Hà Tường Vi (Phó Chánh VP)",
+            updatedBy: "Hà Tường Vi (Chánh Văn phòng)",
             approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
             note: "Lịch đã được Thường trực Đảng ủy và Chủ tịch UBND xã phê duyệt ban hành.",
             items: [
@@ -979,7 +980,7 @@ const INITIAL_DATA = {
             endDate: "2026-08-23",
             status: "published",
             lastUpdated: "2026-08-23 17:00",
-            updatedBy: "Hà Tường Vi (Phó Chánh VP)",
+            updatedBy: "Hà Tường Vi (Chánh Văn phòng)",
             approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
             note: "Lịch tuần 34 đã hoàn thành và lưu trữ.",
             items: [
@@ -1023,7 +1024,7 @@ const INITIAL_DATA = {
             action: "UPDATE",
             actionTitle: "Chỉnh sửa mục công tác Thứ Ba",
             editorId: "u_admin",
-            editorName: "Hà Tường Vi (Phó Chánh VP)",
+            editorName: "Hà Tường Vi (Chánh Văn phòng)",
             timestamp: "2026-08-31 08:30:15",
             changes: [
                 {
@@ -1053,7 +1054,7 @@ const INITIAL_DATA = {
             action: "ATTACH_FILE",
             actionTitle: "Đính kèm giấy mời",
             editorId: "u_editor",
-            editorName: "Hoàng Nhật Lệ (Chuyên viên)",
+            editorName: "Nguyễn Thị Thoản (Chuyên viên)",
             timestamp: "2026-08-30 16:45:20",
             changes: [
                 {
@@ -1073,7 +1074,7 @@ const INITIAL_DATA = {
             action: "UPDATE",
             actionTitle: "Thay đổi người chủ trì Thứ Sáu",
             editorId: "u_admin",
-            editorName: "Hà Tường Vi (Phó Chánh VP)",
+            editorName: "Hà Tường Vi (Chánh Văn phòng)",
             timestamp: "2026-08-30 11:20:00",
             changes: [
                 {

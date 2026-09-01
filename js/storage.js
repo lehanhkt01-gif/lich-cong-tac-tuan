@@ -39,9 +39,17 @@ const StorageService = {
                 localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
             }
 
-            // Đồng bộ danh bạ cán bộ chính thức mới nhất
+            // Đồng bộ danh bạ cán bộ và tài khoản mới nhất (Chánh VP Hà Tường Vi, Phó Chánh VP Trần Minh Hải, CV Nguyễn Thị Thoản, bỏ Hoàng Nhật Lệ)
             let cadres = this.getCadres();
-            if (cadres.length < 50) {
+            const hasOldLeader = cadres.some(c => 
+                c.fullName === "Hoàng Nhật Lệ" || 
+                (c.fullName === "Hà Tường Vi" && c.position && c.position.includes("Phó Chánh")) ||
+                (c.fullName === "Trần Minh Hải" && c.position && !c.position.includes("Phó Chánh"))
+            );
+            const users = this.getUsers();
+            const hasOldUser = users.some(u => u.fullName === "Hoàng Nhật Lệ" || (u.fullName === "Hà Tường Vi" && u.position && u.position.includes("Phó Chánh")));
+
+            if (hasOldLeader || hasOldUser || cadres.length < 45) {
                 localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
                 localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_DATA.users));
                 localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(INITIAL_DATA.users[0]));
