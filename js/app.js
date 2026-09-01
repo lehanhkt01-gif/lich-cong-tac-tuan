@@ -369,7 +369,7 @@ const App = {
             // Header phân cách từng ngày
             html += `
                 <tr class="day-divider-row">
-                    <td colspan="10" class="day-divider-content">
+                    <td colspan="8" class="day-divider-content">
                         <span class="day-name">${dayName}</span>
                         ${dateStr ? `<span class="day-date">(${dateStr})</span>` : ''}
                         <span class="day-item-count">${dayItems.length} cuộc họp/công việc</span>
@@ -381,7 +381,7 @@ const App = {
             if (dayItems.length === 0) {
                 html += `
                     <tr class="item-row">
-                        <td colspan="10" style="text-align: center; color: #94A3B8; font-style: italic; padding: 10px;">
+                        <td colspan="8" style="text-align: center; color: #94A3B8; font-style: italic; padding: 10px;">
                             (Không có lịch công tác)
                         </td>
                     </tr>
@@ -397,10 +397,6 @@ const App = {
 
                     html += `
                         <tr class="item-row" data-item-id="${item.id}">
-                            <td class="col-day-cell">
-                                <strong>${item.dayOfWeek}</strong><br>
-                                <small style="color: #64748B;">${dateStr}</small>
-                            </td>
                             <td class="col-time-cell">
                                 <span class="time-pill">${item.time}</span>
                             </td>
