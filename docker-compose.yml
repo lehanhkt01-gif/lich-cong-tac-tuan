@@ -1,0 +1,14 @@
+services:
+  lich-congtac-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lich-congtac-web
+    restart: unless-stopped
+    ports:
+      - "8090:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:80/ || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
