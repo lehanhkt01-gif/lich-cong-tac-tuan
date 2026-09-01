@@ -284,11 +284,11 @@ body.desktop-preview-mode .notch-speaker {
 }
 
 .brand-sub {
-    font-size: 10.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    opacity: 0.85;
-    font-weight: 600;
+    font-size: 10px;
+    letter-spacing: 0.2px;
+    opacity: 0.92;
+    font-weight: 700;
+    line-height: 1.25;
 }
 
 .brand-main {
