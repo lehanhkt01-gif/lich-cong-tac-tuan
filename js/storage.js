@@ -144,12 +144,22 @@ const StorageService = {
                 localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
             }
 
-            // Đồng bộ dữ liệu lịch mà KHÔNG làm mất các mục công tác do người dùng thêm mới
+            // Đồng bộ dữ liệu lịch: XÓA TOÀN BỘ LỊCH CÔNG TÁC MẪU TỰ ĐỘNG TẠO, CHỈ ĐỂ LỊCH DO CÁN BỘ TẠO
             let schedules = this.getAllSchedules();
             let schedChanged = false;
             if (Array.isArray(schedules)) {
                 schedules.forEach(s => {
                     if (s && s.items) {
+                        const originalLen = s.items.length;
+                        // Loại bỏ các mục mẫu ban đầu (item_35_xx, item_34_xx)
+                        s.items = s.items.filter(item => {
+                            if (!item || !item.id) return false;
+                            const isSample = String(item.id).startsWith("item_35_") || String(item.id).startsWith("item_34_");
+                            return !isSample;
+                        });
+                        if (s.items.length !== originalLen) {
+                            schedChanged = true;
+                        }
                         s.items.forEach(item => {
                             if (item.bloc === "Thường trực") { item.bloc = "MTTQ"; schedChanged = true; }
                             if (item.bloc === "Đoàn thể") { item.bloc = "Khác"; schedChanged = true; }
@@ -159,12 +169,18 @@ const StorageService = {
                             }
                         });
                         s.items = this.sortScheduleItems(s.items);
-                        schedChanged = true;
                     }
                 });
                 if (schedChanged) {
                     localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
                 }
+            }
+
+            // Xóa log mẫu tự động tạo
+            let auditLogs = this.getAuditLogs();
+            if (Array.isArray(auditLogs) && auditLogs.some(l => l.id && String(l.id).startsWith("log_00"))) {
+                auditLogs = auditLogs.filter(l => !l.id || !String(l.id).startsWith("log_00"));
+                localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(auditLogs));
             }
         }
     },
