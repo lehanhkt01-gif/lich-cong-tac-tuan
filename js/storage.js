@@ -109,6 +109,23 @@ const StorageService = {
         });
     },
 
+    // Tính toán ngày dương lịch chính xác từ ngày bắt đầu tuần (Thứ 2) và thứ trong tuần
+    calculateDateForDay(startDateStr, dayOfWeek) {
+        if (!startDateStr) return "";
+        const dayOrder = this.getDayOrder(dayOfWeek); // 1 = Thứ Hai, ..., 7 = Chủ Nhật
+        const offsetDays = (dayOrder >= 1 && dayOrder <= 7) ? (dayOrder - 1) : 0;
+        const parts = startDateStr.split('-');
+        if (parts.length === 3) {
+            const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            d.setDate(d.getDate() + offsetDays);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        return startDateStr;
+    },
+
     // Khởi tạo dữ liệu nếu chưa có trong LocalStorage
     init() {
         if (!localStorage.getItem(STORAGE_KEYS.SCHEDULES)) {
@@ -120,68 +137,34 @@ const StorageService = {
                 localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(INITIAL_DATA.organization));
             }
 
-            // Đồng bộ danh bạ cán bộ và tài khoản mới nhất (Chánh VP Hà Tường Vi, Phó Chánh VP Trần Minh Hải, CV Nguyễn Thị Thoản, bỏ Hoàng Nhật Lệ)
-            let cadres = this.getCadres();
-            const hasOldLeaderInCadres = cadres.some(c => 
-                c.fullName === "Hoàng Nhật Lệ" || 
-                (c.fullName === "Hà Tường Vi" && c.position && c.position.includes("Phó Chánh")) ||
-                (c.fullName === "Trần Minh Hải" && c.position && !c.position.includes("Phó Chánh"))
-            );
+            // Đồng bộ danh bạ và tài khoản hệ thống nếu chưa đủ
             const users = this.getUsers();
-            const hasOldUser = users.some(u => u.fullName === "Hoàng Nhật Lệ" || (u.fullName === "Hà Tường Vi" && u.position && u.position.includes("Phó Chánh")));
-
-            // Đồng bộ Lãnh đạo dự/chủ trì trong Lịch tuần để khớp 100% với danh bạ cán bộ Ea Súp
-            let schedules = this.getAllSchedules();
-            const hasOldLeaderInSchedule = schedules.some(s => 
-                (s.items || []).some(item => 
-                    item.leader && (
-                        item.leader.includes("Hoàng Minh Đức") ||
-                        item.leader.includes("Y Krông") ||
-                        item.leader.includes("Nguyễn Văn Cường") ||
-                        item.leader.includes("Hoàng Nhật Lệ")
-                    )
-                ) || (s.approvedBy && s.approvedBy.includes("Hoàng Minh Đức"))
-            );
-
-            const SYNC_VERSION_KEY = "easup_portal_auth_6_users_v10";
-            const hasCorrect6Users = users.length === 6 && users.some(u => u.username === "vyhatuong" && u.aliases) && users.some(u => u.username === "linhtranvan");
-
-            if (hasOldLeaderInCadres || hasOldUser || hasOldLeaderInSchedule || !hasCorrect6Users || !localStorage.getItem(SYNC_VERSION_KEY)) {
-                localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(INITIAL_DATA.schedules));
-                localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
+            if (!users || users.length < 6 || !users.some(u => u.username === "vyhatuong")) {
                 localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_DATA.users));
-                localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(INITIAL_DATA.organization));
-                localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_DATA.auditLogs));
-                // Nếu người dùng hiện tại không nằm trong 6 tài khoản này, đăng xuất về khách
-                const curr = this.getCurrentUser();
-                if (curr && !INITIAL_DATA.users.some(u => u.username === curr.username)) {
-                    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
-                }
-                localStorage.setItem(SYNC_VERSION_KEY, "true");
-            } else {
-                let schedChanged = false;
+                localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
+            }
+
+            // Đồng bộ dữ liệu lịch mà KHÔNG làm mất các mục công tác do người dùng thêm mới
+            let schedules = this.getAllSchedules();
+            let schedChanged = false;
+            if (Array.isArray(schedules)) {
                 schedules.forEach(s => {
-                    (s.items || []).forEach(item => {
-                        if (item.bloc === "Thường trực") { item.bloc = "MTTQ"; schedChanged = true; }
-                        if (item.bloc === "Đoàn thể") { item.bloc = "Khác"; schedChanged = true; }
-                    });
+                    if (s && s.items) {
+                        s.items.forEach(item => {
+                            if (item.bloc === "Thường trực") { item.bloc = "MTTQ"; schedChanged = true; }
+                            if (item.bloc === "Đoàn thể") { item.bloc = "Khác"; schedChanged = true; }
+                            if (!item.date && s.startDate) {
+                                item.date = this.calculateDateForDay(s.startDate, item.dayOfWeek);
+                                schedChanged = true;
+                            }
+                        });
+                        s.items = this.sortScheduleItems(s.items);
+                        schedChanged = true;
+                    }
                 });
                 if (schedChanged) {
                     localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
                 }
-            }
-
-            // Tự động sắp xếp lại trình tự theo thời gian cho tất cả lịch hiện có trong localStorage
-            let currentSchedules = this.getAllSchedules();
-            let hasAnySortChange = false;
-            currentSchedules.forEach(s => {
-                if (s.items && s.items.length > 0) {
-                    s.items = this.sortScheduleItems(s.items);
-                    hasAnySortChange = true;
-                }
-            });
-            if (hasAnySortChange) {
-                localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(currentSchedules));
             }
         }
     },
@@ -332,19 +315,28 @@ const StorageService = {
 
     // Thêm hoặc cập nhật một mục công tác trong tuần
     saveScheduleItem(weekId, item) {
-        const schedule = this.getScheduleById(weekId);
+        let schedule = this.getScheduleById(weekId);
+        if (!schedule) {
+            const schedules = this.getAllSchedules();
+            schedule = schedules && schedules.length > 0 ? schedules[0] : null;
+        }
         if (!schedule) return null;
 
         if (!schedule.items) schedule.items = [];
         
+        // Tự động gán ngày dương lịch chính xác nếu chưa có
+        if (schedule.startDate && (!item.date || item.dayOfWeek)) {
+            item.date = this.calculateDateForDay(schedule.startDate, item.dayOfWeek);
+        }
+
         const itemIndex = schedule.items.findIndex(i => i.id === item.id);
         let oldItem = null;
 
-        if (itemIndex >= 0) {
+        if (itemIndex >= 0 && item.id) {
             oldItem = JSON.parse(JSON.stringify(schedule.items[itemIndex]));
-            schedule.items[itemIndex] = item;
+            schedule.items[itemIndex] = { ...oldItem, ...item };
         } else {
-            item.id = "item_" + Date.now();
+            item.id = item.id || ("item_" + Date.now() + "_" + Math.floor(Math.random() * 1000));
             schedule.items.push(item);
         }
 

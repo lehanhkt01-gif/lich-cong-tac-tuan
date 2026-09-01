@@ -577,9 +577,13 @@ const App = {
         const attachedDataStr = previewBox?.getAttribute("data-attached");
         const attachment = attachedDataStr ? JSON.parse(attachedDataStr) : null;
 
+        const itemDate = this.currentSchedule?.startDate ? 
+            StorageService.calculateDateForDay(this.currentSchedule.startDate, dayOfWeek) : "";
+
         const itemData = {
             id: this.editingItemId,
             dayOfWeek,
+            date: itemDate,
             time,
             bloc,
             content,
@@ -594,9 +598,9 @@ const App = {
         if (result) {
             // Ghi nhận Audit Log
             const action = this.editingItemId ? "UPDATE" : "CREATE";
-            AuditService.logItemChange(this.currentSchedule, action, result.oldItem, result.newItem, reason);
+            AuditService.logItemChange(result.schedule, action, result.oldItem, result.newItem, reason);
 
-            this.loadCurrentSchedule();
+            this.currentSchedule = result.schedule;
             this.renderAll();
             this.closeModal('modalEditItem');
             this.showToast(this.editingItemId ? "Đã cập nhật mục công tác và ghi nhận vết sửa!" : "Đã thêm mục công tác mới vào lịch tuần!", "success");
@@ -617,11 +621,12 @@ const App = {
         copy.content = "[Nhân bản] " + copy.content;
 
         const result = StorageService.saveScheduleItem(this.currentSchedule.id, copy);
-        AuditService.logItemChange(this.currentSchedule, "CREATE", null, result.newItem, "Nhân bản từ mục trước");
-
-        this.loadCurrentSchedule();
-        this.renderAll();
-        this.showToast("Đã nhân bản mục công tác!", "success");
+        if (result) {
+            AuditService.logItemChange(result.schedule, "CREATE", null, result.newItem, "Nhân bản từ mục trước");
+            this.currentSchedule = result.schedule;
+            this.renderAll();
+            this.showToast("Đã nhân bản mục công tác!", "success");
+        }
     },
 
     deleteItem(itemId) {
@@ -634,8 +639,8 @@ const App = {
 
         const result = StorageService.deleteScheduleItem(this.currentSchedule.id, itemId);
         if (result) {
-            AuditService.logItemChange(this.currentSchedule, "DELETE", result.deletedItem, null, "Xóa theo yêu cầu điều chỉnh lịch");
-            this.loadCurrentSchedule();
+            AuditService.logItemChange(result.schedule, "DELETE", result.deletedItem, null, "Xóa theo yêu cầu điều chỉnh lịch");
+            this.currentSchedule = result.schedule;
             this.renderAll();
             this.showToast("Đã xóa mục công tác và ghi nhận vào lịch sử!", "success");
         }
