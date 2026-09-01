@@ -20,28 +20,15 @@ const StorageService = {
         if (!localStorage.getItem(STORAGE_KEYS.SCHEDULES)) {
             this.resetToDefault();
         } else {
-            // Đồng bộ thông tin tổ chức mới nhất (bỏ Huyện Ea Súp, cập nhật logo)
+            // Đồng bộ thông tin tổ chức mới nhất
             const currentOrg = this.getOrganization();
             if (currentOrg.district || !currentOrg.logoUrl) {
                 localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(INITIAL_DATA.organization));
             }
 
-            // Đồng bộ khối công tác (Thường trực -> MTTQ, Đoàn thể -> Khác)
-            let schedules = this.getAllSchedules();
-            let changed = false;
-            schedules.forEach(s => {
-                (s.items || []).forEach(item => {
-                    if (item.bloc === "Thường trực") { item.bloc = "MTTQ"; changed = true; }
-                    if (item.bloc === "Đoàn thể") { item.bloc = "Khác"; changed = true; }
-                });
-            });
-            if (changed) {
-                localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
-            }
-
             // Đồng bộ danh bạ cán bộ và tài khoản mới nhất (Chánh VP Hà Tường Vi, Phó Chánh VP Trần Minh Hải, CV Nguyễn Thị Thoản, bỏ Hoàng Nhật Lệ)
             let cadres = this.getCadres();
-            const hasOldLeader = cadres.some(c => 
+            const hasOldLeaderInCadres = cadres.some(c => 
                 c.fullName === "Hoàng Nhật Lệ" || 
                 (c.fullName === "Hà Tường Vi" && c.position && c.position.includes("Phó Chánh")) ||
                 (c.fullName === "Trần Minh Hải" && c.position && !c.position.includes("Phó Chánh"))
@@ -49,20 +36,38 @@ const StorageService = {
             const users = this.getUsers();
             const hasOldUser = users.some(u => u.fullName === "Hoàng Nhật Lệ" || (u.fullName === "Hà Tường Vi" && u.position && u.position.includes("Phó Chánh")));
 
-            if (hasOldLeader || hasOldUser || cadres.length < 45) {
+            // Đồng bộ Lãnh đạo dự/chủ trì trong Lịch tuần để khớp 100% với danh bạ cán bộ Ea Súp
+            let schedules = this.getAllSchedules();
+            const hasOldLeaderInSchedule = schedules.some(s => 
+                (s.items || []).some(item => 
+                    item.leader && (
+                        item.leader.includes("Hoàng Minh Đức") ||
+                        item.leader.includes("Y Krông") ||
+                        item.leader.includes("Nguyễn Văn Cường") ||
+                        item.leader.includes("Hoàng Nhật Lệ")
+                    )
+                ) || (s.approvedBy && s.approvedBy.includes("Hoàng Minh Đức"))
+            );
+
+            const SYNC_VERSION_KEY = "easup_portal_leaders_v5_synced";
+            if (hasOldLeaderInCadres || hasOldUser || hasOldLeaderInSchedule || !localStorage.getItem(SYNC_VERSION_KEY)) {
+                localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(INITIAL_DATA.schedules));
                 localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
                 localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_DATA.users));
                 localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(INITIAL_DATA.users[0]));
+                localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(INITIAL_DATA.organization));
+                localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_DATA.auditLogs));
+                localStorage.setItem(SYNC_VERSION_KEY, "true");
             } else {
-                let cadresChanged = false;
-                cadres.forEach(c => {
-                    if (c.bloc === "Thường trực" || c.bloc === "Đoàn thể") {
-                        c.bloc = c.department && c.department.includes("MTTQ") ? "MTTQ" : "Khác";
-                        cadresChanged = true;
-                    }
+                let schedChanged = false;
+                schedules.forEach(s => {
+                    (s.items || []).forEach(item => {
+                        if (item.bloc === "Thường trực") { item.bloc = "MTTQ"; schedChanged = true; }
+                        if (item.bloc === "Đoàn thể") { item.bloc = "Khác"; schedChanged = true; }
+                    });
                 });
-                if (cadresChanged) {
-                    localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(cadres));
+                if (schedChanged) {
+                    localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
                 }
             }
         }

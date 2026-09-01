@@ -40,7 +40,7 @@ const App = {
                 status: "draft",
                 lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 16),
                 updatedBy: AuthService.getCurrentUser().fullName,
-                approvedBy: "Hoàng Minh Đức (Chủ tịch UBND xã)",
+                approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
                 note: "Dự thảo lịch công tác tuần mới.",
                 items: []
             };
@@ -438,7 +438,7 @@ const App = {
             bloc: "UBND",
             content: "",
             location: "Hội trường lớn UBND xã",
-            leader: "Đ/c Hoàng Minh Đức - Chủ tịch UBND xã",
+            leader: "Đ/c Nguyễn Bá Bân - Chủ tịch UBND xã",
             participants: "Lãnh đạo UBND xã và các công chức chuyên môn liên quan.",
             vehicle: "Tự túc phương tiện",
             attachment: null
@@ -854,7 +854,7 @@ const App = {
             status: "draft",
             lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 16),
             updatedBy: AuthService.getCurrentUser().fullName,
-            approvedBy: "Hoàng Minh Đức (Chủ tịch UBND xã)",
+            approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
             note: copyFromPrev ? `Đã sao chép ${initialItems.length} mục công tác từ Tuần ${this.currentWeek}.` : "Tạo mới tuần công tác.",
             items: initialItems
         };
