@@ -111,38 +111,6 @@ body.desktop-preview-mode .device-screen {
     scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
-body.desktop-preview-mode .device-notch {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 120px;
-    height: 24px;
-    background: #000;
-    border-bottom-left-radius: 14px;
-    border-bottom-right-radius: 14px;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-body.desktop-preview-mode .notch-camera {
-    width: 10px;
-    height: 10px;
-    background: #111;
-    border-radius: 50%;
-    border: 2px solid #222;
-}
-
-body.desktop-preview-mode .notch-speaker {
-    width: 40px;
-    height: 4px;
-    background: #222;
-    border-radius: 2px;
-}
-
 /* Floating Switcher on Desktop */
 .desktop-controls-bar {
     display: none;
@@ -213,39 +181,12 @@ body.desktop-preview-mode .notch-speaker {
     padding-top: var(--safe-top);
 }
 
-/* Status Bar */
-.mobile-status-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 16px 2px 16px;
-    font-size: 12px;
-    font-weight: 600;
-    opacity: 0.95;
-}
-
-.status-left {
-    letter-spacing: 0.3px;
-    font-variant-numeric: tabular-nums;
-}
-
-.status-right {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-}
-
-.status-icon {
-    display: inline-block;
-}
-
 /* App Nav Bar (Logo + Title) */
 .mobile-nav-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px 12px 14px;
+    padding: 14px 14px;
     gap: 10px;
 }
 
