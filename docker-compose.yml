@@ -1,14 +1,25 @@
 services:
   lich-congtac-web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: nginx:alpine
     container_name: lich-congtac-web
     restart: unless-stopped
     ports:
       - "8090:80"
+    volumes:
+      # Gắn trực tiếp thư mục mã nguồn từ VPS vào Nginx container
+      - ./:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      - TZ=Asia/Ho_Chi_Minh
     healthcheck:
       test: ["CMD-SHELL", "wget --spider -q http://localhost:80/ || exit 1"]
       interval: 30s
       timeout: 3s
       retries: 3
+    # Mở khóa dòng dưới nếu bạn muốn container nằm chung mạng với Nginx Proxy Manager (NPM)
+    # networks:
+    #   - npm_network
+
+# networks:
+#   npm_network:
+#     external: true
