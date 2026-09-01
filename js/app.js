@@ -97,19 +97,13 @@ const App = {
 
         const guestHeader = document.getElementById("guestHeaderGroup");
         const userProfile = document.getElementById("userProfileBadge");
-        const guestBanner = document.getElementById("guestNoticeBanner");
-        const viewerBanner = document.getElementById("viewerNoticeBanner");
 
         if (isGuest) {
             if (guestHeader) guestHeader.style.display = "flex";
             if (userProfile) userProfile.style.display = "none";
-            if (guestBanner) guestBanner.style.display = "flex";
-            if (viewerBanner) viewerBanner.style.display = "none";
         } else {
             if (guestHeader) guestHeader.style.display = "none";
             if (userProfile) userProfile.style.display = "block";
-            if (guestBanner) guestBanner.style.display = "none";
-            if (viewerBanner) viewerBanner.style.display = isViewer ? "block" : "none";
 
             const avatarEl = document.getElementById("headerUserAvatar");
             const nameEl = document.getElementById("headerUserName");
@@ -124,12 +118,6 @@ const App = {
             if (dropName) dropName.textContent = user.fullName;
             if (dropEmail) dropEmail.textContent = user.email || "";
             if (dropRole) dropRole.textContent = `● ${user.roleName}`;
-
-            // Cập nhật trạng thái active trong dropdown chọn vai trò
-            document.querySelectorAll(".role-item").forEach(item => {
-                const uid = item.getAttribute("data-user-id");
-                item.classList.toggle("active", user.id === uid);
-            });
         }
 
         // Ẩn/hiện các nút Thêm, Sửa, Xóa, Cài Đặt theo quyền
