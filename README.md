@@ -18,16 +18,22 @@ Hệ thống hoạt động hoàn toàn độc lập, không yêu cầu cài đ�
 
 ## 🚀 Hướng Dẫn Sử Dụng Nhanh
 
-Hệ thống cung cấp 02 giao diện riêng biệt tùy theo đối tượng sử dụng:
+Hệ thống cung cấp 02 chế độ truy cập:
 
-1. 🌐 **Giao diện dành cho Khách & Cán bộ tra cứu:** `guest.html`
+1. 🌐 **Chế độ Khách (Chưa đăng nhập / Guest Mode):**
    - Chỉ cho phép xem lịch công tác tuần, tra cứu theo khối/từ khóa, xem chi tiết, xem và tải giấy mời họp, xuất file Word và in ấn.
-   - **Hoàn toàn không có** các mục quản trị: Lập lịch mới, Cài đặt hệ thống, Danh bạ cán bộ, Gửi email thông báo, Cập nhật & Xuất bản hay các nút sửa/xóa.
+   - Tự động ẩn toàn bộ các quyền điều hành: Lập lịch mới, Cài đặt hệ thống, Gửi email thông báo, Cập nhật & Xuất bản hay các nút sửa/xóa.
 
-2. 🔐 **Giao diện Quản trị & Điều hành nội bộ:** `index.html`
-   - Dành cho Lãnh đạo, Chánh/Phó Văn phòng và Chuyên viên nhập liệu.
-   - Đầy đủ tính năng: Lập lịch tuần mới, sửa/xóa mục công tác, tải lên giấy mời, duyệt xuất bản, tự động gửi email thông báo, kiểm tra vết sửa Diff đỏ/xanh, quản lý danh bạ và sao lưu dữ liệu.
-   - Hỗ trợ thanh chuyển đổi vai trò người dùng (Super Admin, Editor, Viewer) trên Header để kiểm thử phân quyền.
+2. 🔐 **Chế độ Quản trị & Điều hành (Đã đăng nhập):**
+   - Giới hạn bảo mật chỉ **06 tài khoản được ủy quyền** của Thường trực HĐND - UBND, Đảng ủy và MTTQ:
+     1. **Hà Tường Vi** (Chánh VP HĐND & UBND) – Tên đăng nhập: `vyhatuong` | Mật khẩu: `12345678@` (Super Admin)
+     2. **Trần Minh Hải** (Phó CVP HĐND & UBND) – Tên đăng nhập: `haitranminh` | Mật khẩu: `12345678@` (Super Admin)
+     3. **Trần Văn Linh** (Chánh VP Đảng ủy) – Tên đăng nhập: `linhtranvan` | Mật khẩu: `12345678@` (Super Admin)
+     4. **Nguyễn Thị Lan** (Phó VP Đảng ủy) – Tên đăng nhập: `lannguyenthi` | Mật khẩu: `12345678@` (Editor)
+     5. **Lê Hồng Hạnh** (Chủ tịch UB MTTQ) – Tên đăng nhập: `hanhlehong` | Mật khẩu: `12345678@` (Super Admin)
+     6. **Hà Văn Chiến** (Văn phòng MTTQ) – Tên đăng nhập: `chienhavan` | Mật khẩu: `12345678@` (Editor)
+   - Đầy đủ tính năng: Lập lịch tuần mới, sửa/xóa mục công tác, tải lên giấy mời, duyệt xuất bản, gửi email thông báo, kiểm tra vết sửa Diff đỏ/xanh, quản lý danh bạ và sao lưu dữ liệu.
+   - Tích hợp tính năng **Đăng nhập nhanh 1-chạm (Quick Login)** cho 6 tài khoản trên tại cửa sổ Đăng Nhập.
 
 ---
 

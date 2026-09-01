@@ -1230,10 +1230,9 @@ const App = {
     },
 
     // =========================================================================
-    // XÁC THỰC & ĐĂNG NHẬP / ĐĂNG KÝ (AUTH HANDLERS)
+    // XÁC THỰC & ĐĂNG NHẬP (AUTH HANDLERS)
     // =========================================================================
     openLoginModal(noticeMessage = null) {
-        this.closeModal("modalRegister");
         const modal = document.getElementById("modalLogin");
         if (modal) {
             modal.classList.add("show");
@@ -1242,16 +1241,6 @@ const App = {
         }
         if (noticeMessage) {
             this.showToast(noticeMessage, "warning");
-        }
-    },
-
-    openRegisterModal() {
-        this.closeModal("modalLogin");
-        const modal = document.getElementById("modalRegister");
-        if (modal) {
-            modal.classList.add("show");
-            const inputName = document.getElementById("regFullName");
-            if (inputName) inputName.focus();
         }
     },
 
@@ -1285,35 +1274,11 @@ const App = {
         }
     },
 
-    quickLogin(userId) {
-        const user = AuthService.loginAsDemoUser(userId);
+    quickLogin(userKey) {
+        const user = AuthService.loginAsDemoUser(userKey);
         if (user) {
             this.closeModal("modalLogin");
             this.showToast(`Đăng nhập thành công với tài khoản: ${user.fullName} (${user.roleName})`, "success");
-        }
-    },
-
-    handleRegisterSubmit() {
-        const fullName = document.getElementById("regFullName")?.value;
-        const username = document.getElementById("regUsername")?.value;
-        const email = document.getElementById("regEmail")?.value;
-        const phone = document.getElementById("regPhone")?.value;
-        const department = document.getElementById("regDepartment")?.value;
-        const position = document.getElementById("regPosition")?.value;
-        const role = document.getElementById("regRole")?.value;
-        const password = document.getElementById("regPassword")?.value;
-        const confirmPassword = document.getElementById("regConfirmPassword")?.value;
-
-        const res = AuthService.register({
-            fullName, username, email, phone, department, position, role, password, confirmPassword
-        });
-
-        if (res.success) {
-            this.closeModal("modalRegister");
-            document.getElementById("formRegister")?.reset();
-            this.showToast(`Đăng ký thành công! Chào mừng đồng chí ${res.user.fullName} đã gia nhập hệ thống.`, "success");
-        } else {
-            this.showToast(res.message, "error");
         }
     },
 

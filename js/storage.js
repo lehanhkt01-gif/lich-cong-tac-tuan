@@ -49,13 +49,21 @@ const StorageService = {
                 ) || (s.approvedBy && s.approvedBy.includes("Hoàng Minh Đức"))
             );
 
-            const SYNC_VERSION_KEY = "easup_portal_leaders_v6_synced";
-            if (hasOldLeaderInCadres || hasOldUser || hasOldLeaderInSchedule || !localStorage.getItem(SYNC_VERSION_KEY)) {
+            const SYNC_VERSION_KEY = "easup_portal_auth_6_users_v7";
+            const users = this.getUsers();
+            const hasCorrect6Users = users.length === 6 && users.some(u => u.username === "vyhatuong") && users.some(u => u.username === "linhtranvan");
+
+            if (hasOldLeaderInCadres || hasOldUser || hasOldLeaderInSchedule || !hasCorrect6Users || !localStorage.getItem(SYNC_VERSION_KEY)) {
                 localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(INITIAL_DATA.schedules));
                 localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
                 localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_DATA.users));
                 localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(INITIAL_DATA.organization));
                 localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_DATA.auditLogs));
+                // Nếu người dùng hiện tại không nằm trong 6 tài khoản này, đăng xuất về khách
+                const curr = this.getCurrentUser();
+                if (curr && !INITIAL_DATA.users.some(u => u.username === curr.username)) {
+                    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+                }
                 localStorage.setItem(SYNC_VERSION_KEY, "true");
             } else {
                 let schedChanged = false;

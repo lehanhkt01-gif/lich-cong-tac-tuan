@@ -19,23 +19,25 @@ const INITIAL_DATA = {
 
     users: [
         {
-            id: "u_admin",
-            username: "admin.chanhvp",
-            password: "password123",
+            id: "u_vyhatuong",
+            username: "vyhatuong",
+            password: "12345678@",
             fullName: "Hà Tường Vi",
             position: "Chánh Văn phòng HĐND & UBND xã",
+            department: "Văn phòng HĐND & UBND",
             role: "super_admin",
             roleName: "Super Admin (Chánh Văn phòng)",
-            email: "viht.vp@easup.daklak.gov.vn",
+            email: "vyht.vp@easup.daklak.gov.vn",
             avatar: "👩‍💼",
             phone: "077 951 5547"
         },
         {
-            id: "u_deputy",
-            username: "deputy.phochanhvp",
-            password: "password123",
+            id: "u_haitranminh",
+            username: "haitranminh",
+            password: "12345678@",
             fullName: "Trần Minh Hải",
             position: "Phó Chánh Văn phòng HĐND & UBND xã",
+            department: "Văn phòng HĐND & UBND",
             role: "super_admin",
             roleName: "Super Admin (Phó Chánh VP)",
             email: "haitm.vp@easup.daklak.gov.vn",
@@ -43,28 +45,56 @@ const INITIAL_DATA = {
             phone: "091 610 5051"
         },
         {
-            id: "u_editor",
-            username: "editor.chuyenvien",
-            password: "password123",
-            fullName: "Nguyễn Thị Thoản",
-            position: "Chuyên viên Văn phòng HĐND & UBND xã",
-            role: "editor",
-            roleName: "Editor (Chuyên viên nhập liệu)",
-            email: "thoannt.vp@easup.daklak.gov.vn",
-            avatar: "👩‍💼",
-            phone: "077 951 5547"
+            id: "u_linhtranvan",
+            username: "linhtranvan",
+            password: "12345678@",
+            fullName: "Trần Văn Linh",
+            position: "Chánh Văn phòng Đảng ủy xã",
+            department: "Văn phòng Đảng ủy",
+            role: "super_admin",
+            roleName: "Super Admin (Chánh VP Đảng ủy)",
+            email: "linhtv.du@easup.daklak.gov.vn",
+            avatar: "👨‍💼",
+            phone: "0913.445.678"
         },
         {
-            id: "u_viewer",
-            username: "viewer.canbo",
-            password: "password123",
-            fullName: "Huỳnh Văn Dương",
-            position: "Chuyên viên Phòng Kinh tế (Địa chính - Đất đai)",
-            role: "viewer",
-            roleName: "Viewer (Cán bộ / Công chức)",
-            email: "duonghv.dc@easup.daklak.gov.vn",
-            avatar: "👤",
-            phone: "097 676 5456"
+            id: "u_lannguyenthi",
+            username: "lannguyenthi",
+            password: "12345678@",
+            fullName: "Nguyễn Thị Lan",
+            position: "Phó Chánh Văn phòng Đảng ủy xã",
+            department: "Văn phòng Đảng ủy",
+            role: "editor",
+            roleName: "Editor (Phó VP Đảng ủy)",
+            email: "lannt.du@easup.daklak.gov.vn",
+            avatar: "👩‍💼",
+            phone: "0982.556.789"
+        },
+        {
+            id: "u_hanhlehong",
+            username: "hanhlehong",
+            password: "12345678@",
+            fullName: "Lê Hồng Hạnh",
+            position: "Ủy viên BTV, Chủ tịch Ủy ban MTTQ Việt Nam xã",
+            department: "Ủy ban MTTQ xã",
+            role: "super_admin",
+            roleName: "Super Admin (Chủ tịch MTTQ)",
+            email: "hanhlh.mttq@easup.daklak.gov.vn",
+            avatar: "👩‍💼",
+            phone: "0918.445.566"
+        },
+        {
+            id: "u_chienhavan",
+            username: "chienhavan",
+            password: "12345678@",
+            fullName: "Hà Văn Chiến",
+            position: "Phụ trách Văn phòng Ủy ban MTTQ xã",
+            department: "Ủy ban MTTQ xã",
+            role: "editor",
+            roleName: "Editor (Văn phòng MTTQ)",
+            email: "chienhv.mttq@easup.daklak.gov.vn",
+            avatar: "👨‍💼",
+            phone: "0977.123.456"
         }
     ],
 
@@ -100,6 +130,26 @@ const INITIAL_DATA = {
             phone: "0913.556.789",
             bloc: "Đảng ủy",
             note: "Phụ trách công tác Đảng thường trực"
+        },
+        {
+            id: "cadre_du_03",
+            fullName: "Trần Văn Linh",
+            position: "Chánh Văn phòng Đảng ủy xã",
+            department: "Văn phòng Đảng ủy",
+            email: "linhtv.du@easup.daklak.gov.vn",
+            phone: "0913.445.678",
+            bloc: "Đảng ủy",
+            note: "Chánh Văn phòng Đảng ủy; tham mưu công tác Đảng ủy và tổng hợp lịch công tác khối Đảng."
+        },
+        {
+            id: "cadre_du_04",
+            fullName: "Nguyễn Thị Lan",
+            position: "Phó Chánh Văn phòng Đảng ủy xã",
+            department: "Văn phòng Đảng ủy",
+            email: "lannt.du@easup.daklak.gov.vn",
+            phone: "0982.556.789",
+            bloc: "Đảng ủy",
+            note: "Phó Chánh Văn phòng Đảng ủy; phụ trách văn thư, tổng hợp và nhập liệu lịch công tác Đảng ủy."
         },
         {
             id: "cadre_ub_01",
@@ -151,6 +201,16 @@ const INITIAL_DATA = {
             bloc: "MTTQ",
             note: "Chỉ đạo chung công tác Mặt trận và khối đoàn thể"
         },
+        {
+            id: "cadre_mttq_02",
+            fullName: "Hà Văn Chiến",
+            position: "Phụ trách Văn phòng Ủy ban MTTQ xã",
+            department: "Ủy ban MTTQ xã",
+            email: "chienhv.mttq@easup.daklak.gov.vn",
+            phone: "0977.123.456",
+            bloc: "MTTQ",
+            note: "Phụ trách Văn phòng Mặt trận Tổ quốc; lập và tổng hợp lịch công tác khối MTTQ và các đoàn thể."
+        },
 
         // ==========================================
         // II. VĂN PHÒNG HĐND VÀ UBND XÃ EA SÚP
@@ -160,7 +220,7 @@ const INITIAL_DATA = {
             fullName: "Hà Tường Vi",
             position: "Chánh Văn phòng HĐND và UBND xã",
             department: "Văn phòng HĐND & UBND",
-            email: "viht.vp@easup.daklak.gov.vn",
+            email: "vyht.vp@easup.daklak.gov.vn",
             phone: "077 951 5547",
             bloc: "UBND",
             note: "Phụ trách chung công tác Văn phòng HĐND và UBND xã; tham mưu hoạt động chỉ đạo điều hành của Thường trực HĐND và UBND xã; kiểm tra thể thức văn bản trình ký."
