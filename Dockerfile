@@ -1,17 +1,14 @@
-FROM nginx:alpine
+FROM python:3.12-alpine
 
-# Copy custom Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
 
-# Copy static web application files
-COPY . /usr/share/nginx/html
+COPY . /app
 
-# Clean up nginx.conf from static folder
-RUN rm -f /usr/share/nginx/html/nginx.conf
+RUN mkdir -p /app/data /app/data/uploads
 
-# Expose port 80 inside container
+ENV TZ=Asia/Ho_Chi_Minh
+ENV PORT=80
+
 EXPOSE 80
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
-
+CMD ["python", "server.py"]

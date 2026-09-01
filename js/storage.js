@@ -183,6 +183,9 @@ const StorageService = {
                 localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(auditLogs));
             }
         }
+
+        // Tự động kết nối và đồng bộ hai chiều với máy chủ backend
+        this.syncWithServer();
     },
 
     // Khôi phục về dữ liệu mẫu mặc định
@@ -276,6 +279,75 @@ const StorageService = {
         localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(cadres));
     },
 
+    // =========================================================================
+    // ĐỒNG BỘ MÁY CHỦ VÀ LƯU TRỮ VĨNH VIỄN (SERVER PERSISTENCE & CLOUD SYNC)
+    // =========================================================================
+    async syncWithServer() {
+        try {
+            const res = await fetch('/api/schedules', { cache: 'no-store' });
+            if (res.ok) {
+                const serverSchedules = await res.json();
+                if (Array.isArray(serverSchedules) && serverSchedules.length > 0) {
+                    serverSchedules.forEach(s => {
+                        if (s && s.items) s.items = this.sortScheduleItems(s.items);
+                    });
+                    localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(serverSchedules));
+
+                    // Tự động kích hoạt cập nhật giao diện đang hiển thị
+                    if (window.App && typeof window.App.loadCurrentSchedule === 'function') {
+                        window.App.loadCurrentSchedule();
+                        window.App.renderAll();
+                    }
+                    if (window.GuestApp && typeof window.GuestApp.loadCurrentSchedule === 'function') {
+                        window.GuestApp.loadCurrentSchedule();
+                        window.GuestApp.renderAll();
+                    }
+                    if (window.MobileApp && typeof window.MobileApp.loadCurrentWeekData === 'function') {
+                        window.MobileApp.loadCurrentWeekData();
+                    }
+                }
+            }
+        } catch (e) {
+            // Đang chạy ở chế độ offline hoặc file cục bộ -> sử dụng LocalStorage
+        }
+    },
+
+    async persistScheduleToServer(schedule) {
+        try {
+            await fetch('/api/schedules', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(schedule)
+            });
+        } catch (e) {
+            // Offline fallback
+        }
+    },
+
+    async persistItemToServer(weekId, item) {
+        try {
+            await fetch('/api/schedules/item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ weekId, item })
+            });
+        } catch (e) {
+            // Offline fallback
+        }
+    },
+
+    async deleteItemFromServer(weekId, itemId) {
+        try {
+            await fetch('/api/schedules/delete-item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ weekId, itemId })
+            });
+        } catch (e) {
+            // Offline fallback
+        }
+    },
+
     // Lấy tất cả lịch tuần
     getAllSchedules() {
         const data = localStorage.getItem(STORAGE_KEYS.SCHEDULES);
@@ -326,6 +398,7 @@ const StorageService = {
         }
 
         localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
+        this.persistScheduleToServer(schedule);
         return schedule;
     },
 
@@ -358,6 +431,7 @@ const StorageService = {
 
         schedule.items = this.sortScheduleItems(schedule.items);
         this.saveSchedule(schedule);
+        this.persistItemToServer(schedule.id, item);
         return { schedule, oldItem, newItem: item };
     },
 
@@ -369,6 +443,7 @@ const StorageService = {
         const oldItem = schedule.items.find(i => i.id === itemId);
         schedule.items = schedule.items.filter(i => i.id !== itemId);
         this.saveSchedule(schedule);
+        this.deleteItemFromServer(schedule.id, itemId);
 
         return { schedule, deletedItem: oldItem };
     },
