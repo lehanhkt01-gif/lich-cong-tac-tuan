@@ -39,7 +39,7 @@ const App = {
                 endDate: endSunday.toISOString().split('T')[0],
                 status: "draft",
                 lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 16),
-                updatedBy: AuthService.getCurrentUser().fullName,
+                updatedBy: (AuthService.getCurrentUser() ? AuthService.getCurrentUser().fullName : "Hà Tường Vi"),
                 approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
                 note: "Dự thảo lịch công tác tuần mới.",
                 items: []
@@ -915,7 +915,7 @@ const App = {
             endDate: endSunday.toISOString().split('T')[0],
             status: "draft",
             lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 16),
-            updatedBy: AuthService.getCurrentUser().fullName,
+            updatedBy: (AuthService.getCurrentUser() ? AuthService.getCurrentUser().fullName : "Hà Tường Vi"),
             approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
             note: copyFromPrev ? `Đã sao chép ${initialItems.length} mục công tác từ Tuần ${this.currentWeek}.` : "Tạo mới tuần công tác.",
             items: initialItems
@@ -947,7 +947,7 @@ const App = {
 
         this.currentSchedule.status = "published";
         this.currentSchedule.lastUpdated = new Date().toISOString().replace('T', ' ').substring(0, 16);
-        this.currentSchedule.updatedBy = AuthService.getCurrentUser().fullName;
+        this.currentSchedule.updatedBy = (AuthService.getCurrentUser() ? AuthService.getCurrentUser().fullName : "Hà Tường Vi");
         
         StorageService.saveSchedule(this.currentSchedule);
         this.renderScheduleHeaderInfo();

@@ -49,8 +49,7 @@ const StorageService = {
                 ) || (s.approvedBy && s.approvedBy.includes("Hoàng Minh Đức"))
             );
 
-            const SYNC_VERSION_KEY = "easup_portal_auth_6_users_v8";
-            const users = this.getUsers();
+            const SYNC_VERSION_KEY = "easup_portal_auth_6_users_v9";
             const hasCorrect6Users = users.length === 6 && users.some(u => u.username === "vyhatuong" && u.aliases) && users.some(u => u.username === "linhtranvan");
 
             if (hasOldLeaderInCadres || hasOldUser || hasOldLeaderInSchedule || !hasCorrect6Users || !localStorage.getItem(SYNC_VERSION_KEY)) {
@@ -195,7 +194,11 @@ const StorageService = {
         
         schedule.lastUpdated = new Date().toISOString().replace('T', ' ').substring(0, 16);
         const currentUser = this.getCurrentUser();
-        schedule.updatedBy = `${currentUser.fullName} (${currentUser.roleName.split(' ')[0]})`;
+        if (currentUser) {
+            schedule.updatedBy = `${currentUser.fullName} (${currentUser.roleName ? currentUser.roleName.split(' ')[0] : 'Admin'})`;
+        } else if (!schedule.updatedBy) {
+            schedule.updatedBy = "Hà Tường Vi";
+        }
 
         if (index >= 0) {
             schedules[index] = schedule;
@@ -255,8 +258,8 @@ const StorageService = {
         const newLog = {
             id: "log_" + Date.now(),
             timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-            editorId: currentUser.id,
-            editorName: `${currentUser.fullName} (${currentUser.position})`,
+            editorId: currentUser ? currentUser.id : "system",
+            editorName: currentUser ? `${currentUser.fullName} (${currentUser.position || 'Cán bộ'})` : "Cán bộ điều hành",
             ...logEntry
         };
 
