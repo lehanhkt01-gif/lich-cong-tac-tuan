@@ -62,6 +62,7 @@
             </a>
 
             <!-- Header Phải: Đồng hồ & Tài khoản / Phân quyền -->
+            <!-- Header Phải: Đồng hồ & Tài khoản / Phân quyền -->
             <div class="header-right-actions">
                 <!-- Đồng hồ thực -->
                 <div class="live-datetime">
@@ -69,8 +70,21 @@
                     <span id="liveDate">Thứ Hai, 24/08/2026</span>
                 </div>
 
-                <!-- Profile Badge & Role Switcher -->
-                <div class="user-profile-badge" id="userProfileBadge" title="Nhấn để đổi vai trò kiểm thử">
+                <!-- 1. VÙNG DÀNH CHO CHẾ ĐỘ KHÁCH (CHƯA ĐĂNG NHẬP) -->
+                <div class="guest-header-group" id="guestHeaderGroup">
+                    <div class="guest-mode-pill">
+                        <span>👤</span> <strong>Chế độ Khách (Chỉ xem)</strong>
+                    </div>
+                    <button class="btn-header-auth btn-header-login" onclick="App.openLoginModal()" title="Đăng nhập để có quyền chỉnh sửa, lập lịch, quản trị">
+                        <span>🔐</span> Đăng Nhập
+                    </button>
+                    <button class="btn-header-auth btn-header-register" onclick="App.openRegisterModal()" title="Đăng ký tài khoản công vụ mới">
+                        <span>📝</span> Đăng Ký
+                    </button>
+                </div>
+
+                <!-- 2. VÙNG DÀNH CHO NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP -->
+                <div class="user-profile-badge" id="userProfileBadge" style="display: none;" title="Nhấn để xem tài khoản, đổi quyền & đăng xuất">
                     <div class="user-card-pill">
                         <div class="user-avatar" id="headerUserAvatar">👩‍💼</div>
                         <div class="user-details">
@@ -80,9 +94,17 @@
                         <span style="font-size: 11px; opacity: 0.8;">▼</span>
                     </div>
 
-                    <!-- Dropdown chuyển vai trò -->
+                    <!-- Dropdown chuyển vai trò & Đăng xuất -->
                     <div class="role-dropdown-menu" id="roleDropdownMenu">
-                        <div class="dropdown-header-title">Chuyển vai trò người dùng (RBAC Demo)</div>
+                        <div class="dropdown-header-title">Thông tin tài khoản</div>
+                        
+                        <div class="user-dropdown-info">
+                            <div class="udi-name" id="dropdownUserFullName">Hà Tường Vi</div>
+                            <div class="udi-email" id="dropdownUserEmail">viht.vp@easup.daklak.gov.vn</div>
+                            <div class="udi-role" id="dropdownUserRoleName">● Super Admin (Chánh Văn phòng)</div>
+                        </div>
+
+                        <div class="dropdown-header-title" style="margin-top: 6px;">Đổi vai trò kiểm thử (RBAC Demo)</div>
                         
                         <div class="role-item active" data-user-id="u_admin">
                             <span class="role-icon">👩‍💼</span>
@@ -116,10 +138,10 @@
                             </div>
                         </div>
 
-                        <div style="border-top: 1px solid #E2E8F0; margin-top: 6px; padding-top: 6px;">
-                            <a href="guest.html" style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; color: #0F4C81; text-decoration: none; font-size: 12.5px; font-weight: bold; border-radius: 4px; background: #F8FAFC;">
-                                <span>🌐</span> Mở Giao Diện Khách (guest.html) ↗
-                            </a>
+                        <div style="border-top: 1px solid #E2E8F0; margin-top: 8px; padding-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+                            <button class="btn-dropdown-logout" onclick="App.handleLogout()">
+                                <span>🚪</span> Đăng Xuất (Về Chế Độ Khách)
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -145,7 +167,7 @@
                 <li class="nav-tab-item" data-tab="cadres">
                     <span>👥</span> Danh Bạ Cán Bộ & Mail
                 </li>
-                <li class="nav-tab-item" data-tab="settings">
+                <li class="nav-tab-item auth-require-admin" data-tab="settings">
                     <span>⚙️</span> Cài Đặt Hệ Thống
                 </li>
             </ul>
@@ -164,8 +186,19 @@
     <main class="main-wrapper">
         <section id="view_schedule" class="view-section active">
 
+            <!-- Banner thông báo Chế độ Khách -->
+            <div id="guestNoticeBanner" style="display: none; background: #EFF6FF; border: 1px solid #BAE6FD; color: #0369A1; padding: 10px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                <div>
+                    <span>👤</span> <strong>Chế độ Khách (Chỉ xem):</strong> Bạn có thể tra cứu lịch, xem chi tiết và tải giấy mời. Để có quyền lập lịch, chỉnh sửa hoặc phê duyệt, vui lòng đăng nhập tài khoản.
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-banner-login" onclick="App.openLoginModal()">🔐 Đăng Nhập</button>
+                    <button class="btn-banner-register" onclick="App.openRegisterModal()">📝 Đăng Ký</button>
+                </div>
+            </div>
+
             <!-- Banner thông báo vai trò Viewer -->
-            <div id="viewerNoticeBanner" style="display: none; background: #FEF3C7; border: 1px solid #FCD34D; color: #92400E; padding: 10px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 16px;">
+            <div id="viewerNoticeBanner" style="display: none; background: #FEF3C7; border: 1px solid #FCD34D; color: #92400E; padding: 10px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 14px;">
                 👁️ <strong>Chế độ Xem (Viewer):</strong> Bạn đang đăng nhập với quyền xem lịch và tải giấy mời. Các tính năng thêm, sửa, xóa và xuất bản bị vô hiệu hóa.
             </div>
 
@@ -802,6 +835,201 @@
             <div class="modal-footer">
                 <button type="button" class="btn-bottom btn-history-audit" onclick="App.closeModal('modalAddCadre')">Hủy</button>
                 <button type="button" class="btn-bottom btn-save-publish" onclick="App.saveNewCadre()">Lưu Cán Bộ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 8: ĐĂNG NHẬP HỆ THỐNG
+         ========================================================================== -->
+    <div class="modal-backdrop" id="modalLogin">
+        <div class="modal-container modal-auth-box">
+            <div class="modal-header">
+                <div class="modal-header-title">
+                    <span>🔐</span> Đăng Nhập Cổng Điều Hành
+                </div>
+                <button class="btn-close-modal" onclick="App.closeModal('modalLogin')">✕</button>
+            </div>
+
+            <div class="modal-body auth-modal-body">
+                <!-- Tabs Chuyển Đăng Nhập / Đăng Ký -->
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn active" type="button" onclick="App.openLoginModal()">Đăng Nhập</button>
+                    <button class="auth-tab-btn" type="button" onclick="App.openRegisterModal()">Đăng Ký Mới</button>
+                </div>
+
+                <form id="formLogin" onsubmit="event.preventDefault(); App.handleLoginSubmit();">
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label class="form-label">Tên đăng nhập hoặc Email công vụ <span class="required">*</span></label>
+                        <div class="input-with-icon">
+                            <span class="input-icon">👤</span>
+                            <input type="text" id="loginUsername" class="form-input" placeholder="Ví dụ: admin.chanhvp hoặc email công vụ..." required autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label class="form-label">Mật khẩu <span class="required">*</span></label>
+                        <div class="input-with-icon">
+                            <span class="input-icon">🔑</span>
+                            <input type="password" id="loginPassword" class="form-input" placeholder="Nhập mật khẩu..." required autocomplete="current-password">
+                            <button type="button" class="btn-toggle-password" onclick="App.togglePasswordVisibility('loginPassword', this)">👁️</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 12.5px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-muted);">
+                            <input type="checkbox" id="loginRemember" checked> Ghi nhớ đăng nhập
+                        </label>
+                        <span style="color: #64748B; font-size: 11.5px;">Mật khẩu mặc định: <strong>123456</strong></span>
+                    </div>
+
+                    <button type="submit" class="btn-auth-submit btn-login-submit">
+                        <span>🔐</span> ĐĂNG NHẬP HỆ THỐNG
+                    </button>
+                </form>
+
+                <!-- KHỐI ĐĂNG NHẬP NHANH BẰNG 1-CHẠM -->
+                <div class="quick-login-section">
+                    <div class="quick-login-title">
+                        <span>⚡ ĐĂNG NHẬP NHANH (TÀI KHOẢN MẪU)</span>
+                    </div>
+                    <div class="quick-login-grid">
+                        <div class="quick-user-card" onclick="App.quickLogin('u_admin')">
+                            <div class="quc-avatar">👩‍💼</div>
+                            <div class="quc-info">
+                                <div class="quc-name">Hà Tường Vi</div>
+                                <div class="quc-role">Chánh Văn phòng (Super Admin)</div>
+                            </div>
+                        </div>
+
+                        <div class="quick-user-card" onclick="App.quickLogin('u_deputy')">
+                            <div class="quc-avatar">👨‍💼</div>
+                            <div class="quc-info">
+                                <div class="quc-name">Trần Minh Hải</div>
+                                <div class="quc-role">Phó Chánh VP (Super Admin)</div>
+                            </div>
+                        </div>
+
+                        <div class="quick-user-card" onclick="App.quickLogin('u_editor')">
+                            <div class="quc-avatar">👩‍💼</div>
+                            <div class="quc-info">
+                                <div class="quc-name">Nguyễn Thị Thoản</div>
+                                <div class="quc-role">Chuyên viên Văn thư (Editor)</div>
+                            </div>
+                        </div>
+
+                        <div class="quick-user-card" onclick="App.quickLogin('u_viewer')">
+                            <div class="quc-avatar">👤</div>
+                            <div class="quc-info">
+                                <div class="quc-name">Huỳnh Văn Dương</div>
+                                <div class="quc-role">Chuyên viên Kinh tế (Viewer)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="auth-switch-link">
+                    Chưa có tài khoản công vụ? <a href="javascript:void(0)" onclick="App.openRegisterModal()">Đăng ký tài khoản mới ↗</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODAL 9: ĐĂNG KÝ TÀI KHOẢN CÔNG VỤ MỚI
+         ========================================================================== -->
+    <div class="modal-backdrop" id="modalRegister">
+        <div class="modal-container modal-auth-box">
+            <div class="modal-header">
+                <div class="modal-header-title">
+                    <span>📝</span> Đăng Ký Tài Khoản Công Vụ
+                </div>
+                <button class="btn-close-modal" onclick="App.closeModal('modalRegister')">✕</button>
+            </div>
+
+            <div class="modal-body auth-modal-body">
+                <!-- Tabs Chuyển Đăng Nhập / Đăng Ký -->
+                <div class="auth-tabs">
+                    <button class="auth-tab-btn" type="button" onclick="App.openLoginModal()">Đăng Nhập</button>
+                    <button class="auth-tab-btn active" type="button" onclick="App.openRegisterModal()">Đăng Ký Mới</button>
+                </div>
+
+                <form id="formRegister" onsubmit="event.preventDefault(); App.handleRegisterSubmit();">
+                    <div class="form-grid">
+                        <div class="form-group form-grid-full">
+                            <label class="form-label">Họ và tên cán bộ / công chức <span class="required">*</span></label>
+                            <input type="text" id="regFullName" class="form-input" placeholder="Ví dụ: Nguyễn Văn An" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Tên đăng nhập <span class="required">*</span></label>
+                            <input type="text" id="regUsername" class="form-input" placeholder="Ví dụ: an.nguyen" required autocomplete="username">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Hòm thư Email công vụ <span class="required">*</span></label>
+                            <input type="email" id="regEmail" class="form-input" placeholder="annv.vp@easup.daklak.gov.vn" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Số điện thoại liên hệ</label>
+                            <input type="tel" id="regPhone" class="form-input" placeholder="Ví dụ: 0912 345 678">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Khối / Phòng ban công tác <span class="required">*</span></label>
+                            <select id="regDepartment" class="form-select" required>
+                                <option value="Văn phòng HĐND & UBND">Văn phòng HĐND & UBND xã</option>
+                                <option value="Phòng Kinh tế">Phòng Kinh tế</option>
+                                <option value="Phòng Văn hóa - Xã hội">Phòng Văn hóa - Xã hội</option>
+                                <option value="Trung tâm Hành chính công">Trung tâm Hành chính công</option>
+                                <option value="Đảng ủy - HĐND xã">Đảng ủy - HĐND xã</option>
+                                <option value="Ủy ban MTTQ xã">Ủy ban MTTQ xã</option>
+                                <option value="Công an xã">Công an xã</option>
+                                <option value="Ban CHQS xã">Ban CHQS xã</option>
+                                <option value="Thôn / Buôn cơ sở">Thôn / Buôn cơ sở</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Chức vụ</label>
+                            <input type="text" id="regPosition" class="form-input" placeholder="Ví dụ: Chuyên viên, Phó Trưởng phòng...">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Vai trò xin cấp quyền <span class="required">*</span></label>
+                            <select id="regRole" class="form-select" required>
+                                <option value="editor">Editor (Chuyên viên lập & sửa lịch)</option>
+                                <option value="viewer">Viewer (Cán bộ / Công chức tra cứu)</option>
+                                <option value="super_admin">Super Admin (Lãnh đạo đơn vị)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Mật khẩu (ít nhất 6 ký tự) <span class="required">*</span></label>
+                            <div class="input-with-icon">
+                                <span class="input-icon">🔑</span>
+                                <input type="password" id="regPassword" class="form-input" placeholder="Nhập mật khẩu..." required minlength="6" autocomplete="new-password">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Nhập lại mật khẩu <span class="required">*</span></label>
+                            <div class="input-with-icon">
+                                <span class="input-icon">🔑</span>
+                                <input type="password" id="regConfirmPassword" class="form-input" placeholder="Xác nhận lại mật khẩu..." required minlength="6" autocomplete="new-password">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-auth-submit btn-register-submit" style="margin-top: 16px;">
+                        <span>📝</span> ĐĂNG KÝ VÀ BẮT ĐẦU SỬ DỤNG
+                    </button>
+                </form>
+
+                <div class="auth-switch-link">
+                    Đã có tài khoản công vụ? <a href="javascript:void(0)" onclick="App.openLoginModal()">Đăng nhập ngay ↗</a>
+                </div>
             </div>
         </div>
     </div>

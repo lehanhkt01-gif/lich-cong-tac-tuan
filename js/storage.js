@@ -49,12 +49,11 @@ const StorageService = {
                 ) || (s.approvedBy && s.approvedBy.includes("Hoàng Minh Đức"))
             );
 
-            const SYNC_VERSION_KEY = "easup_portal_leaders_v5_synced";
+            const SYNC_VERSION_KEY = "easup_portal_leaders_v6_synced";
             if (hasOldLeaderInCadres || hasOldUser || hasOldLeaderInSchedule || !localStorage.getItem(SYNC_VERSION_KEY)) {
                 localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(INITIAL_DATA.schedules));
                 localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
                 localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_DATA.users));
-                localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(INITIAL_DATA.users[0]));
                 localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(INITIAL_DATA.organization));
                 localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_DATA.auditLogs));
                 localStorage.setItem(SYNC_VERSION_KEY, "true");
@@ -77,7 +76,7 @@ const StorageService = {
     resetToDefault() {
         localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(INITIAL_DATA.organization));
         localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_DATA.users));
-        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(INITIAL_DATA.users[0])); // Mặc định Admin
+        localStorage.removeItem(STORAGE_KEYS.CURRENT_USER); // Mặc định ở chế độ Khách
         localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
         localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(INITIAL_DATA.schedules));
         localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_DATA.auditLogs));
@@ -108,14 +107,35 @@ const StorageService = {
         return data ? JSON.parse(data) : INITIAL_DATA.users;
     },
 
-    // Lấy người dùng đang đăng nhập
+    addUser(user) {
+        const users = this.getUsers();
+        const existingIdx = users.findIndex(u => u.username.toLowerCase() === user.username.toLowerCase() || (user.email && u.email.toLowerCase() === user.email.toLowerCase()));
+        if (existingIdx >= 0) {
+            users[existingIdx] = { ...users[existingIdx], ...user };
+        } else {
+            users.push(user);
+        }
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+        return user;
+    },
+
+    // Lấy người dùng đang đăng nhập (trả về null nếu chưa đăng nhập / chế độ khách)
     getCurrentUser() {
         const data = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-        return data ? JSON.parse(data) : INITIAL_DATA.users[0];
+        if (!data || data === "null" || data === "guest" || data === "undefined") return null;
+        try {
+            return JSON.parse(data);
+        } catch (e) {
+            return null;
+        }
     },
 
     setCurrentUser(user) {
-        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+        if (user) {
+            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+        } else {
+            localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+        }
     },
 
     // Lấy danh bạ cán bộ

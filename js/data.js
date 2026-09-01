@@ -21,6 +21,7 @@ const INITIAL_DATA = {
         {
             id: "u_admin",
             username: "admin.chanhvp",
+            password: "password123",
             fullName: "Hà Tường Vi",
             position: "Chánh Văn phòng HĐND & UBND xã",
             role: "super_admin",
@@ -32,6 +33,7 @@ const INITIAL_DATA = {
         {
             id: "u_deputy",
             username: "deputy.phochanhvp",
+            password: "password123",
             fullName: "Trần Minh Hải",
             position: "Phó Chánh Văn phòng HĐND & UBND xã",
             role: "super_admin",
@@ -43,6 +45,7 @@ const INITIAL_DATA = {
         {
             id: "u_editor",
             username: "editor.chuyenvien",
+            password: "password123",
             fullName: "Nguyễn Thị Thoản",
             position: "Chuyên viên Văn phòng HĐND & UBND xã",
             role: "editor",
@@ -54,6 +57,7 @@ const INITIAL_DATA = {
         {
             id: "u_viewer",
             username: "viewer.canbo",
+            password: "password123",
             fullName: "Huỳnh Văn Dương",
             position: "Chuyên viên Phòng Kinh tế (Địa chính - Đất đai)",
             role: "viewer",

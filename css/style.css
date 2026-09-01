@@ -329,6 +329,325 @@ body {
     color: var(--text-muted);
 }
 
+/* User dropdown info */
+.user-dropdown-info {
+    background: #F8FAFC;
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border-left: 3px solid var(--gov-primary);
+}
+
+.user-dropdown-info .udi-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+.user-dropdown-info .udi-email {
+    font-size: 11.5px;
+    color: #64748B;
+    margin-top: 2px;
+}
+
+.user-dropdown-info .udi-role {
+    font-size: 11px;
+    color: #059669;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+.btn-dropdown-logout {
+    width: 100%;
+    padding: 8px 12px;
+    background: #FEF2F2;
+    color: #DC2626;
+    border: 1px solid #FECACA;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-dropdown-logout:hover {
+    background: #FEE2E2;
+    border-color: #F87171;
+}
+
+/* Header Auth Buttons (Đăng Nhập / Đăng Ký) */
+.guest-header-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-header-auth {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    outline: none;
+}
+
+.btn-header-login {
+    background: #F59E0B;
+    color: #FFFFFF;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+
+.btn-header-login:hover {
+    background: #D97706;
+    transform: translateY(-1px);
+}
+
+.btn-header-register {
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(6px);
+}
+
+.btn-header-register:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+/* Banner auth buttons */
+.btn-banner-login {
+    background: #0284C7;
+    color: #FFFFFF;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-banner-login:hover {
+    background: #0369A1;
+}
+
+.btn-banner-register {
+    background: #FFFFFF;
+    color: #0284C7;
+    border: 1px solid #BAE6FD;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-banner-register:hover {
+    background: #F0F9FF;
+}
+
+/* ==========================================================================
+   AUTHENTICATION MODAL STYLES (ĐĂNG NHẬP & ĐĂNG KÝ)
+   ========================================================================== */
+.modal-auth-box {
+    max-width: 480px !important;
+}
+
+.auth-modal-body {
+    padding: 20px 24px;
+}
+
+.auth-tabs {
+    display: flex;
+    background: #F1F5F9;
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+    gap: 4px;
+}
+
+.auth-tab-btn {
+    flex: 1;
+    padding: 9px 14px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #64748B;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+}
+
+.auth-tab-btn.active {
+    background: #FFFFFF;
+    color: var(--gov-primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon .input-icon {
+    position: absolute;
+    left: 12px;
+    font-size: 15px;
+    color: #94A3B8;
+    pointer-events: none;
+}
+
+.input-with-icon .form-input {
+    padding-left: 38px;
+    padding-right: 40px;
+}
+
+.btn-toggle-password {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    color: #64748B;
+}
+
+.btn-auth-submit {
+    width: 100%;
+    height: 46px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-login-submit {
+    background: var(--gov-primary);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(15, 76, 129, 0.3);
+}
+
+.btn-login-submit:hover {
+    background: #0B3A64;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(15, 76, 129, 0.4);
+}
+
+.btn-register-submit {
+    background: #059669;
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.btn-register-submit:hover {
+    background: #047857;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4);
+}
+
+/* Quick Login Section (1-Click Demo) */
+.quick-login-section {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px dashed #E2E8F0;
+}
+
+.quick-login-title {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748B;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.quick-login-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.quick-user-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.quick-user-card:hover {
+    background: #EFF6FF;
+    border-color: #93C5FD;
+    transform: translateY(-1px);
+}
+
+.quc-avatar {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.quc-info {
+    overflow: hidden;
+}
+
+.quc-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0F172A;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.quc-role {
+    font-size: 10px;
+    color: #64748B;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.auth-switch-link {
+    margin-top: 16px;
+    text-align: center;
+    font-size: 12.5px;
+    color: #64748B;
+}
+
+.auth-switch-link a {
+    color: var(--gov-primary);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.auth-switch-link a:hover {
+    text-decoration: underline;
+}
+
 /* ==========================================================================
    NAVIGATION BAR
    ========================================================================== */
@@ -2109,6 +2428,24 @@ body {
         width: 100%;
         font-size: 13px;
         padding: 10px 14px;
+    }
+
+    /* 10. AUTH MODAL & QUICK LOGIN TRÊN ĐIỆN THOẠI */
+    .quick-login-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .guest-header-group {
+        gap: 6px;
+    }
+
+    .guest-mode-pill {
+        display: none; /* Ẩn huy hiệu khách dài trên điện thoại để tiết kiệm diện tích */
+    }
+
+    .btn-header-auth {
+        padding: 5px 10px;
+        font-size: 11.5px;
     }
 }
 

@@ -79,35 +79,60 @@ const App = {
     },
 
     setupAuthUI() {
-        const user = AuthService.getCurrentUser();
-        const avatarEl = document.getElementById("headerUserAvatar");
-        const nameEl = document.getElementById("headerUserName");
-        const roleEl = document.getElementById("headerUserRole");
-
-        if (avatarEl) avatarEl.textContent = user.avatar || "👤";
-        if (nameEl) nameEl.textContent = user.fullName;
-        if (roleEl) roleEl.textContent = user.roleName;
-
-        // Cập nhật các nút có quyền / không có quyền
         this.updateUIPermissions();
 
-        AuthService.onAuthChange(() => {
-            const u = AuthService.getCurrentUser();
-            if (avatarEl) avatarEl.textContent = u.avatar || "👤";
-            if (nameEl) nameEl.textContent = u.fullName;
-            if (roleEl) roleEl.textContent = u.roleName;
+        AuthService.onAuthChange((u) => {
             this.updateUIPermissions();
             this.renderAll();
-            this.showToast(`Đã chuyển sang vai trò: ${u.roleName}`, "success");
         });
     },
 
     updateUIPermissions() {
+        const user = AuthService.getCurrentUser();
+        const isGuest = !user;
         const canEdit = AuthService.canEdit();
         const canDelete = AuthService.canDelete();
         const isViewer = AuthService.isViewer();
+        const isAdmin = AuthService.isAdmin();
 
-        // Ẩn/hiện nút Thêm mới lịch, Sửa, Xóa
+        const guestHeader = document.getElementById("guestHeaderGroup");
+        const userProfile = document.getElementById("userProfileBadge");
+        const guestBanner = document.getElementById("guestNoticeBanner");
+        const viewerBanner = document.getElementById("viewerNoticeBanner");
+
+        if (isGuest) {
+            if (guestHeader) guestHeader.style.display = "flex";
+            if (userProfile) userProfile.style.display = "none";
+            if (guestBanner) guestBanner.style.display = "flex";
+            if (viewerBanner) viewerBanner.style.display = "none";
+        } else {
+            if (guestHeader) guestHeader.style.display = "none";
+            if (userProfile) userProfile.style.display = "block";
+            if (guestBanner) guestBanner.style.display = "none";
+            if (viewerBanner) viewerBanner.style.display = isViewer ? "block" : "none";
+
+            const avatarEl = document.getElementById("headerUserAvatar");
+            const nameEl = document.getElementById("headerUserName");
+            const roleEl = document.getElementById("headerUserRole");
+            const dropName = document.getElementById("dropdownUserFullName");
+            const dropEmail = document.getElementById("dropdownUserEmail");
+            const dropRole = document.getElementById("dropdownUserRoleName");
+
+            if (avatarEl) avatarEl.textContent = user.avatar || "👤";
+            if (nameEl) nameEl.textContent = user.fullName;
+            if (roleEl) roleEl.textContent = user.roleName;
+            if (dropName) dropName.textContent = user.fullName;
+            if (dropEmail) dropEmail.textContent = user.email || "";
+            if (dropRole) dropRole.textContent = `● ${user.roleName}`;
+
+            // Cập nhật trạng thái active trong dropdown chọn vai trò
+            document.querySelectorAll(".role-item").forEach(item => {
+                const uid = item.getAttribute("data-user-id");
+                item.classList.toggle("active", user.id === uid);
+            });
+        }
+
+        // Ẩn/hiện các nút Thêm, Sửa, Xóa, Cài Đặt theo quyền
         document.querySelectorAll(".auth-require-edit").forEach(el => {
             el.style.display = canEdit ? "" : "none";
         });
@@ -116,10 +141,9 @@ const App = {
             el.style.display = canDelete ? "" : "none";
         });
 
-        const statusBanner = document.getElementById("viewerNoticeBanner");
-        if (statusBanner) {
-            statusBanner.style.display = isViewer ? "block" : "none";
-        }
+        document.querySelectorAll(".auth-require-admin").forEach(el => {
+            el.style.display = isAdmin ? "" : "none";
+        });
     },
 
     setupEventListeners() {
@@ -218,7 +242,13 @@ const App = {
         document.getElementById("btnSavePublish")?.addEventListener("click", () => this.handleSaveAndPublish());
 
         // Tạo mới lịch tuần modal
-        document.getElementById("btnCreateNewWeek")?.addEventListener("click", () => this.openCreateWeekModal());
+        document.getElementById("btnCreateNewWeek")?.addEventListener("click", () => {
+            if (!AuthService.canEdit()) {
+                this.openLoginModal("Vui lòng đăng nhập để lập lịch tuần mới!");
+                return;
+            }
+            this.openCreateWeekModal();
+        });
 
         // Lọc theo Khối công tác
         document.querySelectorAll(".bloc-pill-btn").forEach(btn => {
@@ -236,6 +266,15 @@ const App = {
     },
 
     switchTab(tabName) {
+        if (tabName === "settings" && !AuthService.canManageSettings()) {
+            if (AuthService.isGuest()) {
+                this.openLoginModal("Vui lòng đăng nhập với quyền Super Admin để truy cập Cài Đặt Hệ Thống!");
+            } else {
+                this.showToast("Chỉ Super Admin (Lãnh đạo đơn vị) mới có quyền truy cập Cài Đặt Hệ Thống!", "warning");
+            }
+            return;
+        }
+
         this.activeTab = tabName;
         document.querySelectorAll(".nav-tab-item").forEach(t => t.classList.remove("active"));
         document.querySelector(`.nav-tab-item[data-tab="${tabName}"]`)?.classList.add("active");
@@ -426,6 +465,11 @@ const App = {
     // MODAL THÊM / SỬA MỤC CÔNG TÁC
     // =========================================================================
     openEditItemModal(itemId = null, prefillDay = null) {
+        if (!AuthService.canEdit()) {
+            this.openLoginModal("Vui lòng đăng nhập tài khoản để thêm hoặc chỉnh sửa lịch công tác!");
+            return;
+        }
+
         this.editingItemId = itemId;
         const modal = document.getElementById("modalEditItem");
         const modalTitle = document.getElementById("modalEditItemTitle");
@@ -500,6 +544,9 @@ const App = {
         const file = event.target.files[0];
         if (!file) return;
 
+        const u = AuthService.getCurrentUser();
+        const uploaderName = u ? `${u.fullName} (${u.roleName})` : "Cán bộ nhập liệu";
+
         const attachmentObj = {
             id: "doc_gm_" + Date.now(),
             name: file.name,
@@ -507,7 +554,7 @@ const App = {
             size: `${Math.round(file.size / 1024)} KB`,
             type: file.type,
             uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
-            uploader: AuthService.getCurrentUser().fullName
+            uploader: uploaderName
         };
 
         this.renderAttachmentUploadBox(attachmentObj);
@@ -519,6 +566,11 @@ const App = {
     },
 
     saveItemFromModal() {
+        if (!AuthService.canEdit()) {
+            this.openLoginModal("Vui lòng đăng nhập tài khoản có quyền để lưu mục công tác!");
+            return;
+        }
+
         const dayOfWeek = document.getElementById("formItemDay").value;
         const time = document.getElementById("formItemTime").value.trim();
         const bloc = document.getElementById("formItemBloc").value;
@@ -565,6 +617,11 @@ const App = {
     },
 
     duplicateItem(itemId) {
+        if (!AuthService.canEdit()) {
+            this.openLoginModal("Vui lòng đăng nhập tài khoản để nhân bản mục công tác!");
+            return;
+        }
+
         const item = this.currentSchedule.items.find(i => i.id === itemId);
         if (!item) return;
 
@@ -581,6 +638,11 @@ const App = {
     },
 
     deleteItem(itemId) {
+        if (!AuthService.canDelete()) {
+            this.openLoginModal("Chỉ Super Admin (Lãnh đạo đơn vị) mới có quyền xóa mục công tác!");
+            return;
+        }
+
         if (!confirm("Bạn có chắc chắn muốn xóa mục công tác này khỏi lịch tuần?")) return;
 
         const result = StorageService.deleteScheduleItem(this.currentSchedule.id, itemId);
@@ -1165,6 +1227,101 @@ const App = {
             StorageService.resetToDefault();
             window.location.reload();
         }
+    },
+
+    // =========================================================================
+    // XÁC THỰC & ĐĂNG NHẬP / ĐĂNG KÝ (AUTH HANDLERS)
+    // =========================================================================
+    openLoginModal(noticeMessage = null) {
+        this.closeModal("modalRegister");
+        const modal = document.getElementById("modalLogin");
+        if (modal) {
+            modal.classList.add("show");
+            const inputUser = document.getElementById("loginUsername");
+            if (inputUser) inputUser.focus();
+        }
+        if (noticeMessage) {
+            this.showToast(noticeMessage, "warning");
+        }
+    },
+
+    openRegisterModal() {
+        this.closeModal("modalLogin");
+        const modal = document.getElementById("modalRegister");
+        if (modal) {
+            modal.classList.add("show");
+            const inputName = document.getElementById("regFullName");
+            if (inputName) inputName.focus();
+        }
+    },
+
+    togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        if (input.type === "password") {
+            input.type = "text";
+            if (btn) btn.textContent = "🙈";
+        } else {
+            input.type = "password";
+            if (btn) btn.textContent = "👁️";
+        }
+    },
+
+    handleLoginSubmit() {
+        const usernameInput = document.getElementById("loginUsername");
+        const passwordInput = document.getElementById("loginPassword");
+        if (!usernameInput || !passwordInput) return;
+
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+
+        const res = AuthService.login(username, password);
+        if (res.success) {
+            this.closeModal("modalLogin");
+            passwordInput.value = "";
+            this.showToast(`Đăng nhập thành công! Chào mừng đồng chí ${res.user.fullName}.`, "success");
+        } else {
+            this.showToast(res.message, "error");
+        }
+    },
+
+    quickLogin(userId) {
+        const user = AuthService.loginAsDemoUser(userId);
+        if (user) {
+            this.closeModal("modalLogin");
+            this.showToast(`Đăng nhập thành công với tài khoản: ${user.fullName} (${user.roleName})`, "success");
+        }
+    },
+
+    handleRegisterSubmit() {
+        const fullName = document.getElementById("regFullName")?.value;
+        const username = document.getElementById("regUsername")?.value;
+        const email = document.getElementById("regEmail")?.value;
+        const phone = document.getElementById("regPhone")?.value;
+        const department = document.getElementById("regDepartment")?.value;
+        const position = document.getElementById("regPosition")?.value;
+        const role = document.getElementById("regRole")?.value;
+        const password = document.getElementById("regPassword")?.value;
+        const confirmPassword = document.getElementById("regConfirmPassword")?.value;
+
+        const res = AuthService.register({
+            fullName, username, email, phone, department, position, role, password, confirmPassword
+        });
+
+        if (res.success) {
+            this.closeModal("modalRegister");
+            document.getElementById("formRegister")?.reset();
+            this.showToast(`Đăng ký thành công! Chào mừng đồng chí ${res.user.fullName} đã gia nhập hệ thống.`, "success");
+        } else {
+            this.showToast(res.message, "error");
+        }
+    },
+
+    handleLogout() {
+        const roleDropdown = document.getElementById("roleDropdownMenu");
+        if (roleDropdown) roleDropdown.classList.remove("show");
+        AuthService.logout();
+        this.showToast("Đã đăng xuất tài khoản. Hiện bạn đang ở Chế độ Khách (Chỉ xem).", "info");
     },
 
     // =========================================================================
