@@ -21,6 +21,7 @@ const INITIAL_DATA = {
         {
             id: "u_vyhatuong",
             username: "vyhatuong",
+            aliases: ["vihatuong", "vyhatuong", "hatuongvi", "hatuongvy", "viht", "vyht"],
             password: "12345678@",
             fullName: "Hà Tường Vi",
             position: "Chánh Văn phòng HĐND & UBND xã",
@@ -34,6 +35,7 @@ const INITIAL_DATA = {
         {
             id: "u_haitranminh",
             username: "haitranminh",
+            aliases: ["haitranminh", "tranminhhai", "haitm"],
             password: "12345678@",
             fullName: "Trần Minh Hải",
             position: "Phó Chánh Văn phòng HĐND & UBND xã",
@@ -47,6 +49,7 @@ const INITIAL_DATA = {
         {
             id: "u_linhtranvan",
             username: "linhtranvan",
+            aliases: ["linhtranvan", "tranvanlinh", "linhtv"],
             password: "12345678@",
             fullName: "Trần Văn Linh",
             position: "Chánh Văn phòng Đảng ủy xã",
@@ -60,6 +63,7 @@ const INITIAL_DATA = {
         {
             id: "u_lannguyenthi",
             username: "lannguyenthi",
+            aliases: ["lannguyenthi", "nguyenthilan", "lannt"],
             password: "12345678@",
             fullName: "Nguyễn Thị Lan",
             position: "Phó Chánh Văn phòng Đảng ủy xã",
@@ -73,6 +77,7 @@ const INITIAL_DATA = {
         {
             id: "u_hanhlehong",
             username: "hanhlehong",
+            aliases: ["hanhlehong", "lehonghanh", "hanhlh"],
             password: "12345678@",
             fullName: "Lê Hồng Hạnh",
             position: "Ủy viên BTV, Chủ tịch Ủy ban MTTQ Việt Nam xã",
@@ -86,6 +91,7 @@ const INITIAL_DATA = {
         {
             id: "u_chienhavan",
             username: "chienhavan",
+            aliases: ["chienhavan", "havanchien", "chienhv"],
             password: "12345678@",
             fullName: "Hà Văn Chiến",
             position: "Phụ trách Văn phòng Ủy ban MTTQ xã",

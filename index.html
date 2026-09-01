@@ -852,10 +852,10 @@
     </div>
 
     <!-- ==========================================================================
-         MODAL 8: ĐĂNG NHẬP HỆ THỐNG (CHỈ 6 TÀI KHOẢN ĐƯỢC ỦY QUYỀN)
+         MODAL 8: ĐĂNG NHẬP HỆ THỐNG
          ========================================================================== -->
     <div class="modal-backdrop" id="modalLogin">
-        <div class="modal-container modal-auth-box" style="max-width: 520px;">
+        <div class="modal-container modal-auth-box" style="max-width: 440px;">
             <div class="modal-header">
                 <div class="modal-header-title">
                     <span>🔐</span> Đăng Nhập Cổng Điều Hành
@@ -863,22 +863,21 @@
                 <button class="btn-close-modal" onclick="App.closeModal('modalLogin')">✕</button>
             </div>
 
-            <div class="modal-body auth-modal-body">
-                <div style="background: #F0FDF4; border: 1px solid #BBF7D0; color: #166534; padding: 10px 14px; border-radius: 8px; font-size: 12.5px; margin-bottom: 16px;">
-                    🛡️ Hệ thống bảo mật: Chỉ <strong>06 tài khoản được ủy quyền</strong> của Thường trực HĐND & UBND, Đảng ủy và MTTQ mới có quyền đăng nhập để lập lịch và điều hành.
-                </div>
+            <div class="modal-body auth-modal-body" style="padding: 24px 24px 20px 24px;">
+                <!-- Hộp thông báo lỗi đăng nhập (nếu có) -->
+                <div id="loginErrorAlert" style="display: none; background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; font-weight: 600; line-height: 1.4;"></div>
 
                 <form id="formLogin" onsubmit="event.preventDefault(); App.handleLoginSubmit();">
-                    <div class="form-group" style="margin-bottom: 14px;">
-                        <label class="form-label">Tên đăng nhập <span class="required">*</span></label>
+                    <div class="form-group" style="margin-bottom: 18px;">
+                        <label class="form-label" style="font-weight: 700; color: #1E293B;">Tên đăng nhập <span class="required">*</span></label>
                         <div class="input-with-icon">
                             <span class="input-icon">👤</span>
-                            <input type="text" id="loginUsername" class="form-input" placeholder="Ví dụ: vyhatuong, haitranminh..." required autocomplete="username">
+                            <input type="text" id="loginUsername" class="form-input" placeholder="Nhập tên đăng nhập..." required autocomplete="username" autofocus>
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 14px;">
-                        <label class="form-label">Mật khẩu <span class="required">*</span></label>
+                    <div class="form-group" style="margin-bottom: 22px;">
+                        <label class="form-label" style="font-weight: 700; color: #1E293B;">Mật khẩu <span class="required">*</span></label>
                         <div class="input-with-icon">
                             <span class="input-icon">🔑</span>
                             <input type="password" id="loginPassword" class="form-input" placeholder="Nhập mật khẩu..." required autocomplete="current-password">
@@ -886,73 +885,10 @@
                         </div>
                     </div>
 
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 12.5px;">
-                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text-muted);">
-                            <input type="checkbox" id="loginRemember" checked> Ghi nhớ đăng nhập
-                        </label>
-                        <span style="color: #64748B; font-size: 12px;">Mật khẩu mặc định: <strong>12345678@</strong></span>
-                    </div>
-
-                    <button type="submit" class="btn-auth-submit btn-login-submit">
+                    <button type="submit" class="btn-auth-submit btn-login-submit" id="btnLoginSubmit">
                         <span>🔐</span> ĐĂNG NHẬP HỆ THỐNG
                     </button>
                 </form>
-
-                <!-- KHỐI ĐĂNG NHẬP NHANH BẰNG 1-CHẠM (6 TÀI KHOẢN) -->
-                <div class="quick-login-section">
-                    <div class="quick-login-title">
-                        <span>⚡ ĐĂNG NHẬP NHANH BẰNG 1-CHẠM (6 TÀI KHOẢN ĐƯỢC CẤP QUYỀN)</span>
-                    </div>
-                    <div class="quick-login-grid" style="grid-template-columns: repeat(2, 1fr);">
-                        <div class="quick-user-card" onclick="App.quickLogin('vyhatuong')" title="Tên đăng nhập: vyhatuong | Mật khẩu: 12345678@">
-                            <div class="quc-avatar">👩‍💼</div>
-                            <div class="quc-info">
-                                <div class="quc-name">1. Hà Tường Vi</div>
-                                <div class="quc-role">Chánh VP (vyhatuong)</div>
-                            </div>
-                        </div>
-
-                        <div class="quick-user-card" onclick="App.quickLogin('haitranminh')" title="Tên đăng nhập: haitranminh | Mật khẩu: 12345678@">
-                            <div class="quc-avatar">👨‍💼</div>
-                            <div class="quc-info">
-                                <div class="quc-name">2. Trần Minh Hải</div>
-                                <div class="quc-role">Phó CVP (haitranminh)</div>
-                            </div>
-                        </div>
-
-                        <div class="quick-user-card" onclick="App.quickLogin('linhtranvan')" title="Tên đăng nhập: linhtranvan | Mật khẩu: 12345678@">
-                            <div class="quc-avatar">👨‍💼</div>
-                            <div class="quc-info">
-                                <div class="quc-name">3. Trần Văn Linh</div>
-                                <div class="quc-role">Chánh VP ĐU (linhtranvan)</div>
-                            </div>
-                        </div>
-
-                        <div class="quick-user-card" onclick="App.quickLogin('lannguyenthi')" title="Tên đăng nhập: lannguyenthi | Mật khẩu: 12345678@">
-                            <div class="quc-avatar">👩‍💼</div>
-                            <div class="quc-info">
-                                <div class="quc-name">4. Nguyễn Thị Lan</div>
-                                <div class="quc-role">Phó VP ĐU (lannguyenthi)</div>
-                            </div>
-                        </div>
-
-                        <div class="quick-user-card" onclick="App.quickLogin('hanhlehong')" title="Tên đăng nhập: hanhlehong | Mật khẩu: 12345678@">
-                            <div class="quc-avatar">👩‍💼</div>
-                            <div class="quc-info">
-                                <div class="quc-name">5. Lê Hồng Hạnh</div>
-                                <div class="quc-role">CTMT (hanhlehong)</div>
-                            </div>
-                        </div>
-
-                        <div class="quick-user-card" onclick="App.quickLogin('chienhavan')" title="Tên đăng nhập: chienhavan | Mật khẩu: 12345678@">
-                            <div class="quc-avatar">👨‍💼</div>
-                            <div class="quc-info">
-                                <div class="quc-name">6. Hà Văn Chiến</div>
-                                <div class="quc-role">VPMT (chienhavan)</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

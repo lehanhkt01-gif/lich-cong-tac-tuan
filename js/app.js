@@ -1234,10 +1234,15 @@ const App = {
     // =========================================================================
     openLoginModal(noticeMessage = null) {
         const modal = document.getElementById("modalLogin");
+        const errAlert = document.getElementById("loginErrorAlert");
+        if (errAlert) errAlert.style.display = "none";
+
         if (modal) {
             modal.classList.add("show");
             const inputUser = document.getElementById("loginUsername");
-            if (inputUser) inputUser.focus();
+            if (inputUser) {
+                setTimeout(() => inputUser.focus(), 100);
+            }
         }
         if (noticeMessage) {
             this.showToast(noticeMessage, "warning");
@@ -1259,17 +1264,33 @@ const App = {
     handleLoginSubmit() {
         const usernameInput = document.getElementById("loginUsername");
         const passwordInput = document.getElementById("loginPassword");
+        const errAlert = document.getElementById("loginErrorAlert");
+        if (errAlert) errAlert.style.display = "none";
+
         if (!usernameInput || !passwordInput) return;
 
         const username = usernameInput.value.trim();
         const password = passwordInput.value;
 
+        if (!username || !password) {
+            if (errAlert) {
+                errAlert.textContent = "⚠️ Vui lòng nhập đầy đủ Tên đăng nhập và Mật khẩu!";
+                errAlert.style.display = "block";
+            }
+            return;
+        }
+
         const res = AuthService.login(username, password);
         if (res.success) {
+            if (errAlert) errAlert.style.display = "none";
             this.closeModal("modalLogin");
             passwordInput.value = "";
             this.showToast(`Đăng nhập thành công! Chào mừng đồng chí ${res.user.fullName}.`, "success");
         } else {
+            if (errAlert) {
+                errAlert.innerHTML = `⚠️ ${res.message}`;
+                errAlert.style.display = "block";
+            }
             this.showToast(res.message, "error");
         }
     },

@@ -49,9 +49,9 @@ const StorageService = {
                 ) || (s.approvedBy && s.approvedBy.includes("Hoàng Minh Đức"))
             );
 
-            const SYNC_VERSION_KEY = "easup_portal_auth_6_users_v7";
+            const SYNC_VERSION_KEY = "easup_portal_auth_6_users_v8";
             const users = this.getUsers();
-            const hasCorrect6Users = users.length === 6 && users.some(u => u.username === "vyhatuong") && users.some(u => u.username === "linhtranvan");
+            const hasCorrect6Users = users.length === 6 && users.some(u => u.username === "vyhatuong" && u.aliases) && users.some(u => u.username === "linhtranvan");
 
             if (hasOldLeaderInCadres || hasOldUser || hasOldLeaderInSchedule || !hasCorrect6Users || !localStorage.getItem(SYNC_VERSION_KEY)) {
                 localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(INITIAL_DATA.schedules));
