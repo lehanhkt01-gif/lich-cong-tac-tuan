@@ -310,6 +310,27 @@ const App = {
                 <span class="schedule-status-badge ${isPub ? 'status-published' : 'status-draft'}">${isPub ? 'Chính Thức' : 'Dự Thảo'}</span>
             `;
         }
+
+        // Print header & dates
+        const printTitle = document.getElementById("printScheduleTitle");
+        const printDates = document.getElementById("printScheduleDates");
+        const printIssueDate = document.getElementById("printIssueDate");
+
+        if (printTitle) {
+            printTitle.textContent = `LỊCH CÔNG TÁC TUẦN THỨ ${s.weekNumber} NĂM ${s.year}`;
+        }
+        if (printDates) {
+            const start = s.startDate.split('-').reverse().join('/');
+            const end = s.endDate.split('-').reverse().join('/');
+            printDates.textContent = `(Từ ngày ${start} đến ngày ${end})`;
+        }
+        if (printIssueDate) {
+            const now = new Date();
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            printIssueDate.textContent = `Ea Súp, ngày ${day} tháng ${month} năm ${year}`;
+        }
     },
 
     renderScheduleTable() {

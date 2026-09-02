@@ -2470,19 +2470,20 @@ body {
 }
 
 /* ==========================================================================
-   PRINT STYLES (CHUẨN NGHỊ ĐỊNH 30/2020/NĐ-CP)
+   PRINT STYLES (CHUẨN THỂ THỨC NGHỊ ĐỊNH 30/2020/NĐ-CP)
    ========================================================================== */
 @media print {
     @page {
         size: A4 landscape;
-        margin: 1.5cm 1.2cm 1.5cm 1.5cm;
+        margin: 15mm 12mm 15mm 15mm;
     }
 
     body {
         background-color: #FFFFFF !important;
         color: #000000 !important;
-        font-family: 'Times New Roman', serif !important;
-        font-size: 12pt !important;
+        font-family: 'Times New Roman', 'Times', serif !important;
+        font-size: 11pt !important;
+        line-height: 1.3 !important;
     }
 
     .gov-topbar, 
@@ -2493,29 +2494,67 @@ body {
     .col-actions-header,
     .btn-action-icon,
     .btn-attachment-badge,
-    .toast-container {
+    .toast-container,
+    .modal-backdrop,
+    .schedule-header-banner,
+    .schedule-table th:last-child,
+    .schedule-table td:last-child {
         display: none !important;
     }
 
     .main-wrapper {
         padding: 0 !important;
+        margin: 0 !important;
         max-width: 100% !important;
+        box-shadow: none !important;
     }
 
     .schedule-table-card {
         border: none !important;
         box-shadow: none !important;
+        padding: 0 !important;
+        background: transparent !important;
     }
 
     .schedule-table {
-        border: 1px solid #000000 !important;
+        width: 100% !important;
+        border-collapse: collapse !important;
+        border: 1pt solid #000000 !important;
         font-size: 11pt !important;
+        table-layout: auto !important;
     }
 
-    .schedule-table th, .schedule-table td {
-        border: 1px solid #000000 !important;
+    .schedule-table th {
+        background-color: #EDEDED !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        border: 1pt solid #000000 !important;
+        padding: 6pt 4pt !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        color: #000000 !important;
+    }
+
+    .schedule-table td {
+        border: 1pt solid #000000 !important;
         padding: 6pt 4pt !important;
         color: #000000 !important;
+        vertical-align: top !important;
+    }
+
+    .schedule-table tr {
+        page-break-inside: avoid !important;
+    }
+
+    .day-divider-row td {
+        background-color: #F1F5F9 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        font-weight: bold !important;
+        font-size: 11pt !important;
+        text-transform: uppercase !important;
+        border: 1pt solid #000000 !important;
+        padding: 5pt 6pt !important;
     }
 
     .time-pill, .badge-bloc {
@@ -2528,10 +2567,17 @@ body {
 
     .print-only-header {
         display: block !important;
-        margin-bottom: 15pt;
+        margin-bottom: 14pt !important;
+    }
+
+    .print-only-footer {
+        display: block !important;
+        margin-top: 14pt !important;
+        page-break-inside: avoid !important;
     }
 }
 
-.print-only-header {
+.print-only-header,
+.print-only-footer {
     display: none;
 }
