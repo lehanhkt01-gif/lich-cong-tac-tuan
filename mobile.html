@@ -168,11 +168,11 @@
                     <div class="account-view-wrap">
                         <!-- Thông tin cá nhân -->
                         <div class="account-profile-card">
-                            <div class="profile-avatar-box" id="accountUserAvatar">👩‍💼</div>
+                            <div class="profile-avatar-box" id="accountUserAvatar">👤</div>
                             <div class="profile-info-box">
-                                <div class="profile-name" id="accountUserName">Hà Tường Vi</div>
-                                <div class="profile-role-tag" id="accountUserRole">Super Admin (Chánh Văn phòng)</div>
-                                <div class="profile-email" id="accountUserEmail">vyht.vp@easup.daklak.gov.vn</div>
+                                <div class="profile-name" id="accountUserName">Khách vãng lai</div>
+                                <div class="profile-role-tag" id="accountUserRole">Chế độ chỉ xem</div>
+                                <div class="profile-email" id="accountUserEmail">Chưa đăng nhập tài khoản</div>
                             </div>
                         </div>
 
@@ -214,7 +214,6 @@
                     <button class="nav-item-btn" data-tab="notifications">
                         <span class="nav-icon">🔔</span>
                         <span class="nav-label">Thông báo</span>
-                        <span class="nav-badge-count">2</span>
                     </button>
 
                     <button class="nav-item-btn" data-tab="account">
@@ -223,6 +222,9 @@
                     </button>
                 </nav>
 
+                <!-- ==========================================================================
+                     MODALS VÀ BOTTOM SHEETS
+                     ========================================================================== -->
                 <!-- Bottom Sheet: Chi tiết cuộc họp / công việc -->
                 <div class="modal-overlay" id="detailBottomSheet">
                     <div class="bottom-sheet-content">
@@ -233,6 +235,39 @@
                         </div>
                         <div id="detailSheetBody">
                             <!-- Nội dung chi tiết được render động -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Sheet: Đăng nhập hệ thống Mobile -->
+                <div class="modal-overlay" id="modalMobileLogin">
+                    <div class="bottom-sheet-content" style="max-height: 85vh; overflow-y: auto;">
+                        <div class="sheet-handle-bar"></div>
+                        <div class="sheet-header">
+                            <div class="sheet-title">🔐 Đăng Nhập Quản Trị</div>
+                            <button class="btn-close-sheet" onclick="MobileApp.closeModals()">✕</button>
+                        </div>
+                        <div style="padding: 20px 16px;">
+                            <div id="mobileLoginError" style="display: none; background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; padding: 10px 12px; border-radius: 8px; font-size: 12.5px; margin-bottom: 14px; font-weight: 600;"></div>
+                            
+                            <form onsubmit="event.preventDefault(); MobileApp.handleMobileLoginSubmit();">
+                                <div style="margin-bottom: 16px;">
+                                    <label style="display: block; font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 6px;">Tên đăng nhập / Email:</label>
+                                    <input type="text" id="mobileLoginUsername" class="form-input" placeholder="Nhập tên đăng nhập..." autocomplete="username" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <label style="display: block; font-weight: 700; font-size: 13px; color: #1e293b; margin-bottom: 6px;">Mật khẩu:</label>
+                                    <input type="password" id="mobileLoginPassword" class="form-input" placeholder="Nhập mật khẩu..." autocomplete="current-password" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                                </div>
+                                <div style="display: flex; gap: 10px;">
+                                    <button type="button" onclick="MobileApp.closeModals()" style="flex: 1; padding: 12px; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer;">
+                                        Hủy Bỏ
+                                    </button>
+                                    <button type="submit" style="flex: 2; padding: 12px; background: #1e40af; color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer;">
+                                        🔐 Đăng Nhập
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -262,8 +297,8 @@
     </div>
 
     <!-- Scripts cần thiết -->
-    <script src="js/data.js?v=20260902_3"></script>
-    <script src="js/storage.js?v=20260902_3"></script>
-    <script src="js/mobile.js?v=20260902_3"></script>
+    <script src="js/data.js?v=20260902_4"></script>
+    <script src="js/storage.js?v=20260902_4"></script>
+    <script src="js/mobile.js?v=20260902_4"></script>
 </body>
 </html>

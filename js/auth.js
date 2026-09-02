@@ -49,13 +49,13 @@ const AuthService = {
         );
 
         if (!found) {
-            return { success: false, message: "Tên đăng nhập không đúng hoặc không có trong 06 tài khoản được cấp quyền!" };
+            return { success: false, message: "Tên đăng nhập hoặc mật khẩu không chính xác!" };
         }
 
         // Kiểm tra mật khẩu
         const validPassword = (found.password || "12345678@").trim();
         if (cleanPassword !== validPassword && cleanPassword !== "12345678@" && cleanPassword !== "123456" && cleanPassword !== "password123") {
-            return { success: false, message: "Mật khẩu không chính xác! Vui lòng kiểm tra lại." };
+            return { success: false, message: "Tên đăng nhập hoặc mật khẩu không chính xác!" };
         }
 
         this.setCurrentUser(found);

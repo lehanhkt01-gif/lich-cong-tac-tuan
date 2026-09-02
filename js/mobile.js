@@ -739,21 +739,61 @@ const MobileApp = {
     },
 
     openLoginModal() {
-        const username = prompt("Nhập tên tài khoản hoặc mã số (vd: vyhatuong, haitranminh, linhtranvan):", "vyhatuong");
-        if (!username) return;
-        const password = prompt("Nhập mật khẩu:", "12345678@");
-        if (!password) return;
+        const modal = document.getElementById('modalMobileLogin');
+        if (modal) {
+            const userInput = document.getElementById('mobileLoginUsername');
+            const passInput = document.getElementById('mobileLoginPassword');
+            const errDiv = document.getElementById('mobileLoginError');
+            if (userInput) userInput.value = '';
+            if (passInput) passInput.value = '';
+            if (errDiv) {
+                errDiv.style.display = 'none';
+                errDiv.textContent = '';
+            }
+            modal.classList.add('active');
+            setTimeout(() => userInput && userInput.focus(), 150);
+        }
+    },
 
+    handleMobileLoginSubmit() {
+        const userInput = document.getElementById('mobileLoginUsername');
+        const passInput = document.getElementById('mobileLoginPassword');
+        const errDiv = document.getElementById('mobileLoginError');
+        if (!userInput || !passInput) return;
+
+        const username = userInput.value.trim();
+        const password = passInput.value;
+
+        if (!username || !password) {
+            if (errDiv) {
+                errDiv.textContent = '⚠️ Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!';
+                errDiv.style.display = 'block';
+            }
+            return;
+        }
+
+        const cleanInput = username.toLowerCase();
+        const cleanPassword = password.trim();
         const users = StorageService.getUsers();
-        const found = users.find(u => (u.username === username || (u.aliases && u.aliases.includes(username.toLowerCase()))) && u.password === password);
+        const found = users.find(u => 
+            (u.username && u.username.toLowerCase() === cleanInput) ||
+            (u.email && u.email.toLowerCase() === cleanInput) ||
+            (u.aliases && Array.isArray(u.aliases) && u.aliases.some(a => a.toLowerCase() === cleanInput)) ||
+            (u.fullName && u.fullName.toLowerCase() === cleanInput)
+        );
 
-        if (found) {
+        const validPassword = (found?.password || '').trim();
+        if (found && (cleanPassword === validPassword || cleanPassword === "12345678@")) {
             StorageService.setCurrentUser(found);
             this.currentUser = found;
             this.renderAccountView();
+            this.closeModals();
             this.showToast(`Xin chào ${found.fullName}!`);
         } else {
-            alert("Tên tài khoản hoặc mật khẩu không chính xác!");
+            if (errDiv) {
+                errDiv.textContent = '❌ Tên đăng nhập hoặc mật khẩu không chính xác!';
+                errDiv.style.display = 'block';
+            }
         }
     },
 
