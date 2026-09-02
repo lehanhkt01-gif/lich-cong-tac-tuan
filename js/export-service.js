@@ -135,27 +135,6 @@ const ExportService = {
                     <p style="margin-top:10pt; font-style:italic; font-size:12pt;">
                         * Ghi chú: Các đơn vị được phân công chuẩn bị nội dung chủ động phối hợp Văn phòng gửi tài liệu họp trước 01 ngày. Lịch này thay cho giấy mời đối với các cuộc họp nội bộ.
                     </p>
-
-                    <!-- PHẦN KÝ DUYỆT VÀ NƠI NHẬN -->
-                    <table width="100%" cellpadding="0" cellspacing="0" style="border:none; margin-top:20pt;">
-                        <tr>
-                            <td width="50%" style="vertical-align:top; font-size:11pt;">
-                                <p style="font-weight:bold; font-style:italic; text-decoration:underline;">Nơi nhận:</p>
-                                <p>- TT Huyện ủy, HĐND, UBND huyện (để b/c);</p>
-                                <p>- TT Đảng ủy, TT HĐND, Lãnh đạo UBND xã;</p>
-                                <p>- UBMTTQ và các đoàn thể xã;</p>
-                                <p>- Các ban ngành, Công an, BCH QS xã;</p>
-                                <p>- Trưởng các thôn, buôn;</p>
-                                <p>- Lưu: VT, VP.</p>
-                            </td>
-                            <td width="50%" align="center" style="vertical-align:top;">
-                                <p style="font-weight:bold; font-size:12pt; text-transform:uppercase;">TL. CHỦ TỊCH</p>
-                                <p style="font-weight:bold; font-size:13pt; text-transform:uppercase;">CHÁNH VĂN PHÒNG</p>
-                                <div style="height:60pt;"></div>
-                                <p style="font-weight:bold; font-size:13pt;">Hà Tường Vi</p>
-                            </td>
-                        </tr>
-                    </table>
                 </div>
             </body>
             </html>
