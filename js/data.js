@@ -831,6 +831,84 @@ const INITIAL_DATA = {
 
     schedules: [
         {
+            id: "sched_2026_w36",
+            year: 2026,
+            weekNumber: 36,
+            title: "Lịch công tác tuần 36 năm 2026",
+            startDate: "2026-08-31",
+            endDate: "2026-09-06",
+            status: "published",
+            lastUpdated: "2026-09-02 08:30",
+            updatedBy: "Hà Tường Vi (Super Admin (Chánh Văn phòng))",
+            approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
+            note: "Lịch công tác tuần 36.",
+            items: [
+                {
+                    id: "item_1788266460531_387",
+                    dayOfWeek: "Thứ Năm",
+                    date: "2026-09-03",
+                    time: "08h00",
+                    bloc: "MTTQ",
+                    content: "test",
+                    location: "Phòng họp Mặt trận",
+                    leader: "Đ/c Lê Hồng Hạnh - Chủ tịch Ủy ban MTTQ xã",
+                    participants: "Cán bộ cơ quan",
+                    vehicle: "Tự túc phương tiện",
+                    attachment: {
+                        id: "doc_gm_1788266456453",
+                        name: "644307113_2097890564337589_5736284302502780288_n (1).jpg",
+                        badge: "📄 GM (644307113_20978905...)",
+                        size: "472 KB",
+                        type: "image/jpeg",
+                        uploadDate: "2026-09-01 12:40",
+                        uploader: "Hà Tường Vi (Super Admin (Chánh Văn phòng))"
+                    }
+                },
+                {
+                    id: "item_1788266640514_578",
+                    dayOfWeek: "Thứ Năm",
+                    date: "2026-09-03",
+                    time: "10h00",
+                    bloc: "Đảng ủy",
+                    content: "Họp Đảng ủy",
+                    location: "Hội trường lớn UBND xã",
+                    leader: "Đ/c Đỗ Xuân Dũng - Bí thư Đảng ủy, Chủ tịch HĐND xã",
+                    participants: "Toàn thể BCH Đảng bộ",
+                    vehicle: "Tự túc phương tiện",
+                    attachment: {
+                        id: "doc_gm_1788266638279",
+                        name: "Gemini_Generated_Image_4h5iy4h5iy4h5iy4.png",
+                        badge: "📄 GM (Gemini_Generated_I...)",
+                        size: "6419 KB",
+                        type: "image/png",
+                        uploadDate: "2026-09-01 12:43",
+                        uploader: "Hà Tường Vi (Super Admin (Chánh Văn phòng))"
+                    }
+                },
+                {
+                    id: "item_1788266562727_694",
+                    dayOfWeek: "Thứ Năm",
+                    date: "2026-09-03",
+                    time: "14h00",
+                    bloc: "UBND",
+                    content: "Họp UBND",
+                    location: "Phòng họp 01 UBND",
+                    leader: "Đ/c Nguyễn Bá Bân - Chủ tịch UBND xã",
+                    participants: "Lãnh đạo UBND xã và các công chức chuyên môn liên quan.",
+                    vehicle: "Tự túc phương tiện",
+                    attachment: {
+                        id: "doc_gm_1788266548190",
+                        name: "Gemini_Generated_Image_4h5iy4h5iy4h5iy4.png",
+                        badge: "📄 GM (Gemini_Generated_I...)",
+                        size: "6419 KB",
+                        type: "image/png",
+                        uploadDate: "2026-09-01 12:42",
+                        uploader: "Hà Tường Vi (Super Admin (Chánh Văn phòng))"
+                    }
+                }
+            ]
+        },
+        {
             id: "sched_2026_w35",
             year: 2026,
             weekNumber: 35,

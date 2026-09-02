@@ -1,7 +1,6 @@
-/**
- * TẦNG LƯU TRỮ DỮ LIỆU - STORAGE ENGINE
- * Quản lý LocalStorage và State cho Cổng thông tin điều hành
- */
+const API_BASE_URL = (typeof window !== 'undefined' && window.location.hostname.includes('github.io'))
+    ? 'https://lichcongtac.easupso.com'
+    : '';
 
 const STORAGE_KEYS = {
     ORGANIZATION: "easup_portal_organization",
@@ -401,7 +400,7 @@ const StorageService = {
 
     async persistScheduleToServer(schedule) {
         try {
-            await fetch('/api/schedules', {
+            await fetch(`${API_BASE_URL}/api/schedules`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(schedule)
@@ -413,7 +412,7 @@ const StorageService = {
 
     async persistItemToServer(weekId, item) {
         try {
-            await fetch('/api/schedules/item', {
+            await fetch(`${API_BASE_URL}/api/schedules/item`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ weekId, item })
@@ -425,7 +424,7 @@ const StorageService = {
 
     async deleteItemFromServer(weekId, itemId) {
         try {
-            await fetch('/api/schedules/delete-item', {
+            await fetch(`${API_BASE_URL}/api/schedules/delete-item`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ weekId, itemId })
@@ -440,7 +439,7 @@ const StorageService = {
     // =========================================================================
     async getBackupsList() {
         try {
-            const res = await fetch('/api/backups', { cache: 'no-store' });
+            const res = await fetch(`${API_BASE_URL}/api/backups`, { cache: 'no-store' });
             if (res.ok) return await res.json();
         } catch (e) {
             console.error("Lỗi lấy danh sách sao lưu:", e);
@@ -450,7 +449,7 @@ const StorageService = {
 
     async restoreFromBackupFile(filename) {
         try {
-            const res = await fetch('/api/backups/restore', {
+            const res = await fetch(`${API_BASE_URL}/api/backups/restore`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ filename })
@@ -468,7 +467,7 @@ const StorageService = {
 
     async createManualBackup(tag = "manual") {
         try {
-            const res = await fetch('/api/backups/create', {
+            const res = await fetch(`${API_BASE_URL}/api/backups/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ tag })
@@ -481,7 +480,7 @@ const StorageService = {
 
     async importBackupSchedules(schedules) {
         try {
-            const res = await fetch('/api/backups/import', {
+            const res = await fetch(`${API_BASE_URL}/api/backups/import`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ schedules })
@@ -773,7 +772,7 @@ const StorageService = {
 
     async syncWithServer() {
         try {
-            const res = await fetch('/api/schedules', { cache: 'no-store' });
+            const res = await fetch(`${API_BASE_URL}/api/schedules`, { cache: 'no-store' });
             if (res.ok) {
                 const serverSchedules = await res.json();
                 if (Array.isArray(serverSchedules) && serverSchedules.length > 0) {
@@ -792,7 +791,7 @@ const StorageService = {
 
     async restoreAllDataFromServer() {
         try {
-            const res = await fetch('/api/schedules', { cache: 'no-store' });
+            const res = await fetch(`${API_BASE_URL}/api/schedules`, { cache: 'no-store' });
             if (!res.ok) throw new Error("Không thể kết nối máy chủ");
             const serverSchedules = await res.json();
             if (Array.isArray(serverSchedules) && serverSchedules.length > 0) {
@@ -800,7 +799,7 @@ const StorageService = {
             }
             
             try {
-                const resCadres = await fetch('/api/cadres', { cache: 'no-store' });
+                const resCadres = await fetch(`${API_BASE_URL}/api/cadres`, { cache: 'no-store' });
                 if (resCadres.ok) {
                     const cadres = await resCadres.json();
                     if (Array.isArray(cadres) && cadres.length > 0) {
@@ -815,64 +814,6 @@ const StorageService = {
             };
         } catch (e) {
             return { success: false, message: "Lỗi kết nối máy chủ: " + e.message };
-        }
-    },
-
-    async getBackupsList() {
-        try {
-            const res = await fetch('/api/backups', { cache: 'no-store' });
-            if (res.ok) return await res.json();
-        } catch (e) {}
-        return [];
-    },
-
-    async restoreFromBackupFile(filename) {
-        try {
-            const res = await fetch('/api/backups/restore', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ filename })
-            });
-            const data = await res.json();
-            if (data.success && data.schedules) {
-                this.saveSchedules(data.schedules);
-                return { success: true, message: `Đã khôi phục toàn bộ dữ liệu từ bản sao lưu ${filename}!` };
-            }
-            return { success: false, message: data.message || "Khôi phục thất bại" };
-        } catch (e) {
-            return { success: false, message: "Lỗi kết nối: " + e.message };
-        }
-    },
-
-    async createManualBackup(tag = "manual") {
-        try {
-            const res = await fetch('/api/backups/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tag })
-            });
-            return await res.json();
-        } catch (e) {
-            return { success: false, error: e.message };
-        }
-    },
-
-    async importBackupSchedules(schedules) {
-        try {
-            const res = await fetch('/api/backups/import', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ schedules })
-            });
-            const data = await res.json();
-            if (data.success) {
-                this.saveSchedules(schedules);
-                return { success: true, message: "Đã nhập và đồng bộ toàn bộ dữ liệu thành công!" };
-            }
-            return { success: false, message: data.message || "Lỗi nhập dữ liệu" };
-        } catch (e) {
-            this.saveSchedules(schedules);
-            return { success: true, message: "Đã lưu dữ liệu vào bộ nhớ cục bộ!" };
         }
     },
 
