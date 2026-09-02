@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 HỆ THỐNG MÁY CHỦ DỮ LIỆU & ĐIỀU HÀNH LỊCH CÔNG TÁC TUẦN UBND XÃ EA SÚP
-Tích hợp: Static File Server + REST API Dữ liệu vĩnh viễn (Server-side Persistence)
+Tích hợp: Static File Server + REST API Dữ liệu vĩnh viễn + Bộ Sao lưu & Khôi phục (Backup & Restore Engine)
 """
 
 import http.server
@@ -11,14 +11,19 @@ import json
 import os
 import mimetypes
 import urllib.parse
+import threading
+import shutil
+import glob
 from datetime import datetime, timedelta
 
 PORT = int(os.environ.get("PORT", 80))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
+BACKUPS_DIR = os.path.join(DATA_DIR, "backups")
 UPLOADS_DIR = os.path.join(DATA_DIR, "uploads")
 
 os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(BACKUPS_DIR, exist_ok=True)
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
 SCHEDULES_FILE = os.path.join(DATA_DIR, "schedules.json")
@@ -26,7 +31,62 @@ CADRES_FILE = os.path.join(DATA_DIR, "cadres.json")
 AUDIT_LOGS_FILE = os.path.join(DATA_DIR, "audit_logs.json")
 ORGANIZATION_FILE = os.path.join(DATA_DIR, "organization.json")
 
-# Đảm bảo có sẵn các tệp JSON khởi tạo nếu chưa có
+# Khóa luồng toàn cục (Thread Lock) đảm bảo chống xung đột dữ liệu đồng thời (Race condition)
+DATA_LOCK = threading.Lock()
+
+def create_backup_snapshot(source_file, tag="auto"):
+    """Tạo bản sao lưu snapshot tự động có dấu thời gian"""
+    if not os.path.exists(source_file) or os.path.getsize(source_file) == 0:
+        return None
+    try:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:19]
+        base_name = os.path.splitext(os.path.basename(source_file))[0]
+        backup_filename = f"{base_name}_{timestamp}_{tag}.json"
+        backup_path = os.path.join(BACKUPS_DIR, backup_filename)
+        shutil.copy2(source_file, backup_path)
+
+        # Giữ tối đa 50 bản sao lưu gần nhất, xóa bản cũ hơn
+        all_backups = sorted(glob.glob(os.path.join(BACKUPS_DIR, f"{base_name}_*.json")), key=os.path.getmtime)
+        if len(all_backups) > 50:
+            for old_file in all_backups[:-50]:
+                try:
+                    os.remove(old_file)
+                except Exception:
+                    pass
+        return backup_filename
+    except Exception as e:
+        print(f"Lỗi tạo bản sao lưu snapshot: {e}")
+        return None
+
+def read_json_file(file_path, default=None):
+    with DATA_LOCK:
+        if not os.path.exists(file_path):
+            return default if default is not None else []
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error reading {file_path}: {e}")
+            return default if default is not None else []
+
+def write_json_file(file_path, data, backup=True):
+    with DATA_LOCK:
+        try:
+            # Tự động tạo bản sao lưu trước khi ghi đè nếu tệp đang có dữ liệu
+            if backup and os.path.exists(file_path) and os.path.getsize(file_path) > 10:
+                create_backup_snapshot(file_path, "auto")
+
+            # Ghi nguyên tử (Atomic Write) qua tệp tạm rồi đổi tên để không bao giờ bị hỏng tệp
+            tmp_file = f"{file_path}.tmp_{os.getpid()}_{datetime.now().timestamp()}"
+            with open(tmp_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            os.replace(tmp_file, file_path)
+            return True
+        except Exception as e:
+            print(f"Error writing {file_path}: {e}")
+            return False
+
+# Khởi tạo tệp dữ liệu mặc định nếu chưa có
 def init_data_files():
     now = datetime.now()
     year, week_no, day = now.isocalendar()
@@ -50,33 +110,12 @@ def init_data_files():
                 "items": []
             }
         ]
-        with open(SCHEDULES_FILE, "w", encoding="utf-8") as f:
-            json.dump(default_schedules, f, ensure_ascii=False, indent=2)
+        write_json_file(SCHEDULES_FILE, default_schedules, backup=False)
 
     if not os.path.exists(AUDIT_LOGS_FILE):
-        with open(AUDIT_LOGS_FILE, "w", encoding="utf-8") as f:
-            json.dump([], f, ensure_ascii=False, indent=2)
+        write_json_file(AUDIT_LOGS_FILE, [], backup=False)
 
 init_data_files()
-
-def read_json_file(file_path, default=None):
-    if not os.path.exists(file_path):
-        return default if default is not None else []
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"Error reading {file_path}: {e}")
-        return default if default is not None else []
-
-def write_json_file(file_path, data):
-    try:
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        return True
-    except Exception as e:
-        print(f"Error writing {file_path}: {e}")
-        return False
 
 class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
@@ -127,8 +166,53 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
                     "items": []
                 }
                 schedules.insert(0, curr_sched)
-                write_json_file(SCHEDULES_FILE, schedules)
+                write_json_file(SCHEDULES_FILE, schedules, backup=False)
             self.send_json_response(schedules)
+            return
+
+        # API Danh sách điểm sao lưu (Restore Points)
+        if path == "/api/backups":
+            backup_files = sorted(glob.glob(os.path.join(BACKUPS_DIR, "*.json")), key=os.path.getmtime, reverse=True)
+            result = []
+            for bf in backup_files:
+                try:
+                    stat = os.stat(bf)
+                    fn = os.path.basename(bf)
+                    mtime_str = datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    item_count = 0
+                    week_count = 0
+                    with open(bf, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        if isinstance(data, list):
+                            week_count = len(data)
+                            for s in data:
+                                if isinstance(s, dict) and "items" in s and isinstance(s["items"], list):
+                                    item_count += len(s["items"])
+
+                    result.append({
+                        "filename": fn,
+                        "time": mtime_str,
+                        "size": f"{round(stat.st_size / 1024, 1)} KB",
+                        "weekCount": week_count,
+                        "itemCount": item_count
+                    })
+                except Exception:
+                    pass
+            self.send_json_response(result)
+            return
+
+        # Tải tệp sao lưu trực tiếp
+        if path == "/api/backups/export":
+            schedules = read_json_file(SCHEDULES_FILE, [])
+            json_bytes = json.dumps(schedules, ensure_ascii=False, indent=2).encode('utf-8')
+            filename = f"schedules_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
+            self.send_header('Content-Length', str(len(json_bytes)))
+            self.end_headers()
+            self.wfile.write(json_bytes)
             return
 
         if path == "/api/cadres":
@@ -161,6 +245,47 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
         except Exception:
             body = {}
 
+        # API Khôi phục từ một bản sao lưu (Restore Backup Snapshot)
+        if path == "/api/backups/restore":
+            filename = body.get("filename")
+            if not filename:
+                self.send_json_response({"error": "Thiếu tên tệp khôi phục"}, status=400)
+                return
+            target_backup = os.path.join(BACKUPS_DIR, os.path.basename(filename))
+            if not os.path.exists(target_backup):
+                self.send_json_response({"error": "Không tìm thấy bản sao lưu"}, status=404)
+                return
+
+            try:
+                with open(target_backup, "r", encoding="utf-8") as f:
+                    restored_data = json.load(f)
+                write_json_file(SCHEDULES_FILE, restored_data, backup=True)
+                self.send_json_response({
+                    "success": True,
+                    "message": f"Khôi phục thành công từ bản sao lưu {filename}",
+                    "schedules": restored_data
+                })
+            except Exception as e:
+                self.send_json_response({"error": f"Lỗi khôi phục: {str(e)}"}, status=500)
+            return
+
+        # API Tạo bản sao lưu thủ công (Create Snapshot Now)
+        if path == "/api/backups/create":
+            tag = body.get("tag", "manual")
+            fn = create_backup_snapshot(SCHEDULES_FILE, tag)
+            self.send_json_response({"success": True, "filename": fn})
+            return
+
+        # API Nhập khôi phục từ tệp JSON (Import & Restore from JSON payload)
+        if path == "/api/backups/import":
+            schedules = body.get("schedules")
+            if not schedules or not isinstance(schedules, list):
+                self.send_json_response({"error": "Dữ liệu JSON không hợp lệ"}, status=400)
+                return
+            write_json_file(SCHEDULES_FILE, schedules, backup=True)
+            self.send_json_response({"success": True, "message": "Đã nhập và khôi phục dữ liệu thành công!", "schedules": schedules})
+            return
+
         if path == "/api/schedules":
             # Ghi đè toàn bộ hoặc cập nhật 1 lịch tuần
             schedules = read_json_file(SCHEDULES_FILE, [])
@@ -172,7 +297,7 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
                     schedules[idx] = body
                 else:
                     schedules.insert(0, body)
-            write_json_file(SCHEDULES_FILE, schedules)
+            write_json_file(SCHEDULES_FILE, schedules, backup=True)
             self.send_json_response({"success": True, "schedules": schedules})
             return
 
@@ -205,7 +330,7 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
                 sched["items"].append(item)
 
             sched["lastUpdated"] = datetime.now().strftime("%Y-%m-%d %H:%M")
-            write_json_file(SCHEDULES_FILE, schedules)
+            write_json_file(SCHEDULES_FILE, schedules, backup=True)
             self.send_json_response({"success": True, "schedule": sched, "item": item})
             return
 
@@ -217,7 +342,7 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
             if sched and "items" in sched:
                 sched["items"] = [it for it in sched["items"] if it.get("id") != item_id]
                 sched["lastUpdated"] = datetime.now().strftime("%Y-%m-%d %H:%M")
-                write_json_file(SCHEDULES_FILE, schedules)
+                write_json_file(SCHEDULES_FILE, schedules, backup=True)
             self.send_json_response({"success": True, "schedule": sched})
             return
 
@@ -227,19 +352,19 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
                 logs.insert(0, body)
             elif isinstance(body, list):
                 logs = body
-            write_json_file(AUDIT_LOGS_FILE, logs)
+            write_json_file(AUDIT_LOGS_FILE, logs, backup=False)
             self.send_json_response({"success": True})
             return
 
         if path == "/api/cadres":
             if isinstance(body, list):
-                write_json_file(CADRES_FILE, body)
+                write_json_file(CADRES_FILE, body, backup=False)
             self.send_json_response({"success": True})
             return
 
         if path == "/api/organization":
             if isinstance(body, dict):
-                write_json_file(ORGANIZATION_FILE, body)
+                write_json_file(ORGANIZATION_FILE, body, backup=False)
             self.send_json_response({"success": True})
             return
 
@@ -258,7 +383,7 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
             if sched and "items" in sched:
                 sched["items"] = [it for it in sched["items"] if it.get("id") != item_id]
                 sched["lastUpdated"] = datetime.now().strftime("%Y-%m-%d %H:%M")
-                write_json_file(SCHEDULES_FILE, schedules)
+                write_json_file(SCHEDULES_FILE, schedules, backup=True)
             self.send_json_response({"success": True, "schedule": sched})
             return
 

@@ -1296,6 +1296,128 @@ const App = {
     },
 
     // =========================================================================
+    // TRUNG TÂM SAO LƯU & KHÔI PHỤC DỮ LIỆU (BACKUP & RESTORE CONTROLLER)
+    // =========================================================================
+    async openBackupModal() {
+        this.openModal("modalBackupRestore");
+        await this.renderBackupList();
+    },
+
+    async renderBackupList() {
+        const container = document.getElementById("backupListContainer");
+        if (!container) return;
+        container.innerHTML = `<div style="text-align: center; color: #64748B; padding: 15px; font-size: 13px;">⏳ Đang tải danh sách điểm sao lưu...</div>`;
+
+        const backups = await StorageService.getBackupsList();
+        if (!backups || backups.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: #64748B; padding: 15px; font-size: 13px;">Chưa có bản sao lưu nào được ghi nhận.</div>`;
+            return;
+        }
+
+        let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+        backups.forEach(b => {
+            html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #E2E8F0; padding: 8px 12px; border-radius: 6px;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 13px; color: #0F172A;">🕒 ${escapeHTML(b.time)}</div>
+                        <div style="font-size: 11.5px; color: #64748B;">Tệp: <code>${escapeHTML(b.filename)}</code> • ${b.size} • <b>${b.itemCount} mục công tác</b> (${b.weekCount} tuần)</div>
+                    </div>
+                    <button type="button" class="btn-sm" onclick="App.handleRestoreBackup('${escapeHTML(b.filename)}')" style="background: #10B981; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 12px;">
+                        🔄 Khôi Phục
+                    </button>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    },
+
+    handleQuickRestoreWeek36() {
+        if (confirm("Bạn có chắc muốn tự động khôi phục 3 mục công tác đã lập (Họp Đảng ủy, Họp UBND, MTTQ) cho Tuần 36?")) {
+            StorageService.restorePresetItemsWeek36();
+            this.currentWeek = 36;
+            this.currentYear = 2026;
+            this.populateWeekOptions();
+            this.loadCurrentSchedule();
+            this.renderAll();
+            this.showBackupAlert("✅ Đã khôi phục thành công 3 mục công tác Tuần 36!", "success");
+            this.showToast("Khôi phục thành công 3 mục công việc Tuần 36!", "success");
+        }
+    },
+
+    async handleRestoreBackup(filename) {
+        if (!confirm(`Bạn có chắc chắn muốn khôi phục dữ liệu từ bản sao lưu:\n${filename}?\nDữ liệu hiện tại sẽ được thay thế bằng bản sao lưu này.`)) {
+            return;
+        }
+
+        const res = await StorageService.restoreFromBackupFile(filename);
+        if (res.success) {
+            this.loadCurrentSchedule();
+            this.populateWeekOptions();
+            this.renderAll();
+            this.showBackupAlert("✅ " + res.message, "success");
+            this.showToast("Khôi phục dữ liệu thành công!", "success");
+            await this.renderBackupList();
+        } else {
+            this.showBackupAlert("❌ " + res.message, "error");
+        }
+    },
+
+    async handleCreateManualBackup() {
+        const res = await StorageService.createManualBackup("manual");
+        if (res.success) {
+            this.showBackupAlert(`✅ Đã tạo điểm sao lưu mới: ${res.filename}`, "success");
+            this.showToast("Đã tạo điểm sao lưu an toàn!", "success");
+            await this.renderBackupList();
+        } else {
+            this.showBackupAlert("❌ Lỗi tạo bản sao lưu", "error");
+        }
+    },
+
+    handleImportBackupFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                if (!Array.isArray(parsed)) {
+                    alert("Tệp JSON không đúng định dạng danh sách lịch tuần.");
+                    return;
+                }
+                const res = await StorageService.importBackupSchedules(parsed);
+                if (res.success) {
+                    this.loadCurrentSchedule();
+                    this.populateWeekOptions();
+                    this.renderAll();
+                    this.showBackupAlert("✅ Đã nhập và khôi phục dữ liệu từ tệp thành công!", "success");
+                    this.showToast("Đã nhập dữ liệu thành công!", "success");
+                    await this.renderBackupList();
+                } else {
+                    this.showBackupAlert("❌ " + res.message, "error");
+                }
+            } catch (err) {
+                alert("Lỗi đọc tệp JSON: " + err.message);
+            }
+        };
+        reader.readAsText(file);
+    },
+
+    showBackupAlert(msg, type = "success") {
+        const alertEl = document.getElementById("backupAlertMsg");
+        if (!alertEl) return;
+        alertEl.style.display = "block";
+        alertEl.style.background = type === "success" ? "#ECFDF5" : "#FEF2F2";
+        alertEl.style.border = type === "success" ? "1px solid #A7F3D0" : "1px solid #FECACA";
+        alertEl.style.color = type === "success" ? "#065F46" : "#DC2626";
+        alertEl.innerHTML = msg;
+        setTimeout(() => {
+            if (alertEl) alertEl.style.display = "none";
+        }, 6000);
+    },
+
+    // =========================================================================
     // UTILS & TOAST
     // =========================================================================
     openModal(modalId) {

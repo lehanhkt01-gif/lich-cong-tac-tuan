@@ -194,13 +194,21 @@
                                 <span>›</span>
                             </a>
 
-                            <div class="account-menu-item" onclick="if(confirm('Bạn có chắc muốn khôi phục dữ liệu mẫu ban đầu?')){ StorageService.resetToDefault(); MobileApp.loadCurrentWeekData(); MobileApp.renderAll(); MobileApp.showToast('Đã khôi phục dữ liệu mẫu!'); }">
+                            <div class="account-menu-item" onclick="if(confirm('Khôi phục 3 mục công tác đã lập (Họp Đảng ủy, Họp UBND, MTTQ) cho Tuần 36?')){ StorageService.restorePresetItemsWeek36(); MobileApp.currentWeek = 36; MobileApp.loadCurrentWeekData(); MobileApp.renderAll(); MobileApp.showToast('✅ Đã khôi phục 3 mục công tác Tuần 36!'); }">
                                 <div class="menu-item-left">
-                                    <span class="menu-item-icon">🔄</span>
-                                    <span>Khôi Phục Dữ Liệu Gốc</span>
+                                    <span class="menu-item-icon">⚡</span>
+                                    <span style="color: #b91c1c; font-weight: 700;">Cứu Hộ 3 Mục Tuần 36</span>
                                 </div>
                                 <span>›</span>
                             </div>
+
+                            <a href="/api/backups/export" target="_blank" class="account-menu-item">
+                                <div class="menu-item-left">
+                                    <span class="menu-item-icon">💾</span>
+                                    <span>Tải Tệp Sao Lưu Dự Phòng (.JSON)</span>
+                                </div>
+                                <span>›</span>
+                            </a>
                         </div>
                     </div>
                 </main>
@@ -269,8 +277,8 @@
     </div>
 
     <!-- Scripts cần thiết -->
-    <script src="js/data.js?v=20260901_5"></script>
-    <script src="js/storage.js?v=20260901_5"></script>
-    <script src="js/mobile.js?v=20260901_5"></script>
+    <script src="js/data.js?v=20260902_1"></script>
+    <script src="js/storage.js?v=20260902_1"></script>
+    <script src="js/mobile.js?v=20260902_1"></script>
 </body>
 </html>
