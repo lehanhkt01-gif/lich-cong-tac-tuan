@@ -136,7 +136,7 @@
             </ul>
 
             <div class="nav-actions-quick">
-                <button type="button" class="btn-restore-data" onclick="App.openBackupModal()" style="background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; padding: 7px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s;" title="Trung tâm Sao lưu & Khôi phục dữ liệu an toàn">
+                <button type="button" class="btn-restore-data auth-require-login" onclick="App.openBackupModal()" style="display: none; background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; padding: 7px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; align-items: center; gap: 6px; transition: all 0.2s;" title="Trung tâm Sao lưu & Khôi phục dữ liệu an toàn">
                     <span>🔄</span> Khôi Phục Dữ Liệu
                 </button>
                 <a href="mobile.html" class="btn-mobile-portal" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; padding: 7px 12px; border-radius: 6px; font-weight: 700; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;" title="Mở giao diện Điện thoại di động dạng thẻ">
@@ -884,9 +884,9 @@
                         <span>💾</span> XUẤT / NHẬP TỆP DỮ LIỆU DỰ PHÒNG (.JSON)
                     </div>
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-                        <a href="/api/backups/export" target="_blank" class="btn-sm" style="background: #059669; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
+                        <button type="button" class="btn-sm" onclick="App.exportBackupJSON()" style="background: #059669; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 13px;">
                             <span>📥</span> Tải Tệp Sao Lưu Về Máy (.JSON)
-                        </a>
+                        </button>
 
                         <label class="btn-sm" style="background: #475569; color: #fff; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; margin: 0;">
                             <span>📤</span> Nhập Tệp Sao Lưu Từ Máy
@@ -903,12 +903,12 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20260902_2"></script>
-    <script src="js/storage.js?v=20260902_2"></script>
-    <script src="js/auth.js?v=20260902_2"></script>
-    <script src="js/audit.js?v=20260902_2"></script>
-    <script src="js/email-service.js?v=20260902_2"></script>
-    <script src="js/export-service.js?v=20260902_2"></script>
-    <script src="js/app.js?v=20260902_2"></script>
+    <script src="js/data.js?v=20260902_3"></script>
+    <script src="js/storage.js?v=20260902_3"></script>
+    <script src="js/auth.js?v=20260902_3"></script>
+    <script src="js/audit.js?v=20260902_3"></script>
+    <script src="js/email-service.js?v=20260902_3"></script>
+    <script src="js/export-service.js?v=20260902_3"></script>
+    <script src="js/app.js?v=20260902_3"></script>
 </body>
 </html>

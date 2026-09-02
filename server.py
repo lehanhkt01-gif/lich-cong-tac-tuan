@@ -208,7 +208,7 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
             json_bytes = json.dumps(schedules, ensure_ascii=False, indent=2).encode('utf-8')
             filename = f"schedules_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             self.send_response(200)
-            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Type', 'application/octet-stream')
             self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
             self.send_header('Content-Length', str(len(json_bytes)))
             self.end_headers()

@@ -320,6 +320,10 @@ const StorageService = {
         }
     },
 
+    logout() {
+        this.setCurrentUser(null);
+    },
+
     // Lấy danh bạ cán bộ
     getCadres() {
         const data = localStorage.getItem(STORAGE_KEYS.CADRES);

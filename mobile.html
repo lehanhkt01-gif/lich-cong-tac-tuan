@@ -193,22 +193,6 @@
                                 </div>
                                 <span>›</span>
                             </a>
-
-                            <div class="account-menu-item" onclick="MobileApp.openRestoreModal()">
-                                <div class="menu-item-left">
-                                    <span class="menu-item-icon">🔄</span>
-                                    <span style="color: #b91c1c; font-weight: 700;">Khôi Phục Dữ Liệu</span>
-                                </div>
-                                <span>›</span>
-                            </div>
-
-                            <a href="/api/backups/export" target="_blank" class="account-menu-item">
-                                <div class="menu-item-left">
-                                    <span class="menu-item-icon">💾</span>
-                                    <span>Tải Tệp Sao Lưu Dự Phòng (.JSON)</span>
-                                </div>
-                                <span>›</span>
-                            </a>
                         </div>
                     </div>
                 </main>
@@ -267,48 +251,6 @@
                     </div>
                 </div>
 
-                <!-- Bottom Sheet: Khôi phục dữ liệu -->
-                <div class="modal-overlay" id="modalMobileRestore">
-                    <div class="bottom-sheet-content" style="max-height: 85vh; overflow-y: auto;">
-                        <div class="sheet-handle-bar"></div>
-                        <div class="sheet-header">
-                            <div class="sheet-title">🔄 Khôi Phục Dữ Liệu</div>
-                            <button class="btn-close-sheet" onclick="MobileApp.closeModals()">✕</button>
-                        </div>
-                        <div style="padding: 16px;">
-                            <!-- Tùy chọn 1: Đồng bộ máy chủ -->
-                            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
-                                <div style="font-weight: 700; color: #1e40af; margin-bottom: 4px; font-size: 13.5px;">🔄 Đồng Bộ Từ Máy Chủ VPS</div>
-                                <div style="font-size: 12px; color: #3b82f6; margin-bottom: 8px;">Tải lại toàn bộ dữ liệu lịch mới nhất được lưu trữ an toàn trên máy chủ.</div>
-                                <button type="button" onclick="MobileApp.handleSyncFromServer()" style="width: 100%; padding: 9px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                                    Tải & Đồng Bộ Ngay
-                                </button>
-                            </div>
-
-                            <!-- Tùy chọn 2: Điểm sao lưu VPS -->
-                            <div style="margin-bottom: 12px;">
-                                <div style="font-weight: 700; color: #1e293b; margin-bottom: 6px; font-size: 13px;">🗄️ Các Bản Sao Lưu Trên Máy Chủ:</div>
-                                <div id="mobileBackupListContainer" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; max-height: 160px; overflow-y: auto;">
-                                    <div style="text-align: center; color: #64748b; font-size: 12px; padding: 10px;">Đang tải...</div>
-                                </div>
-                            </div>
-
-                            <!-- Tùy chọn 3: Khôi phục Tuần 36 -->
-                            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px; margin-bottom: 12px;">
-                                <div style="font-weight: 700; color: #92400e; margin-bottom: 4px; font-size: 13.5px;">⚡ Khôi Phục Dữ Liệu Tuần 36</div>
-                                <div style="font-size: 12px; color: #b45309; margin-bottom: 8px;">Lấy lại ngay 3 mục công tác đã lập (Họp Đảng ủy, Họp UBND, MTTQ).</div>
-                                <button type="button" onclick="MobileApp.handleQuickRestoreWeek36()" style="width: 100%; padding: 9px; background: #d97706; color: #fff; border: none; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer;">
-                                    Khôi Phục 3 Mục Tuần 36
-                                </button>
-                            </div>
-
-                            <!-- Tùy chọn 4: Tải tệp sao lưu -->
-                            <a href="/api/backups/export" target="_blank" style="display: block; text-align: center; padding: 10px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 13px;">
-                                💾 Tải Tệp Sao Lưu Dự Phòng (.JSON)
-                            </a>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Toast thông báo nổi -->
                 <div class="mobile-toast" id="mobileToast">
@@ -320,8 +262,8 @@
     </div>
 
     <!-- Scripts cần thiết -->
-    <script src="js/data.js?v=20260902_2"></script>
-    <script src="js/storage.js?v=20260902_2"></script>
-    <script src="js/mobile.js?v=20260902_2"></script>
+    <script src="js/data.js?v=20260902_3"></script>
+    <script src="js/storage.js?v=20260902_3"></script>
+    <script src="js/mobile.js?v=20260902_3"></script>
 </body>
 </html>

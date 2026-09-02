@@ -124,6 +124,10 @@ const App = {
         document.querySelectorAll(".auth-require-admin").forEach(el => {
             el.style.display = isAdmin ? "" : "none";
         });
+
+        document.querySelectorAll(".auth-require-login").forEach(el => {
+            el.style.display = isGuest ? "none" : "inline-flex";
+        });
     },
 
     setupEventListeners() {
@@ -1181,13 +1185,25 @@ const App = {
     },
 
     exportBackupJSON() {
-        const json = StorageService.exportAllDataJSON();
-        const blob = new Blob([json], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Backup_Lich_Cong_Tac_EaSup_${new Date().toISOString().substring(0, 10)}.json`;
-        a.click();
+        try {
+            const json = StorageService.exportAllDataJSON();
+            const blob = new Blob([json], { type: "application/json;charset=utf-8;" });
+            const now = new Date();
+            const filename = `Backup_Lich_Cong_Tac_EaSup_${now.toISOString().slice(0, 10)}.json`;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 1000);
+            this.showToast("Đã tải tệp sao lưu dữ liệu (.JSON) về máy thành công!", "success");
+        } catch (e) {
+            alert("Lỗi tải tệp sao lưu: " + e.message);
+        }
     },
 
     importBackupJSON(event) {
