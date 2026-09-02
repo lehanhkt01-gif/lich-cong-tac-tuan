@@ -718,7 +718,7 @@ const MobileApp = {
             if (avatarEl) avatarEl.textContent = u.avatar || '👨‍💼';
             if (loginBtn) loginBtn.innerHTML = `<span>🚪</span> Đăng Xuất`;
         } else {
-            if (nameEl) nameEl.textContent = "Khách vãng lai";
+            if (nameEl) nameEl.textContent = "Chế độ Khách";
             if (roleEl) roleEl.textContent = "Chế độ chỉ xem";
             if (emailEl) emailEl.textContent = "Chưa đăng nhập tài khoản";
             if (avatarEl) avatarEl.textContent = "👤";
