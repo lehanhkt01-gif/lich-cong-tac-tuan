@@ -1348,16 +1348,29 @@ const App = {
         container.innerHTML = html;
     },
 
-    handleQuickRestoreWeek36() {
-        if (confirm("Bạn có chắc muốn tự động khôi phục 3 mục công tác đã lập (Họp Đảng ủy, Họp UBND, MTTQ) cho Tuần 36?")) {
-            StorageService.restorePresetItemsWeek36();
-            this.currentWeek = 36;
-            this.currentYear = 2026;
-            this.populateWeekOptions();
+    async handleRestoreAllData() {
+        if (!confirm("Bạn có chắc chắn muốn khôi phục toàn bộ dữ liệu lịch công tác từ máy chủ VPS?")) {
+            return;
+        }
+
+        const btn = document.activeElement;
+        if (btn && btn.tagName === "BUTTON") btn.disabled = true;
+
+        this.showBackupAlert("⏳ Đang khôi phục toàn bộ dữ liệu từ máy chủ VPS...", "info");
+
+        const res = await StorageService.restoreAllDataFromServer();
+        if (btn && btn.tagName === "BUTTON") btn.disabled = false;
+
+        if (res.success) {
             this.loadCurrentSchedule();
+            this.populateWeekOptions();
             this.renderAll();
-            this.showBackupAlert("✅ Đã khôi phục thành công 3 mục công tác Tuần 36!", "success");
-            this.showToast("Khôi phục thành công 3 mục công việc Tuần 36!", "success");
+            this.showBackupAlert("✅ " + res.message, "success");
+            this.showToast("Khôi phục toàn bộ dữ liệu thành công!", "success");
+            await this.renderBackupList();
+        } else {
+            this.showBackupAlert("❌ " + res.message, "error");
+            this.showToast(res.message, "error");
         }
     },
 

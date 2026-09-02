@@ -762,6 +762,120 @@ const StorageService = {
         return JSON.stringify(fullBackup, null, 2);
     },
 
+    // =========================================================================
+    // ĐỒNG BỘ VÀ KHÔI PHỤC TOÀN BỘ DỮ LIỆU TỪ MÁY CHỦ VPS
+    // =========================================================================
+    saveCadres(cadres) {
+        if (Array.isArray(cadres)) {
+            localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(cadres));
+        }
+    },
+
+    async syncWithServer() {
+        try {
+            const res = await fetch('/api/schedules', { cache: 'no-store' });
+            if (res.ok) {
+                const serverSchedules = await res.json();
+                if (Array.isArray(serverSchedules) && serverSchedules.length > 0) {
+                    const localSchedules = this.getAllSchedules();
+                    const hasLocalItems = localSchedules.some(s => s.items && s.items.length > 0);
+                    const hasServerItems = serverSchedules.some(s => s.items && s.items.length > 0);
+                    if (hasServerItems || !hasLocalItems) {
+                        this.saveSchedules(serverSchedules);
+                    }
+                }
+            }
+        } catch (e) {
+            console.log("Offline mode / Chưa kết nối backend");
+        }
+    },
+
+    async restoreAllDataFromServer() {
+        try {
+            const res = await fetch('/api/schedules', { cache: 'no-store' });
+            if (!res.ok) throw new Error("Không thể kết nối máy chủ");
+            const serverSchedules = await res.json();
+            if (Array.isArray(serverSchedules) && serverSchedules.length > 0) {
+                this.saveSchedules(serverSchedules);
+            }
+            
+            try {
+                const resCadres = await fetch('/api/cadres', { cache: 'no-store' });
+                if (resCadres.ok) {
+                    const cadres = await resCadres.json();
+                    if (Array.isArray(cadres) && cadres.length > 0) {
+                        this.saveCadres(cadres);
+                    }
+                }
+            } catch (e) {}
+
+            return { 
+                success: true, 
+                message: `Đã khôi phục thành công toàn bộ dữ liệu (${serverSchedules.length} tuần lịch) từ Máy chủ VPS!` 
+            };
+        } catch (e) {
+            return { success: false, message: "Lỗi kết nối máy chủ: " + e.message };
+        }
+    },
+
+    async getBackupsList() {
+        try {
+            const res = await fetch('/api/backups', { cache: 'no-store' });
+            if (res.ok) return await res.json();
+        } catch (e) {}
+        return [];
+    },
+
+    async restoreFromBackupFile(filename) {
+        try {
+            const res = await fetch('/api/backups/restore', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            });
+            const data = await res.json();
+            if (data.success && data.schedules) {
+                this.saveSchedules(data.schedules);
+                return { success: true, message: `Đã khôi phục toàn bộ dữ liệu từ bản sao lưu ${filename}!` };
+            }
+            return { success: false, message: data.message || "Khôi phục thất bại" };
+        } catch (e) {
+            return { success: false, message: "Lỗi kết nối: " + e.message };
+        }
+    },
+
+    async createManualBackup(tag = "manual") {
+        try {
+            const res = await fetch('/api/backups/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tag })
+            });
+            return await res.json();
+        } catch (e) {
+            return { success: false, error: e.message };
+        }
+    },
+
+    async importBackupSchedules(schedules) {
+        try {
+            const res = await fetch('/api/backups/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ schedules })
+            });
+            const data = await res.json();
+            if (data.success) {
+                this.saveSchedules(schedules);
+                return { success: true, message: "Đã nhập và đồng bộ toàn bộ dữ liệu thành công!" };
+            }
+            return { success: false, message: data.message || "Lỗi nhập dữ liệu" };
+        } catch (e) {
+            this.saveSchedules(schedules);
+            return { success: true, message: "Đã lưu dữ liệu vào bộ nhớ cục bộ!" };
+        }
+    },
+
     // Nhập CSDL từ JSON
     importAllDataJSON(jsonString) {
         try {
