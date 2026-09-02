@@ -41,15 +41,7 @@ const App = {
     },
 
     getMondayOfWeek(weekNo, year) {
-        const simple = new Date(year, 0, 1 + (weekNo - 1) * 7);
-        const dayOfWeek = simple.getDay();
-        const ISOweekStart = simple;
-        if (dayOfWeek <= 4) {
-            ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-        } else {
-            ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-        }
-        return ISOweekStart;
+        return StorageService.getMondayOfWeek(weekNo, year);
     },
 
     // Đồng hồ thời gian thực
@@ -902,9 +894,11 @@ const App = {
         const year = parseInt(document.getElementById("createWeekYear").value);
         const copyFromPrev = document.getElementById("checkCopyFromPrev").checked;
 
-        const startMonday = this.getMondayOfWeek(weekNo, year);
-        const endSunday = new Date(startMonday);
-        endSunday.setDate(startMonday.getDate() + 6);
+        const startMonday = StorageService.getMondayOfWeek(weekNo, year);
+        const endSunday = StorageService.getSundayOfWeek(weekNo, year);
+        const pad = (n) => String(n).padStart(2, '0');
+        const startIso = `${startMonday.getFullYear()}-${pad(startMonday.getMonth() + 1)}-${pad(startMonday.getDate())}`;
+        const endIso = `${endSunday.getFullYear()}-${pad(endSunday.getMonth() + 1)}-${pad(endSunday.getDate())}`;
 
         let initialItems = [];
 
@@ -916,6 +910,9 @@ const App = {
                     const cloned = JSON.parse(JSON.stringify(item));
                     cloned.id = "item_" + Math.random().toString(36).substr(2, 9);
                     cloned.attachment = null; // Gỡ giấy mời cũ
+                    if (cloned.dayOfWeek) {
+                        cloned.date = StorageService.calculateDateForDay(startIso, cloned.dayOfWeek);
+                    }
                     return cloned;
                 });
             }
@@ -926,8 +923,8 @@ const App = {
             year: year,
             weekNumber: weekNo,
             title: `Lịch công tác tuần ${weekNo} năm ${year}`,
-            startDate: startMonday.toISOString().split('T')[0],
-            endDate: endSunday.toISOString().split('T')[0],
+            startDate: startIso,
+            endDate: endIso,
             status: "draft",
             lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 16),
             updatedBy: (AuthService.getCurrentUser() ? AuthService.getCurrentUser().fullName : "Hà Tường Vi"),

@@ -108,7 +108,7 @@ const StorageService = {
         });
     },
 
-    // Tính toán thông tin Tuần hiện tại theo thời gian thực tế (Chuẩn ISO-8601)
+    // Tính toán thông tin Tuần hiện tại theo thời gian thực tế (Chuẩn ISO-8601: Bắt đầu từ Thứ 2, kết thúc Chủ Nhật)
     getCurrentWeekInfo(date = new Date()) {
         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
         const dayNum = d.getUTCDay() || 7;
@@ -118,35 +118,48 @@ const StorageService = {
         const year = d.getUTCFullYear();
 
         const monday = this.getMondayOfWeek(weekNo, year);
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
+        const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
 
         const mStr = `${monday.getDate().toString().padStart(2, '0')}/${(monday.getMonth() + 1).toString().padStart(2, '0')}`;
         const sStr = `${sunday.getDate().toString().padStart(2, '0')}/${(sunday.getMonth() + 1).toString().padStart(2, '0')}/${sunday.getFullYear()}`;
 
+        const pad = (n) => String(n).padStart(2, '0');
+        const startIso = `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`;
+        const endIso = `${sunday.getFullYear()}-${pad(sunday.getMonth() + 1)}-${pad(sunday.getDate())}`;
+
         return {
             year,
             weekNumber: weekNo,
-            startDate: monday.toISOString().split('T')[0],
-            endDate: sunday.toISOString().split('T')[0],
+            startDate: startIso,
+            endDate: endIso,
             label: `Tuần ${weekNo} (${mStr} - ${sStr})`
         };
     },
 
-    // Lấy ngày Thứ Hai đầu tuần cho bất kỳ tuần nào trong năm
+    // Lấy ngày Thứ Hai đầu tuần cho bất kỳ tuần nào trong năm (Chuẩn ISO-8601)
     getMondayOfWeek(weekNo, year) {
-        const simple = new Date(year, 0, 1 + (weekNo - 1) * 7);
-        const dayOfWeek = simple.getDay() || 7;
-        const monday = new Date(simple);
-        monday.setDate(simple.getDate() - dayOfWeek + 1);
+        const y = parseInt(year, 10);
+        const w = parseInt(weekNo, 10);
+        // ISO-8601: Ngày 4 tháng 1 luôn thuộc Tuần 1 của năm
+        const jan4 = new Date(y, 0, 4);
+        const dayOfWeekJan4 = jan4.getDay() || 7; // 1 = Thứ Hai, ..., 7 = Chủ Nhật
+        // Ngày Thứ Hai đầu tiên của Tuần 1
+        const monWeek1 = new Date(y, 0, 4 - (dayOfWeekJan4 - 1));
+        // Ngày Thứ Hai của Tuần w
+        const monday = new Date(monWeek1.getFullYear(), monWeek1.getMonth(), monWeek1.getDate() + (w - 1) * 7);
         return monday;
     },
 
-    // Lấy chuỗi khoảng ngày định dạng DD/MM - DD/MM/YYYY cho tuần bất kỳ
+    // Lấy ngày Chủ Nhật cuối tuần cho bất kỳ tuần nào trong năm
+    getSundayOfWeek(weekNo, year) {
+        const monday = this.getMondayOfWeek(weekNo, year);
+        return new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+    },
+
+    // Lấy chuỗi khoảng ngày định dạng DD/MM - DD/MM/YYYY cho tuần bất kỳ (Thứ 2 đến Chủ Nhật)
     getWeekDateRangeString(weekNo, year) {
         const monday = this.getMondayOfWeek(weekNo, year);
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
+        const sunday = this.getSundayOfWeek(weekNo, year);
         const mStr = `${monday.getDate().toString().padStart(2, '0')}/${(monday.getMonth() + 1).toString().padStart(2, '0')}`;
         const sStr = `${sunday.getDate().toString().padStart(2, '0')}/${(sunday.getMonth() + 1).toString().padStart(2, '0')}/${sunday.getFullYear()}`;
         return `${mStr} - ${sStr}`;
@@ -570,13 +583,27 @@ const StorageService = {
         return sched;
     },
 
-    // Lấy tất cả lịch tuần
+    // Lấy tất cả lịch tuần (Tự động chuẩn hóa Thứ Hai là ngày đầu tuần, Chủ Nhật là ngày cuối tuần)
     getAllSchedules() {
         const data = localStorage.getItem(STORAGE_KEYS.SCHEDULES);
         const schedules = data ? JSON.parse(data) : INITIAL_DATA.schedules;
         if (Array.isArray(schedules)) {
             schedules.forEach(s => {
-                if (s && s.items) s.items = this.sortScheduleItems(s.items);
+                if (s && s.year && s.weekNumber) {
+                    const monday = this.getMondayOfWeek(s.weekNumber, s.year);
+                    const sunday = this.getSundayOfWeek(s.weekNumber, s.year);
+                    const pad = (n) => String(n).padStart(2, '0');
+                    s.startDate = `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`;
+                    s.endDate = `${sunday.getFullYear()}-${pad(sunday.getMonth() + 1)}-${pad(sunday.getDate())}`;
+                }
+                if (s && s.items) {
+                    s.items.forEach(item => {
+                        if (item && item.dayOfWeek && s.startDate) {
+                            item.date = this.calculateDateForDay(s.startDate, item.dayOfWeek);
+                        }
+                    });
+                    s.items = this.sortScheduleItems(s.items);
+                }
             });
         }
         return schedules;
@@ -591,16 +618,16 @@ const StorageService = {
 
         if (!sched) {
             const monday = this.getMondayOfWeek(w, y);
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
+            const sunday = this.getSundayOfWeek(w, y);
+            const pad = (n) => String(n).padStart(2, '0');
 
             sched = {
                 id: `sched_${y}_w${w}`,
                 year: y,
                 weekNumber: w,
                 title: `Lịch công tác tuần ${w} năm ${y}`,
-                startDate: monday.toISOString().split('T')[0],
-                endDate: sunday.toISOString().split('T')[0],
+                startDate: `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`,
+                endDate: `${sunday.getFullYear()}-${pad(sunday.getMonth() + 1)}-${pad(sunday.getDate())}`,
                 status: "published",
                 lastUpdated: new Date().toISOString().replace('T', ' ').substring(0, 16),
                 updatedBy: (this.getCurrentUser() ? this.getCurrentUser().fullName : "Hà Tường Vi"),
@@ -610,7 +637,14 @@ const StorageService = {
             };
         }
 
-        if (sched && sched.items) sched.items = this.sortScheduleItems(sched.items);
+        if (sched && sched.items) {
+            sched.items.forEach(item => {
+                if (item && item.dayOfWeek && sched.startDate) {
+                    item.date = this.calculateDateForDay(sched.startDate, item.dayOfWeek);
+                }
+            });
+            sched.items = this.sortScheduleItems(sched.items);
+        }
         return sched;
     },
 

@@ -86,12 +86,34 @@ def write_json_file(file_path, data, backup=True):
             print(f"Error writing {file_path}: {e}")
             return False
 
+def get_week_start_end(year, week_no):
+    from datetime import date
+    try:
+        monday = date.fromisocalendar(int(year), int(week_no), 1)
+        sunday = date.fromisocalendar(int(year), int(week_no), 7)
+        return monday.strftime("%Y-%m-%d"), sunday.strftime("%Y-%m-%d")
+    except Exception:
+        jan4 = date(int(year), 1, 4)
+        mon1 = jan4 - timedelta(days=jan4.isoweekday() - 1)
+        target_mon = mon1 + timedelta(weeks=int(week_no) - 1)
+        target_sun = target_mon + timedelta(days=6)
+        return target_mon.strftime("%Y-%m-%d"), target_sun.strftime("%Y-%m-%d")
+
+def normalize_schedules(schedules):
+    if not isinstance(schedules, list):
+        return schedules
+    for s in schedules:
+        if isinstance(s, dict) and "year" in s and "weekNumber" in s:
+            correct_start, correct_end = get_week_start_end(s["year"], s["weekNumber"])
+            s["startDate"] = correct_start
+            s["endDate"] = correct_end
+    return schedules
+
 # Khởi tạo tệp dữ liệu mặc định nếu chưa có
 def init_data_files():
     now = datetime.now()
     year, week_no, day = now.isocalendar()
-    monday = now - timedelta(days=day - 1)
-    sunday = monday + timedelta(days=6)
+    monday_str, sunday_str = get_week_start_end(year, week_no)
 
     if not os.path.exists(SCHEDULES_FILE):
         default_schedules = [
@@ -100,8 +122,8 @@ def init_data_files():
                 "year": year,
                 "weekNumber": week_no,
                 "title": f"Lịch công tác tuần {week_no} năm {year}",
-                "startDate": monday.strftime("%Y-%m-%d"),
-                "endDate": sunday.strftime("%Y-%m-%d"),
+                "startDate": monday_str,
+                "endDate": sunday_str,
                 "status": "published",
                 "lastUpdated": now.strftime("%Y-%m-%d %H:%M"),
                 "updatedBy": "Hà Tường Vi (Chánh Văn phòng)",
@@ -111,6 +133,11 @@ def init_data_files():
             }
         ]
         write_json_file(SCHEDULES_FILE, default_schedules, backup=False)
+    else:
+        existing = read_json_file(SCHEDULES_FILE, [])
+        if existing:
+            normalize_schedules(existing)
+            write_json_file(SCHEDULES_FILE, existing, backup=False)
 
     if not os.path.exists(AUDIT_LOGS_FILE):
         write_json_file(AUDIT_LOGS_FILE, [], backup=False)
@@ -148,16 +175,15 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
             now = datetime.now()
             year, week_no, day = now.isocalendar()
             curr_id = f"sched_{year}_w{week_no}"
+            monday_str, sunday_str = get_week_start_end(year, week_no)
             if not any(s.get("id") == curr_id or (s.get("year") == year and s.get("weekNumber") == week_no) for s in schedules):
-                monday = now - timedelta(days=day - 1)
-                sunday = monday + timedelta(days=6)
                 curr_sched = {
                     "id": curr_id,
                     "year": year,
                     "weekNumber": week_no,
                     "title": f"Lịch công tác tuần {week_no} năm {year}",
-                    "startDate": monday.strftime("%Y-%m-%d"),
-                    "endDate": sunday.strftime("%Y-%m-%d"),
+                    "startDate": monday_str,
+                    "endDate": sunday_str,
                     "status": "published",
                     "lastUpdated": now.strftime("%Y-%m-%d %H:%M"),
                     "updatedBy": "Hà Tường Vi (Chánh Văn phòng)",
@@ -166,7 +192,9 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
                     "items": []
                 }
                 schedules.insert(0, curr_sched)
-                write_json_file(SCHEDULES_FILE, schedules, backup=False)
+            
+            normalize_schedules(schedules)
+            write_json_file(SCHEDULES_FILE, schedules, backup=False)
             self.send_json_response(schedules)
             return
 
@@ -297,6 +325,7 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
                     schedules[idx] = body
                 else:
                     schedules.insert(0, body)
+            normalize_schedules(schedules)
             write_json_file(SCHEDULES_FILE, schedules, backup=True)
             self.send_json_response({"success": True, "schedules": schedules})
             return
