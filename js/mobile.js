@@ -793,6 +793,78 @@ const MobileApp = {
         alert(`Xem trước tệp tin: ${filename}\n(Tài liệu định dạng PDF theo chuẩn lưu trữ Văn phòng)`);
     },
 
+    // =========================================================================
+    // KHÔI PHỤC DỮ LIỆU MOBILE
+    // =========================================================================
+    async openRestoreModal() {
+        const modal = document.getElementById('modalMobileRestore');
+        if (modal) {
+            modal.classList.add('active');
+            await this.renderMobileBackupList();
+        }
+    },
+
+    async renderMobileBackupList() {
+        const container = document.getElementById('mobileBackupListContainer');
+        if (!container) return;
+        container.innerHTML = `<div style="text-align: center; color: #64748b; font-size: 12px; padding: 10px;">⏳ Đang tải bản sao lưu...</div>`;
+
+        const backups = await StorageService.getBackupsList();
+        if (!backups || backups.length === 0) {
+            container.innerHTML = `<div style="text-align: center; color: #64748b; font-size: 12px; padding: 10px;">Chưa có bản sao lưu trên máy chủ.</div>`;
+            return;
+        }
+
+        let html = '';
+        backups.forEach(b => {
+            html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px; margin-bottom: 6px;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 12px; color: #1e293b;">🕒 ${this.escapeHTML(b.time)}</div>
+                        <div style="font-size: 11px; color: #64748b;"><b>${b.itemCount} mục</b> (${b.size})</div>
+                    </div>
+                    <button type="button" onclick="MobileApp.handleRestoreBackup('${this.escapeHTML(b.filename)}')" style="background: #10b981; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                        Khôi Phục
+                    </button>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    },
+
+    async handleSyncFromServer() {
+        await StorageService.syncWithServer();
+        this.loadCurrentWeekData();
+        this.renderAll();
+        this.closeModals();
+        this.showToast("✅ Đã đồng bộ dữ liệu mới nhất từ Máy chủ VPS!");
+    },
+
+    handleQuickRestoreWeek36() {
+        if (confirm("Khôi phục dữ liệu 3 mục công tác đã lập (Họp Đảng ủy, Họp UBND, MTTQ) cho Tuần 36?")) {
+            StorageService.restorePresetItemsWeek36();
+            this.currentWeek = 36;
+            this.currentYear = 2026;
+            this.loadCurrentWeekData();
+            this.renderAll();
+            this.closeModals();
+            this.showToast("✅ Đã khôi phục dữ liệu 3 mục Tuần 36!");
+        }
+    },
+
+    async handleRestoreBackup(filename) {
+        if (!confirm(`Khôi phục dữ liệu từ bản sao lưu:\n${filename}?`)) return;
+        const res = await StorageService.restoreFromBackupFile(filename);
+        if (res.success) {
+            this.loadCurrentWeekData();
+            this.renderAll();
+            this.closeModals();
+            this.showToast("✅ " + res.message);
+        } else {
+            alert(res.message);
+        }
+    },
+
     closeModals() {
         document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
     },
