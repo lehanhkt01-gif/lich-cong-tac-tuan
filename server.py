@@ -258,6 +258,36 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json_response(org)
             return
 
+        # Phục vụ tải tệp đính kèm (Giấy mời / Văn bản / Ảnh)
+        if path.startswith("/data/uploads/") or path.startswith("/api/uploads/"):
+            filename = os.path.basename(path)
+            file_path = os.path.join(UPLOADS_DIR, filename)
+            if os.path.exists(file_path) and os.path.isfile(file_path):
+                mime_type = "application/octet-stream"
+                ext = os.path.splitext(filename)[1].lower()
+                if ext in [".png", ".jpg", ".jpeg", ".gif", ".webp"]:
+                    mime_type = f"image/{ext.replace('.', '')}"
+                elif ext == ".pdf":
+                    mime_type = "application/pdf"
+                elif ext == ".doc":
+                    mime_type = "application/msword"
+                elif ext == ".docx":
+                    mime_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+                stat = os.stat(file_path)
+                self.send_response(200)
+                self.send_header('Content-Type', mime_type)
+                self.send_header('Content-Length', str(stat.st_size))
+                self.send_header('Access-Control-Allow-Origin', '*')
+                self.send_header('Content-Disposition', f'inline; filename="{filename}"')
+                self.end_headers()
+                with open(file_path, "rb") as f:
+                    shutil.copyfileobj(f, self.wfile)
+                return
+            else:
+                self.send_error(404, "File not found")
+                return
+
         # Serve static files
         super().do_GET()
 
@@ -272,6 +302,44 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
             body = json.loads(post_data.decode('utf-8')) if post_data else {}
         except Exception:
             body = {}
+
+        # API Tải lên tệp đính kèm (Upload Giấy mời / Tài liệu do Văn phòng đưa lên)
+        if path == "/api/upload":
+            raw_filename = body.get("filename", "attachment")
+            base64_data = body.get("data")
+            file_type = body.get("type", "")
+
+            if not base64_data:
+                self.send_json_response({"error": "Thiếu dữ liệu tệp đính kèm"}, status=400)
+                return
+
+            if "," in base64_data:
+                base64_data = base64_data.split(",", 1)[1]
+
+            try:
+                import base64
+                import re
+                file_bytes = base64.b64decode(base64_data)
+                clean_name = re.sub(r'[^a-zA-Z0-9._-]', '_', raw_filename)
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                safe_filename = f"doc_{timestamp}_{clean_name}"
+                target_path = os.path.join(UPLOADS_DIR, safe_filename)
+
+                with open(target_path, "wb") as f:
+                    f.write(file_bytes)
+
+                size_kb = round(len(file_bytes) / 1024, 1)
+                self.send_json_response({
+                    "success": True,
+                    "filename": safe_filename,
+                    "originalName": raw_filename,
+                    "url": f"/data/uploads/{safe_filename}",
+                    "size": f"{size_kb} KB",
+                    "type": file_type
+                })
+            except Exception as e:
+                self.send_json_response({"error": f"Lỗi lưu tệp: {str(e)}"}, status=500)
+            return
 
         # API Khôi phục từ một bản sao lưu (Restore Backup Snapshot)
         if path == "/api/backups/restore":

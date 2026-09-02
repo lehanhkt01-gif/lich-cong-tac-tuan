@@ -658,22 +658,32 @@
     </div>
 
     <!-- ==========================================================================
-         MODAL 4: TRÌNH XEM GIẤY MỜI / PDF (DOCUMENT VIEWER)
+         MODAL 4: TRÌNH XEM & TẢI TỆP ĐÍNH KÈM / GIẤY MỜI
          ========================================================================== -->
     <div class="modal-backdrop" id="modalDocPreview">
         <div class="modal-container modal-lg">
             <div class="modal-header">
                 <div class="modal-header-title" id="docPreviewTitle">
-                    <span>📄</span> Giấy mời số 89/GM-UBND
+                    <span>📄</span> Tệp Đính Kèm Cuộc Họp
                 </div>
                 <button class="btn-close-modal" onclick="App.closeModal('modalDocPreview')">✕</button>
             </div>
-            <div class="modal-body" id="docPreviewBody" style="background-color: #525659; padding: 20px;">
-                <!-- Render mô phỏng văn bản PDF chính thức -->
+            <div class="modal-body" id="docPreviewBody" style="background-color: #F8FAFC; padding: 20px; min-height: 250px;">
+                <!-- Render nội dung ảnh, PDF hoặc thẻ tải tệp -->
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn-bottom btn-export-pdf" onclick="window.print()">🖨️ In Giấy Mời</button>
-                <button type="button" class="btn-bottom btn-history-audit" onclick="App.closeModal('modalDocPreview')">Đóng</button>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; gap: 8px;">
+                    <a id="btnDocDownload" href="#" download class="btn-bottom btn-save-publish" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; background: #16A34A;">
+                        📥 Tải Về Tệp Gốc
+                    </a>
+                    <a id="btnDocOpenTab" href="#" target="_blank" class="btn-bottom btn-primary-create" style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        ↗️ Mở Trong Tab Mới
+                    </a>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn-bottom btn-export-pdf" onclick="window.print()">🖨️ In</button>
+                    <button type="button" class="btn-bottom btn-history-audit" onclick="App.closeModal('modalDocPreview')">Đóng</button>
+                </div>
             </div>
         </div>
     </div>
@@ -917,12 +927,12 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20260902_13"></script>
-    <script src="js/storage.js?v=20260902_13"></script>
-    <script src="js/auth.js?v=20260902_13"></script>
-    <script src="js/audit.js?v=20260902_13"></script>
-    <script src="js/email-service.js?v=20260902_13"></script>
-    <script src="js/export-service.js?v=20260902_13"></script>
-    <script src="js/app.js?v=20260902_13"></script>
+    <script src="js/data.js?v=20260902_14"></script>
+    <script src="js/storage.js?v=20260902_14"></script>
+    <script src="js/auth.js?v=20260902_14"></script>
+    <script src="js/audit.js?v=20260902_14"></script>
+    <script src="js/email-service.js?v=20260902_14"></script>
+    <script src="js/export-service.js?v=20260902_14"></script>
+    <script src="js/app.js?v=20260902_14"></script>
 </body>
 </html>

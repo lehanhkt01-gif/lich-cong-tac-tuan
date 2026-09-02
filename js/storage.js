@@ -827,6 +827,65 @@ const StorageService = {
         }
     },
 
+    // Tải lên tệp đính kèm (PDF, Ảnh, Word) lên máy chủ VPS hoặc lưu base64
+    async uploadAttachment(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const base64Data = e.target.result;
+                const u = this.getCurrentUser();
+                const uploaderName = u ? `${u.fullName} (${u.roleName || 'Văn phòng'})` : "Văn phòng HĐND & UBND xã";
+
+                try {
+                    const res = await fetch(`${API_BASE_URL}/api/upload`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            filename: file.name,
+                            data: base64Data,
+                            type: file.type,
+                            size: `${(file.size / 1024).toFixed(1)} KB`
+                        })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.success) {
+                            resolve({
+                                id: "doc_" + Date.now(),
+                                name: file.name,
+                                badge: `📄 GM (${file.name.length > 20 ? file.name.substring(0, 18) + '...' : file.name})`,
+                                size: data.size || `${(file.size / 1024).toFixed(1)} KB`,
+                                type: file.type,
+                                url: `${API_BASE_URL}${data.url}`,
+                                dataUrl: base64Data,
+                                uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                                uploader: uploaderName
+                            });
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.log("Upload lên VPS lỗi, dùng fallback Base64 cục bộ:", err);
+                }
+
+                // Fallback nếu chạy offline
+                resolve({
+                    id: "doc_" + Date.now(),
+                    name: file.name,
+                    badge: `📄 GM (${file.name.length > 20 ? file.name.substring(0, 18) + '...' : file.name})`,
+                    size: `${(file.size / 1024).toFixed(1)} KB`,
+                    type: file.type,
+                    url: base64Data,
+                    dataUrl: base64Data,
+                    uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                    uploader: uploaderName
+                });
+            };
+            reader.onerror = () => reject(new Error("Không thể đọc tệp đã chọn"));
+            reader.readAsDataURL(file);
+        });
+    },
+
     async syncWithServer() {
         try {
             const res = await fetch(`${API_BASE_URL}/api/schedules`, { cache: 'no-store' });

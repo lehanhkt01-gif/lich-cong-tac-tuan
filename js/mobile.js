@@ -409,8 +409,8 @@ const MobileApp = {
                             <div class="item-extras-row">
                                 <span class="bloc-tag ${blocClass}">${item.bloc || 'UBND'}</span>
                                 ${item.attachment ? `
-                                    <span class="attachment-chip" onclick="event.stopPropagation(); MobileApp.previewAttachment('${item.attachment.name}')">
-                                        📄 ${item.attachment.badge || 'Giấy mời PDF'}
+                                    <span class="attachment-chip" onclick="event.stopPropagation(); MobileApp.previewAttachment('${this.escapeHTML(item.attachment.name || '')}', '${item.id}')">
+                                        📄 ${this.escapeHTML(item.attachment.badge || 'Giấy mời PDF')}
                                     </span>
                                 ` : ''}
                             </div>
@@ -545,8 +545,8 @@ const MobileApp = {
                     <div class="detail-row-content">
                         <div class="detail-row-label">Tài liệu đính kèm</div>
                         <div class="detail-row-value">
-                            <a href="#" onclick="MobileApp.previewAttachment('${item.attachment.name}'); return false;" style="color: #2563eb; font-weight: 700; text-decoration: underline;">
-                                📥 ${item.attachment.name} (${item.attachment.badge || 'Giấy mời PDF'})
+                            <a href="#" onclick="MobileApp.previewAttachment('${this.escapeHTML(item.attachment.name || '')}', '${item.id}'); return false;" style="color: #2563eb; font-weight: 700; text-decoration: underline;">
+                                📥 ${this.escapeHTML(item.attachment.name || 'Tệp đính kèm')} (${this.escapeHTML(item.attachment.badge || 'Giấy mời')})
                             </a>
                         </div>
                     </div>
@@ -842,8 +842,34 @@ const MobileApp = {
         }
     },
 
-    previewAttachment(filename) {
-        alert(`Xem trước tệp tin: ${filename}\n(Tài liệu định dạng PDF theo chuẩn lưu trữ Văn phòng)`);
+    previewAttachment(filename, itemId) {
+        let att = null;
+        if (itemId && this.currentSchedule && this.currentSchedule.items) {
+            const item = this.currentSchedule.items.find(i => i.id === itemId);
+            if (item && item.attachment) att = item.attachment;
+        }
+        if (!att && this.currentSchedule && this.currentSchedule.items) {
+            const item = this.currentSchedule.items.find(i => i.attachment && i.attachment.name === filename);
+            if (item) att = item.attachment;
+        }
+
+        const fileUrl = (att && (att.url || att.dataUrl)) || '';
+        const realName = (att && att.name) || filename || 'Tep_Dinh_Kem.pdf';
+
+        if (fileUrl) {
+            const a = document.createElement('a');
+            a.href = fileUrl;
+            a.download = realName;
+            a.target = '_blank';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                if (document.body.contains(a)) document.body.removeChild(a);
+            }, 500);
+            this.showToast(`📥 Đang tải: ${realName}`);
+        } else {
+            alert(`📄 Tệp đính kèm: ${realName}\n(Được lưu trữ theo hồ sơ cuộc họp UBND xã Ea Súp)`);
+        }
     },
 
     async handleSyncFromServer() {

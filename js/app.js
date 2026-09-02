@@ -408,7 +408,7 @@ const App = {
                 dayItems.forEach((item, idx) => {
                     const blocBadgeClass = this.getBlocBadgeClass(item.bloc);
                     const attachmentHTML = item.attachment ? `
-                        <button class="btn-attachment-badge" onclick="App.previewAttachment('${item.attachment.id || ''}', '${escapeHTML(item.attachment.name || '')}', '${escapeHTML(item.content)}')">
+                        <button class="btn-attachment-badge" onclick="App.previewAttachment('${item.id}', '${escapeHTML(item.attachment.name || '')}', '${escapeHTML(item.content)}')">
                             📄 ${escapeHTML(item.attachment.badge || item.attachment.name || 'Giấy mời')}
                         </button>
                     ` : `<span class="no-attachment-tag">—</span>`;
@@ -542,25 +542,27 @@ const App = {
         }
     },
 
-    handleFileUpload(event) {
+    async handleFileUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
 
-        const u = AuthService.getCurrentUser();
-        const uploaderName = u ? `${u.fullName} (${u.roleName})` : "Cán bộ nhập liệu";
+        const previewBox = document.getElementById("attachmentPreviewArea");
+        if (previewBox) {
+            previewBox.innerHTML = `
+                <div style="padding: 16px; text-align: center; color: #2563EB; font-weight: 700;">
+                    ⏳ Đang tải tệp "${escapeHTML(file.name)}" lên máy chủ...
+                </div>
+            `;
+        }
 
-        const attachmentObj = {
-            id: "doc_gm_" + Date.now(),
-            name: file.name,
-            badge: `📄 GM (${file.name.substring(0, 18)}...)`,
-            size: `${Math.round(file.size / 1024)} KB`,
-            type: file.type,
-            uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
-            uploader: uploaderName
-        };
-
-        this.renderAttachmentUploadBox(attachmentObj);
-        this.showToast(`Đã đính kèm tệp: ${file.name}`, "success");
+        try {
+            const attachmentObj = await StorageService.uploadAttachment(file);
+            this.renderAttachmentUploadBox(attachmentObj);
+            this.showToast(`Đã tải lên tệp: ${file.name}`, "success");
+        } catch (e) {
+            alert("Lỗi tải tệp: " + e.message);
+            this.renderAttachmentUploadBox(null);
+        }
     },
 
     removeCurrentAttachment() {
@@ -569,7 +571,7 @@ const App = {
 
     saveItemFromModal() {
         if (!AuthService.canEdit()) {
-            this.openLoginModal("Vui lòng đăng nhập tài khoản có quyền để lưu mục công tác!");
+            this.openLoginModal("Vui lòng đăng nhập tài khoản để thực hiện thao tác này!");
             return;
         }
 
@@ -580,25 +582,25 @@ const App = {
         const location = document.getElementById("formItemLocation").value.trim();
         const leader = document.getElementById("formItemLeader").value.trim();
         const participants = document.getElementById("formItemParticipants").value.trim();
-        const vehicle = document.getElementById("formItemVehicle").value.trim();
+        const vehicle = document.getElementById("formItemVehicle").value;
         const reason = document.getElementById("formEditReason").value.trim();
 
-        if (!time || !content || !leader) {
-            alert("Vui lòng nhập đầy đủ Thời gian, Nội dung công tác và Người chủ trì!");
+        if (!time || !content || !location || !leader) {
+            alert("Vui lòng điền đầy đủ các thông tin bắt buộc: Giờ, Nội dung, Địa điểm, Lãnh đạo dự!");
             return;
         }
 
         const previewBox = document.getElementById("attachmentPreviewArea");
-        const attachedDataStr = previewBox?.getAttribute("data-attached");
-        const attachment = attachedDataStr ? JSON.parse(attachedDataStr) : null;
-
-        const itemDate = this.currentSchedule?.startDate ? 
-            StorageService.calculateDateForDay(this.currentSchedule.startDate, dayOfWeek) : "";
+        let attachment = null;
+        if (previewBox && previewBox.hasAttribute("data-attached")) {
+            try {
+                attachment = JSON.parse(previewBox.getAttribute("data-attached"));
+            } catch (e) {}
+        }
 
         const itemData = {
             id: this.editingItemId,
             dayOfWeek,
-            date: itemDate,
             time,
             bloc,
             content,
@@ -611,9 +613,9 @@ const App = {
 
         const result = StorageService.saveScheduleItem(this.currentSchedule.id, itemData);
         if (result) {
-            // Ghi nhận Audit Log
+            // Ghi nhật ký Audit Trail
             const action = this.editingItemId ? "UPDATE" : "CREATE";
-            AuditService.logItemChange(result.schedule, action, result.oldItem, result.newItem, reason);
+            AuditService.logItemChange(result.schedule, action, this.originalItemState, result.newItem, reason);
 
             this.currentSchedule = result.schedule;
             this.renderAll();
@@ -679,29 +681,33 @@ const App = {
                 </div>
 
                 <div>
-                    <div style="font-size: 12px; color: #64748B; font-weight: bold; text-transform: uppercase;">Nội dung công tác:</div>
-                    <div style="font-size: 15px; font-weight: 700; color: #0F172A; margin-top: 4px; line-height: 1.5;">${escapeHTML(item.content)}</div>
+                    <div style="font-size: 13px; color: #64748B;">Nội dung công tác:</div>
+                    <div style="font-size: 15px; font-weight: 700; color: #1E293B; margin-top: 2px;">${escapeHTML(item.content)}</div>
                 </div>
 
-                <div style="background: #F8FAFC; padding: 12px 16px; border-radius: 8px; border: 1px solid #E2E8F0;">
-                    <div style="margin-bottom: 6px;">
-                        <strong style="color: #991B1B;">👤 Lãnh đạo dự / Chủ trì:</strong> ${escapeHTML(item.leader)}
-                    </div>
-                    <div style="margin-bottom: 6px;">
-                        <strong>👥 Thành phần tham dự:</strong> ${escapeHTML(item.participants)}
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #F8FAFC; padding: 12px; border-radius: 8px;">
+                    <div>
+                        <div style="font-size: 12px; color: #64748B;">Lãnh đạo chủ trì / Tham gia:</div>
+                        <div style="font-size: 13.5px; font-weight: 600; color: #0F4C81; margin-top: 2px;">👤 ${escapeHTML(item.leader)}</div>
                     </div>
                     <div>
-                        <strong>🚗 Phương tiện bố trí:</strong> ${escapeHTML(item.vehicle || 'Tự túc')}
+                        <div style="font-size: 12px; color: #64748B;">Phương tiện:</div>
+                        <div style="font-size: 13.5px; font-weight: 600; color: #334155; margin-top: 2px;">🚗 ${escapeHTML(item.vehicle || 'Tự túc')}</div>
                     </div>
+                </div>
+
+                <div>
+                    <div style="font-size: 12px; color: #64748B;">Thành phần tham dự / Đơn vị chuẩn bị:</div>
+                    <div style="font-size: 13.5px; color: #1E293B; margin-top: 2px;">👥 ${escapeHTML(item.participants || 'Cán bộ liên quan')}</div>
                 </div>
 
                 ${item.attachment ? `
-                    <div style="background: #F0FDF4; border: 1px solid #86EFAC; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; padding: 12px 16px; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
                         <div>
                             <div style="font-weight: bold; color: #166534;">📄 ${escapeHTML(item.attachment.name || 'Giấy mời họp')}</div>
                             <div style="font-size: 11px; color: #475569;">Dung lượng: ${item.attachment.size || '340 KB'} | Người tải: ${item.attachment.uploader || 'Văn phòng'}</div>
                         </div>
-                        <button class="btn-primary-create" style="padding: 6px 14px; font-size: 12px;" onclick="App.previewAttachment('${item.attachment.id}', '${escapeHTML(item.attachment.name)}', '${escapeHTML(item.content)}')">👁️ Xem Giấy Mời</button>
+                        <button class="btn-primary-create" style="padding: 6px 14px; font-size: 12px;" onclick="App.previewAttachment('${item.id}', '${escapeHTML(item.attachment.name)}', '${escapeHTML(item.content)}')">👁️ Xem Giấy Mời</button>
                     </div>
                 ` : ''}
             </div>
@@ -747,82 +753,128 @@ const App = {
     },
 
     // =========================================================================
-    // PREVIEW GIẤY MỜI / PDF MODAL
+    // PREVIEW & TẢI GIẤY MỜI / TỆP ĐÍNH KÈM
     // =========================================================================
     previewAttachment(docId, docName, meetingTitle) {
         const titleEl = document.getElementById("docPreviewTitle");
         const bodyEl = document.getElementById("docPreviewBody");
+        const btnDownload = document.getElementById("btnDocDownload");
+        const btnOpenTab = document.getElementById("btnDocOpenTab");
         const org = StorageService.getOrganization();
 
-        if (titleEl) titleEl.textContent = `📄 ${docName || 'Giấy mời số 89/GM-UBND'}`;
+        let targetAttachment = null;
+        let foundContent = meetingTitle || "";
+        if (this.currentSchedule && this.currentSchedule.items) {
+            const foundItem = this.currentSchedule.items.find(i => 
+                (i.attachment && (i.attachment.id === docId || i.attachment.name === docName)) || i.id === docId
+            );
+            if (foundItem) {
+                targetAttachment = foundItem.attachment;
+                foundContent = foundItem.content;
+            }
+        }
+
+        const realDocName = (targetAttachment && targetAttachment.name) || docName || 'Giay_Moi_Hop.pdf';
+        const fileUrl = (targetAttachment && (targetAttachment.url || targetAttachment.dataUrl)) || '';
+        const fileSize = (targetAttachment && targetAttachment.size) || 'Đính kèm';
+        const uploader = (targetAttachment && targetAttachment.uploader) || 'Văn phòng HĐND & UBND xã';
+        const isImage = /\.(png|jpe?g|gif|webp)$/i.test(realDocName) || (targetAttachment && targetAttachment.type && targetAttachment.type.startsWith('image/'));
+        const isPdf = /\.pdf$/i.test(realDocName) || (targetAttachment && targetAttachment.type === 'application/pdf');
+
+        if (titleEl) titleEl.innerHTML = `<span>📄</span> ${escapeHTML(realDocName)}`;
+
+        if (btnDownload) {
+            btnDownload.href = fileUrl || '#';
+            btnDownload.setAttribute('download', realDocName);
+            btnDownload.onclick = (e) => {
+                if (!fileUrl) {
+                    e.preventDefault();
+                    this.showToast("Tệp được lưu trữ trực tuyến theo giấy mời hành chính.", "info");
+                }
+            };
+        }
+
+        if (btnOpenTab) {
+            if (fileUrl) {
+                btnOpenTab.style.display = 'inline-flex';
+                btnOpenTab.href = fileUrl;
+            } else {
+                btnOpenTab.style.display = 'none';
+            }
+        }
 
         if (bodyEl) {
-            bodyEl.innerHTML = `
-                <div style="background: #FFFFFF; border: 1px solid #CBD5E1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 30px; max-width: 700px; margin: 0 auto; font-family: 'Times New Roman', serif;">
-                    <!-- HEADER GIẤY MỜI -->
-                    <table width="100%" style="border-collapse: collapse; margin-bottom: 20px;">
-                        <tr>
-                            <td width="45%" style="text-align: center; vertical-align: top; font-size: 12pt;">
-                                <div>${org.province}</div>
-                                <div style="font-weight: bold;">${org.fullName}</div>
-                                <div style="border-bottom: 1px solid black; width: 40%; margin: 2px auto 4px auto;"></div>
-                                <div>Số: 89/GM-UBND</div>
-                            </td>
-                            <td width="55%" style="text-align: center; vertical-align: top; font-size: 12pt;">
-                                <div style="font-weight: bold;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-                                <div style="font-weight: bold;">Độc lập - Tự do - Hạnh phúc</div>
-                                <div style="border-bottom: 1px solid black; width: 50%; margin: 2px auto 4px auto;"></div>
-                                <div style="font-style: italic;">Ea Súp, ngày 24 tháng 08 năm 2026</div>
-                            </td>
-                        </tr>
-                    </table>
-
-                    <!-- TIÊU ĐỀ GIẤY MỜI -->
-                    <div style="text-align: center; margin: 24px 0;">
-                        <div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">GIẤY MỜI</div>
-                        <div style="font-size: 13pt; font-weight: bold; margin-top: 6px;">V/v ${escapeHTML(meetingTitle)}</div>
+            if (fileUrl && isImage) {
+                bodyEl.innerHTML = `
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="margin-bottom: 12px; font-size: 13px; color: #475569;">
+                            <strong>📄 Tệp gốc:</strong> ${escapeHTML(realDocName)} (${fileSize}) • <strong>Đưa lên bởi:</strong> ${escapeHTML(uploader)}
+                        </div>
+                        <img src="${fileUrl}" alt="${escapeHTML(realDocName)}" style="max-width: 100%; max-height: 600px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 1px solid #CBD5E1;">
                     </div>
-
-                    <!-- NỘI DUNG GIẤY MỜI -->
-                    <div style="font-size: 13pt; line-height: 1.6; text-align: justify;">
-                        <p style="text-indent: 20px; margin-bottom: 10px;">
-                            Ủy ban nhân dân xã Ea Súp trân trọng kính mời các đồng chí tham dự phiên họp với các nội dung sau:
-                        </p>
-                        <p style="margin-left: 20px; margin-bottom: 8px;">
-                            <strong>1. Nội dung:</strong> ${escapeHTML(meetingTitle)}
-                        </p>
-                        <p style="margin-left: 20px; margin-bottom: 8px;">
-                            <strong>2. Thời gian:</strong> Theo lịch công tác tuần đã công bố trên Cổng điều hành.
-                        </p>
-                        <p style="margin-left: 20px; margin-bottom: 8px;">
-                            <strong>3. Địa điểm:</strong> Trụ sở UBND xã Ea Súp.
-                        </p>
-                        <p style="margin-left: 20px; margin-bottom: 8px;">
-                            <strong>4. Chủ trì:</strong> Thường trực UBND xã.
-                        </p>
-                        <p style="text-indent: 20px; margin-top: 14px;">
-                            Đề nghị các đại biểu tham dự đúng giờ, chuẩn bị đầy đủ báo cáo, tài liệu để cuộc họp đạt kết quả tốt./.
-                        </p>
+                `;
+            } else if (fileUrl && isPdf) {
+                bodyEl.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="margin-bottom: 10px; font-size: 13px; color: #475569;">
+                            <strong>📄 Tệp PDF:</strong> ${escapeHTML(realDocName)} (${fileSize}) • <strong>Đưa lên bởi:</strong> ${escapeHTML(uploader)}
+                        </div>
+                        <iframe src="${fileUrl}" style="width: 100%; height: 560px; border: 1px solid #CBD5E1; border-radius: 6px; background: #fff;"></iframe>
                     </div>
-
-                    <!-- CHỮ KÝ -->
-                    <table width="100%" style="margin-top: 30px;">
-                        <tr>
-                            <td width="50%" style="font-size: 11pt; font-style: italic;">
-                                <strong>Nơi nhận:</strong><br>
-                                - Như thành phần mời;<br>
-                                - Lưu: VT, VP.
-                            </td>
-                            <td width="50%" style="text-align: center; font-size: 13pt;">
-                                <strong>TL. CHỦ TỊCH</strong><br>
-                                <strong>CHÁNH VĂN PHÒNG</strong><br>
-                                <div style="height: 50px;"></div>
-                                <strong>Hà Tường Vi</strong>
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            `;
+                `;
+            } else if (fileUrl) {
+                bodyEl.innerHTML = `
+                    <div style="background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 40px 20px; text-align: center; max-width: 550px; margin: 20px auto;">
+                        <div style="font-size: 52px; margin-bottom: 12px;">📁</div>
+                        <div style="font-size: 17px; font-weight: 700; color: #0F4C81;">${escapeHTML(realDocName)}</div>
+                        <div style="font-size: 13px; color: #64748B; margin: 8px 0 24px 0;">
+                            Dung lượng: ${fileSize} • Đưa lên bởi: ${escapeHTML(uploader)}
+                        </div>
+                        <a href="${fileUrl}" download="${escapeHTML(realDocName)}" class="btn-bottom btn-save-publish" style="text-decoration: none; padding: 12px 28px; font-size: 14px; font-weight: 700; background: #16A34A; display: inline-flex; align-items: center; gap: 8px;">
+                            📥 TẢI VỀ MÁY ĐỂ XEM VĂN BẢN
+                        </a>
+                    </div>
+                `;
+            } else {
+                bodyEl.innerHTML = `
+                    <div style="background: #FFFFFF; border: 1px solid #CBD5E1; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 30px; max-width: 700px; margin: 0 auto; font-family: 'Times New Roman', serif;">
+                        <table width="100%" style="border-collapse: collapse; margin-bottom: 20px;">
+                            <tr>
+                                <td width="45%" style="text-align: center; vertical-align: top; font-size: 12pt;">
+                                    <div>${org.province}</div>
+                                    <div style="font-weight: bold;">${org.fullName}</div>
+                                    <div style="border-bottom: 1px solid black; width: 40%; margin: 2px auto 4px auto;"></div>
+                                    <div>Số: 89/GM-UBND</div>
+                                </td>
+                                <td width="55%" style="text-align: center; vertical-align: top; font-size: 12pt;">
+                                    <div style="font-weight: bold;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                                    <div style="font-weight: bold;">Độc lập - Tự do - Hạnh phúc</div>
+                                    <div style="border-bottom: 1px solid black; width: 50%; margin: 2px auto 4px auto;"></div>
+                                    <div style="font-style: italic;">Ea Súp, ngày 31 tháng 08 năm 2026</div>
+                                </td>
+                            </tr>
+                        </table>
+                        <div style="text-align: center; margin: 24px 0;">
+                            <div style="font-size: 16pt; font-weight: bold; text-transform: uppercase;">GIẤY MỜI</div>
+                            <div style="font-size: 13pt; font-weight: bold; margin-top: 6px;">V/v ${escapeHTML(foundContent)}</div>
+                        </div>
+                        <div style="font-size: 13pt; line-height: 1.6; text-align: justify;">
+                            <p style="text-indent: 20px; margin-bottom: 10px;">
+                                Ủy ban nhân dân xã Ea Súp trân trọng kính mời các đồng chí tham dự phiên họp với các nội dung sau:
+                            </p>
+                            <p style="margin-left: 20px; margin-bottom: 8px;">
+                                <strong>1. Nội dung:</strong> ${escapeHTML(foundContent)}
+                            </p>
+                            <p style="margin-left: 20px; margin-bottom: 8px;">
+                                <strong>2. Thời gian & Địa điểm:</strong> Theo lịch công tác tuần đã công bố trên Cổng điều hành.
+                            </p>
+                            <p style="text-indent: 20px; margin-top: 14px;">
+                                Đề nghị các đại biểu tham dự đúng giờ, chuẩn bị đầy đủ báo cáo, tài liệu để cuộc họp đạt kết quả tốt./.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         this.openModal("modalDocPreview");
