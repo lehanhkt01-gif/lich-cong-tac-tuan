@@ -571,7 +571,7 @@ const MobileApp = {
     // =========================================================================
     // CHỌN TUẦN (WEEK PICKER MODAL)
     // =========================================================================
-    openWeekPickerModal() {
+    openWeekPickerModal(selectedYear = null) {
         const modal = document.getElementById('weekPickerModal');
         const listEl = document.getElementById('weekListContainer');
         if (!modal || !listEl) return;
@@ -580,17 +580,35 @@ const MobileApp = {
         const realCurrentWeek = currentInfo.weekNumber;
         const realCurrentYear = currentInfo.year;
 
-        let html = '';
-        for (let w = 52; w >= 1; w--) {
-            const rangeStr = StorageService.getWeekDateRangeString(w, this.currentYear);
-            const isRealCurrent = (w === realCurrentWeek && this.currentYear === realCurrentYear);
-            const isSelected = (w === this.currentWeek);
+        const yearToRender = parseInt(selectedYear || this.currentYear || realCurrentYear, 10);
 
-            const sched = StorageService.getScheduleByWeek(this.currentYear, w);
+        // Thanh chọn năm nhanh (2025 -> 2030)
+        const years = [2025, 2026, 2027, 2028, 2029, 2030];
+        let yearPillsHtml = `
+            <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; -webkit-overflow-scrolling: touch;">
+                <span style="font-size: 13px; font-weight: 700; color: #475569; display: flex; align-items: center; white-space: nowrap;">Năm:</span>
+        `;
+        years.forEach(y => {
+            const isYActive = (y === yearToRender);
+            yearPillsHtml += `
+                <button type="button" onclick="MobileApp.openWeekPickerModal(${y})" style="padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; white-space: nowrap; ${isYActive ? 'background: #1e40af; color: #fff;' : 'background: #f1f5f9; color: #475569;'}">
+                    ${y} ${y === realCurrentYear ? '•' : ''}
+                </button>
+            `;
+        });
+        yearPillsHtml += `</div><div style="max-height: 55vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">`;
+
+        let html = yearPillsHtml;
+        for (let w = 52; w >= 1; w--) {
+            const rangeStr = StorageService.getWeekDateRangeString(w, yearToRender);
+            const isRealCurrent = (w === realCurrentWeek && yearToRender === realCurrentYear);
+            const isSelected = (w === this.currentWeek && yearToRender === this.currentYear);
+
+            const sched = StorageService.getScheduleByWeek(yearToRender, w);
             const count = (sched && sched.items) ? sched.items.length : 0;
 
             html += `
-                <div class="account-menu-item" style="padding: 12px 14px; ${isSelected ? 'background: #eff6ff; font-weight: 700; color: #1d4ed8;' : ''}" onclick="MobileApp.selectWeek(${this.currentYear}, ${w})">
+                <div class="account-menu-item" style="padding: 12px 14px; ${isSelected ? 'background: #eff6ff; font-weight: 700; color: #1d4ed8;' : ''}" onclick="MobileApp.selectWeek(${yearToRender}, ${w})">
                     <div class="menu-item-left">
                         <span class="menu-item-icon">📅</span>
                         <div>
@@ -602,6 +620,7 @@ const MobileApp = {
                 </div>
             `;
         }
+        html += `</div>`;
 
         listEl.innerHTML = html;
         modal.classList.add('active');
