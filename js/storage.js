@@ -798,6 +798,29 @@ const StorageService = {
     // =========================================================================
     // ĐỒNG BỘ VÀ KHÔI PHỤC TOÀN BỘ DỮ LIỆU TỪ MÁY CHỦ VPS
     // =========================================================================
+    saveSchedules(schedules) {
+        if (Array.isArray(schedules)) {
+            schedules.forEach(s => {
+                if (s && s.year && s.weekNumber) {
+                    const monday = this.getMondayOfWeek(s.weekNumber, s.year);
+                    const sunday = this.getSundayOfWeek(s.weekNumber, s.year);
+                    const pad = (n) => String(n).padStart(2, '0');
+                    s.startDate = `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`;
+                    s.endDate = `${sunday.getFullYear()}-${pad(sunday.getMonth() + 1)}-${pad(sunday.getDate())}`;
+                }
+                if (s && s.items) {
+                    s.items.forEach(item => {
+                        if (item && item.dayOfWeek && s.startDate) {
+                            item.date = this.calculateDateForDay(s.startDate, item.dayOfWeek);
+                        }
+                    });
+                    s.items = this.sortScheduleItems(s.items);
+                }
+            });
+            localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
+        }
+    },
+
     saveCadres(cadres) {
         if (Array.isArray(cadres)) {
             localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(cadres));
