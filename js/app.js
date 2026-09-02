@@ -300,10 +300,15 @@ const App = {
             statusEl.innerHTML = isPub ? `✅ Đã Ban Hành Chính Thức` : `📝 Đang Dự Thảo`;
         }
 
-        // Print header
-        const printTitle = document.getElementById("printScheduleTitle");
-        if (printTitle) {
-            printTitle.textContent = `LỊCH CÔNG TÁC TUẦN THỨ ${s.weekNumber} NĂM ${s.year} (TỪ ${s.startDate.split('-').reverse().join('/')} ĐẾN ${s.endDate.split('-').reverse().join('/')})`;
+        // Bottom bar
+        const bottomInfo = document.querySelector(".bottom-info-left");
+        if (bottomInfo) {
+            const isPub = s.status === "published";
+            bottomInfo.innerHTML = `
+                <span style="font-weight: 700; color: var(--gov-primary);">XÃ EA SÚP</span>
+                <span>• Lịch Tuần ${s.weekNumber}/${s.year}</span>
+                <span class="schedule-status-badge ${isPub ? 'status-published' : 'status-draft'}">${isPub ? 'Chính Thức' : 'Dự Thảo'}</span>
+            `;
         }
     },
 
