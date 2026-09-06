@@ -206,14 +206,15 @@ Trả về duy nhất 1 JSON object có định dạng:
     },
 
     // Hàm chính: Bóc tách tệp hoặc văn bản bằng Gemini API
-    async extractSchedule({ file = null, rawText = "", targetWeek = null, targetYear = null, onProgress = null }) {
-        const apiKey = this.getApiKey();
-        if (!apiKey) {
+    async extractSchedule({ file = null, rawText = "", targetWeek = null, targetYear = null, apiKey = null, onProgress = null }) {
+        const key = (apiKey || this.getApiKey()).trim();
+        if (!key) {
             throw new Error("Chưa cấu hình Gemini API Key! Vui lòng nhập API Key để tiếp tục.");
         }
+        this.saveApiKey(key);
 
         const modelId = this.getModel();
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${apiKey}`;
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
 
         if (onProgress) onProgress("Đang chuẩn bị nội dung tài liệu...", 20);
 
@@ -329,13 +330,27 @@ Trả về duy nhất 1 JSON object có định dạng:
             throw new Error("Gemini AI không trả về dữ liệu phù hợp. Vui lòng kiểm tra lại chất lượng tệp hoặc hình ảnh!");
         }
 
-        let parsedResult;
+        let parsedResult = null;
         try {
             parsedResult = JSON.parse(rawJsonText);
         } catch (e) {
-            // Trường hợp có markdown ```json ... ``` bao quanh
-            const cleanJson = rawJsonText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-            parsedResult = JSON.parse(cleanJson);
+            try {
+                const cleanJson = rawJsonText.replace(/```json/gi, '').replace(/```/g, '').trim();
+                parsedResult = JSON.parse(cleanJson);
+            } catch (e2) {
+                const firstBrace = rawJsonText.indexOf('{');
+                const lastBrace = rawJsonText.lastIndexOf('}');
+                const firstBracket = rawJsonText.indexOf('[');
+                const lastBracket = rawJsonText.lastIndexOf(']');
+                
+                if (firstBrace !== -1 && lastBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+                    parsedResult = JSON.parse(rawJsonText.substring(firstBrace, lastBrace + 1));
+                } else if (firstBracket !== -1 && lastBracket !== -1) {
+                    parsedResult = JSON.parse(rawJsonText.substring(firstBracket, lastBracket + 1));
+                } else {
+                    throw new Error("Không thể phân tích dữ liệu JSON trả về từ AI: " + e.message);
+                }
+            }
         }
 
         // Chuẩn hóa và làm sạch mảng items

@@ -1653,15 +1653,7 @@ const App = {
         // Populate target week options
         const selectEl = document.getElementById("aiTargetWeekSelect");
         if (selectEl) {
-            selectEl.innerHTML = "";
-            for (let w = 1; w <= 52; w++) {
-                const opt = document.createElement("option");
-                opt.value = w;
-                const range = StorageService.getWeekDateRange(w, this.currentYear);
-                opt.textContent = `Tuần ${w} (${range.start} - ${range.end}/${this.currentYear})` + (w === this.currentWeek ? " • Hiện tại" : "");
-                if (w === this.currentWeek) opt.selected = true;
-                selectEl.appendChild(opt);
-            }
+            StorageService.populateWeekSelect(selectEl, this.currentWeek, this.currentYear);
         }
 
         // Populate API Key input if stored

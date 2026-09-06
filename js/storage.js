@@ -170,6 +170,24 @@ const StorageService = {
         return `${mStr} - ${sStr}`;
     },
 
+    // Lấy đối tượng khoảng ngày đầy đủ (start, end, startISO, endISO, rangeString)
+    getWeekDateRange(weekNo, year) {
+        const monday = this.getMondayOfWeek(weekNo, year);
+        const sunday = this.getSundayOfWeek(weekNo, year);
+        const pad = (n) => String(n).padStart(2, '0');
+        const start = `${pad(monday.getDate())}/${pad(monday.getMonth() + 1)}`;
+        const end = `${pad(sunday.getDate())}/${pad(sunday.getMonth() + 1)}`;
+        const startISO = `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`;
+        const endISO = `${sunday.getFullYear()}-${pad(sunday.getMonth() + 1)}-${pad(sunday.getDate())}`;
+        return {
+            start,
+            end,
+            startISO,
+            endISO,
+            rangeString: `${start} - ${end}/${sunday.getFullYear()}`
+        };
+    },
+
     // Điền động danh sách tuần vào phần tử <select> và gắn nhãn "• Hiện tại" chính xác
     populateWeekSelect(weekSelectEl, selectedWeek, selectedYear) {
         if (!weekSelectEl) return;

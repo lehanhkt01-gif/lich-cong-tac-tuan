@@ -54,6 +54,21 @@ const AuditService = {
         return changes;
     },
 
+    // Ghi lại log chung cho hệ thống
+    logChange(action, description, actor = "") {
+        const logEntry = {
+            action: action,
+            actionTitle: description,
+            timestamp: new Date().toLocaleString("vi-VN"),
+            actor: actor || "Super Admin",
+            changes: []
+        };
+        if (typeof StorageService !== "undefined" && StorageService.addAuditLog) {
+            return StorageService.addAuditLog(logEntry);
+        }
+        return null;
+    },
+
     // Ghi lại log khi thêm/sửa/xóa một mục
     logItemChange(weekSchedule, action, oldItem, newItem, reason = "") {
         const changes = this.computeItemDiff(oldItem, newItem);
