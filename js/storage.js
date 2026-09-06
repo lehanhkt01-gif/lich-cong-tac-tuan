@@ -908,11 +908,9 @@ const StorageService = {
             if (res.ok) {
                 const serverSchedules = await res.json();
                 if (Array.isArray(serverSchedules) && serverSchedules.length > 0) {
-                    const localSchedules = this.getAllSchedules();
-                    const hasLocalItems = localSchedules.some(s => s.items && s.items.length > 0);
-                    const hasServerItems = serverSchedules.some(s => s.items && s.items.length > 0);
-                    if (hasServerItems || !hasLocalItems) {
-                        this.saveSchedules(serverSchedules);
+                    this.saveSchedules(serverSchedules);
+                    if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('schedules-synced', { detail: serverSchedules }));
                     }
                 }
             }

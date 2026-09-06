@@ -240,6 +240,13 @@ const App = {
         // Tìm kiếm & lọc danh bạ cán bộ
         document.getElementById("cadreSearchInput")?.addEventListener("input", () => this.renderCadresView());
         document.getElementById("cadreDeptFilter")?.addEventListener("change", () => this.renderCadresView());
+
+        // Lắng nghe sự kiện đồng bộ dữ liệu từ máy chủ
+        window.addEventListener("schedules-synced", () => {
+            this.populateWeekOptions();
+            this.loadCurrentSchedule();
+            this.renderAll();
+        });
     },
 
     switchTab(tabName) {

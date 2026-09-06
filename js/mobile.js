@@ -117,6 +117,12 @@ const MobileApp = {
         document.getElementById('btnFabAdd')?.addEventListener('click', () => {
             this.openAddEditModal();
         });
+
+        // Lắng nghe sự kiện đồng bộ dữ liệu từ máy chủ
+        window.addEventListener("schedules-synced", () => {
+            this.loadCurrentWeekData();
+            this.renderAll();
+        });
     },
 
     startClock() {

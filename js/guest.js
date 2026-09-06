@@ -135,6 +135,13 @@ const GuestApp = {
             if (this.currentSchedule) ExportService.exportToWord(this.currentSchedule);
         });
         document.getElementById("btnExportPDF")?.addEventListener("click", () => ExportService.printSchedule());
+
+        // Lắng nghe sự kiện đồng bộ dữ liệu từ máy chủ
+        window.addEventListener("schedules-synced", () => {
+            this.populateWeekOptions();
+            this.loadCurrentSchedule();
+            this.renderAll();
+        });
     },
 
     switchTab(tabName) {
