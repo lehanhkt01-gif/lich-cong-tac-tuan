@@ -181,7 +181,7 @@ QUY TẮC BÓC TÁCH BẮT BUỘC:
 
 8. "participants": Thành phần tham dự hoặc đơn vị tham mưu/chuẩn bị (ví dụ: "Lãnh đạo UBND, Công chức Địa chính", "BCH Đảng bộ", "Toàn thể cán bộ, công chức").
 
-9. "vehicle": Phương tiện ("Tự túc phương tiện" hoặc "Xe cơ quan").
+9. "vehicle": Phương tiện bố trí hoặc thông tin lái xe / tài xế. ĐẶC BIỆT CHÚ Ý: Nếu trong lịch/văn bản có ghi tên tài xế hoặc người lái xe (ví dụ: "Đ/c Nam - LX", "Đ/c Hùng lái xe", "Đ/c Thành (LX)", "Xe UBND Đ/c Thắng lái", "Xe cơ quan", v.v.) thì điền chính xác tên tài xế / phương tiện vào trường "vehicle". Nếu không có thông tin lái xe hoặc ghi tự túc thì ghi "Tự túc phương tiện".
 
 CẤU TRÚC JSON ĐẦU RA BẮT BUỘC:
 Trả về duy nhất 1 JSON object có định dạng:
@@ -505,7 +505,7 @@ Trả về duy nhất 1 JSON object có định dạng:
                     location: getProp(block, ["location", "diaDiem", "địa điểm"]) || "UBND xã",
                     leader: getProp(block, ["leader", "chuTri", "chủ trì", "lanhDao", "lãnh đạo"]) || "Lãnh đạo UBND",
                     participants: getProp(block, ["participants", "thanhPhan", "thành phần"]) || "",
-                    vehicle: getProp(block, ["vehicle", "phuongTien", "phương tiện"]) || "Tự túc phương tiện"
+                    vehicle: getProp(block, ["vehicle", "phuongTien", "phương tiện", "laiXe", "lái xe", "taiXe", "tài xế", "driver"]) || "Tự túc phương tiện"
                 });
             }
         }

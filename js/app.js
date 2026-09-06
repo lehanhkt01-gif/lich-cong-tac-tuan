@@ -20,9 +20,16 @@ const App = {
     aiTargetYear: 2026,
 
     init() {
-        const currentInfo = StorageService.getCurrentWeekInfo(new Date());
-        this.currentYear = currentInfo.year;
-        this.currentWeek = currentInfo.weekNumber;
+        const savedWeek = sessionStorage.getItem("activeWeek") || localStorage.getItem("activeWeek");
+        const savedYear = sessionStorage.getItem("activeYear") || localStorage.getItem("activeYear");
+        if (savedWeek && savedYear) {
+            this.currentWeek = parseInt(savedWeek, 10);
+            this.currentYear = parseInt(savedYear, 10);
+        } else {
+            const currentInfo = StorageService.getCurrentWeekInfo(new Date());
+            this.currentYear = currentInfo.year;
+            this.currentWeek = currentInfo.weekNumber;
+        }
 
         this.populateWeekOptions();
         this.loadCurrentSchedule();
@@ -30,6 +37,18 @@ const App = {
         this.setupEventListeners();
         this.setupAuthUI();
         this.renderAll();
+
+        // Kiểm tra thông báo flash sau khi reload trang
+        const flashToastRaw = sessionStorage.getItem("flashToast");
+        if (flashToastRaw) {
+            sessionStorage.removeItem("flashToast");
+            try {
+                const flashToast = JSON.parse(flashToastRaw);
+                setTimeout(() => {
+                    this.showToast(flashToast.message, flashToast.type || "success");
+                }, 300);
+            } catch (e) {}
+        }
     },
 
     populateWeekOptions() {
@@ -135,6 +154,8 @@ const App = {
         if (yearSelect) {
             yearSelect.addEventListener("change", (e) => {
                 this.currentYear = parseInt(e.target.value, 10);
+                sessionStorage.setItem("activeWeek", this.currentWeek);
+                sessionStorage.setItem("activeYear", this.currentYear);
                 this.populateWeekOptions();
                 this.loadCurrentSchedule();
                 this.renderAll();
@@ -145,6 +166,8 @@ const App = {
         if (weekSelect) {
             weekSelect.addEventListener("change", (e) => {
                 this.currentWeek = parseInt(e.target.value, 10);
+                sessionStorage.setItem("activeWeek", this.currentWeek);
+                sessionStorage.setItem("activeYear", this.currentYear);
                 this.loadCurrentSchedule();
                 this.renderAll();
             });
@@ -154,6 +177,8 @@ const App = {
         document.getElementById("btnPrevWeek")?.addEventListener("click", () => {
             if (this.currentWeek > 1) {
                 this.currentWeek--;
+                sessionStorage.setItem("activeWeek", this.currentWeek);
+                sessionStorage.setItem("activeYear", this.currentYear);
                 this.populateWeekOptions();
                 this.loadCurrentSchedule();
                 this.renderAll();
@@ -163,6 +188,8 @@ const App = {
         document.getElementById("btnNextWeek")?.addEventListener("click", () => {
             if (this.currentWeek < 52) {
                 this.currentWeek++;
+                sessionStorage.setItem("activeWeek", this.currentWeek);
+                sessionStorage.setItem("activeYear", this.currentYear);
                 this.populateWeekOptions();
                 this.loadCurrentSchedule();
                 this.renderAll();
@@ -173,6 +200,8 @@ const App = {
             const currentInfo = StorageService.getCurrentWeekInfo(new Date());
             this.currentWeek = currentInfo.weekNumber;
             this.currentYear = currentInfo.year;
+            sessionStorage.setItem("activeWeek", this.currentWeek);
+            sessionStorage.setItem("activeYear", this.currentYear);
             this.populateWeekOptions();
             this.loadCurrentSchedule();
             this.renderAll();
@@ -512,9 +541,13 @@ const App = {
 
         if (itemId) {
             const found = (this.currentSchedule.items || []).find(i => i.id === itemId);
-            if (found) item = JSON.parse(JSON.stringify(found));
+            if (found) {
+                item = JSON.parse(JSON.stringify(found));
+                this.originalItemState = JSON.parse(JSON.stringify(found));
+            }
             if (modalTitle) modalTitle.textContent = "✏️ Chỉnh sửa mục công tác";
         } else {
+            this.originalItemState = null;
             if (modalTitle) modalTitle.textContent = "➕ Thêm mới mục công tác tuần";
         }
 
@@ -637,10 +670,15 @@ const App = {
             const action = this.editingItemId ? "UPDATE" : "CREATE";
             AuditService.logItemChange(result.schedule, action, this.originalItemState, result.newItem, reason);
 
-            this.currentSchedule = result.schedule;
-            this.renderAll();
-            this.closeModal('modalEditItem');
-            this.showToast(this.editingItemId ? "Đã cập nhật mục công tác và ghi nhận vết sửa!" : "Đã thêm mục công tác mới vào lịch tuần!", "success");
+            sessionStorage.setItem("activeWeek", this.currentWeek);
+            sessionStorage.setItem("activeYear", this.currentYear);
+            sessionStorage.setItem("flashToast", JSON.stringify({
+                message: this.editingItemId ? "Đã cập nhật mục công tác thành công!" : "Đã thêm mục công tác mới vào lịch tuần!",
+                type: "success"
+            }));
+
+            // Tự động tải lại trang hiện hành
+            window.location.reload();
         }
     },
 
@@ -660,9 +698,13 @@ const App = {
         const result = StorageService.saveScheduleItem(this.currentSchedule.id, copy);
         if (result) {
             AuditService.logItemChange(result.schedule, "CREATE", null, result.newItem, "Nhân bản từ mục trước");
-            this.currentSchedule = result.schedule;
-            this.renderAll();
-            this.showToast("Đã nhân bản mục công tác!", "success");
+            sessionStorage.setItem("activeWeek", this.currentWeek);
+            sessionStorage.setItem("activeYear", this.currentYear);
+            sessionStorage.setItem("flashToast", JSON.stringify({
+                message: "Đã nhân bản mục công tác!",
+                type: "success"
+            }));
+            window.location.reload();
         }
     },
 
@@ -677,9 +719,13 @@ const App = {
         const result = StorageService.deleteScheduleItem(this.currentSchedule.id, itemId);
         if (result) {
             AuditService.logItemChange(result.schedule, "DELETE", result.deletedItem, null, "Xóa theo yêu cầu điều chỉnh lịch");
-            this.currentSchedule = result.schedule;
-            this.renderAll();
-            this.showToast("Đã xóa mục công tác và ghi nhận vào lịch sử!", "success");
+            sessionStorage.setItem("activeWeek", this.currentWeek);
+            sessionStorage.setItem("activeYear", this.currentYear);
+            sessionStorage.setItem("flashToast", JSON.stringify({
+                message: "Đã xóa mục công tác khỏi lịch tuần!",
+                type: "success"
+            }));
+            window.location.reload();
         }
     },
 
@@ -1950,6 +1996,9 @@ const App = {
                 <td style="padding: 4px;">
                     <input type="text" class="ai-cell-input ai-field-participants" value="${escapeHTML(item.participants || '')}" placeholder="Thành phần..." style="width: 100%; font-size: 11.5px; padding: 4px; border: 1px solid #CBD5E1; border-radius: 4px;">
                 </td>
+                <td style="padding: 4px;">
+                    <input type="text" class="ai-cell-input ai-field-vehicle" value="${escapeHTML(item.vehicle || 'Tự túc phương tiện')}" placeholder="Tự túc / Lái xe..." style="width: 100%; font-size: 11.5px; padding: 4px; border: 1px solid #CBD5E1; border-radius: 4px;">
+                </td>
                 <td style="text-align: center; vertical-align: middle; padding: 4px;">
                     <button type="button" onclick="App.deleteAiExtractedRow(${idx})" style="background: none; border: none; color: #DC2626; cursor: pointer; font-size: 15px; font-weight: bold;" title="Xóa hàng">✕</button>
                 </td>
@@ -2005,6 +2054,7 @@ const App = {
             const leader = r.querySelector(".ai-field-leader")?.value.trim() || "";
             const location = r.querySelector(".ai-field-location")?.value.trim() || "";
             const participants = r.querySelector(".ai-field-participants")?.value.trim() || "";
+            const vehicle = r.querySelector(".ai-field-vehicle")?.value.trim() || orig.vehicle || "Tự túc phương tiện";
 
             updated.push({
                 ...orig,
@@ -2017,7 +2067,7 @@ const App = {
                 leader: leader,
                 location: location,
                 participants: participants,
-                vehicle: orig.vehicle || "Tự túc phương tiện",
+                vehicle: vehicle,
                 _checked: isChecked
             });
         });
@@ -2099,17 +2149,15 @@ const App = {
             console.warn("VPS Sync Warning:", e);
         }
 
-        // Chuyển tới tuần vừa nạp và làm mới giao diện
-        this.currentWeek = targetWeek;
-        this.currentYear = targetYear;
-        this.populateWeekOptions();
-        this.loadCurrentSchedule();
-        this.renderAll();
+        sessionStorage.setItem("activeWeek", targetWeek);
+        sessionStorage.setItem("activeYear", targetYear);
+        sessionStorage.setItem("flashToast", JSON.stringify({
+            message: `Đã nạp ${cleanItems.length} mục công tác vào Lịch Tuần ${targetWeek}/${targetYear}!`,
+            type: "success"
+        }));
 
-        // Đóng modal
-        this.closeModal("modalAIExtractor");
-
-        this.showToast(`🎉 Đã nạp thành công ${cleanItems.length} mục công tác vào Lịch Tuần ${targetWeek}/${targetYear}!`, "success");
+        // Tự động tải lại trang hiện hành
+        window.location.reload();
     },
 
     // =========================================================================

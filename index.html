@@ -615,13 +615,14 @@
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Phương tiện bố trí</label>
-                            <select id="formItemVehicle" class="form-select">
-                                <option value="Tự túc phương tiện">Tự túc phương tiện</option>
-                                <option value="Xe 47A-002.35 (UBND)">Xe 47A-002.35 (UBND)</option>
-                                <option value="Xe 47A-001.89 (Đảng ủy)">Xe 47A-001.89 (Đảng ủy)</option>
-                                <option value="Xe bán tải 47C-123.45">Xe bán tải 47C-123.45</option>
-                            </select>
+                            <label class="form-label">Phương tiện bố trí / Lái xe</label>
+                            <input type="text" id="formItemVehicle" class="form-input" list="vehicleSuggestions" placeholder="Nhập tên tài xế / xe hoặc tự túc...">
+                            <datalist id="vehicleSuggestions">
+                                <option value="Tự túc phương tiện">
+                                <option value="Xe 47A-002.35 (UBND)">
+                                <option value="Xe 47A-001.89 (Đảng ủy)">
+                                <option value="Xe bán tải 47C-123.45">
+                            </datalist>
                         </div>
 
                         <div class="form-grid-full form-group">
@@ -1098,6 +1099,7 @@
                                     <th style="width: 150px; padding: 8px 6px;">Chủ Trì / Lãnh Đạo</th>
                                     <th style="width: 140px; padding: 8px 6px;">Địa Điểm</th>
                                     <th style="width: 130px; padding: 8px 6px;">Thành Phần</th>
+                                    <th style="width: 130px; padding: 8px 6px;">Phương Tiện / Lái Xe</th>
                                     <th style="width: 38px; text-align: center; padding: 8px 4px;">Xóa</th>
                                 </tr>
                             </thead>
@@ -1133,13 +1135,13 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20260906_35"></script>
-    <script src="js/storage.js?v=20260906_35"></script>
-    <script src="js/auth.js?v=20260906_35"></script>
-    <script src="js/audit.js?v=20260906_35"></script>
-    <script src="js/email-service.js?v=20260906_35"></script>
-    <script src="js/export-service.js?v=20260906_35"></script>
-    <script src="js/ai-extractor.js?v=20260906_35"></script>
-    <script src="js/app.js?v=20260906_35"></script>
+    <script src="js/data.js?v=20260907_01"></script>
+    <script src="js/storage.js?v=20260907_01"></script>
+    <script src="js/auth.js?v=20260907_01"></script>
+    <script src="js/audit.js?v=20260907_01"></script>
+    <script src="js/email-service.js?v=20260907_01"></script>
+    <script src="js/export-service.js?v=20260907_01"></script>
+    <script src="js/ai-extractor.js?v=20260907_01"></script>
+    <script src="js/app.js?v=20260907_01"></script>
 </body>
 </html>
