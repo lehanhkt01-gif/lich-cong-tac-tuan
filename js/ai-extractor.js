@@ -63,7 +63,7 @@ const GeminiExtractorService = {
         }
     },
 
-    // Kiểm tra API Key có hợp lệ không
+    // Kiểm tra API Key có hợp lệ không (hỗ trợ tự động fallback nếu model quá tải 503 hoặc 404)
     async testApiKey(apiKey, model = null) {
         const key = (apiKey || this.getApiKey()).trim();
         if (!key) {
@@ -71,42 +71,61 @@ const GeminiExtractorService = {
         }
 
         const modelId = model || this.getModel();
-        let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
+        const candidateModels = [
+            modelId,
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash"
+        ];
+        const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
+        let lastError = null;
 
-        const payload = {
-            contents: [
-                {
-                    role: "user",
-                    parts: [{ text: "Xin chào! Trả về đúng 1 từ: OK" }]
+        for (const m of uniqueModels) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [{ text: "Xin chào! Trả về đúng 1 từ: OK" }]
+                    }
+                ],
+                generationConfig: {
+                    maxOutputTokens: 10,
+                    temperature: 0.1
                 }
-            ],
-            generationConfig: {
-                maxOutputTokens: 10,
-                temperature: 0.1
+            };
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    return true;
+                }
+
+                const errData = await res.json().catch(() => ({}));
+                const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
+
+                if (res.status === 403 || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
+                    throw new Error("Khóa Google Gemini API Key không chính xác hoặc đã bị vô hiệu hóa. Vui lòng kiểm tra lại!");
+                }
+
+                lastError = new Error(errMsg);
+            } catch (e) {
+                if (e.message && e.message.includes("không chính xác")) throw e;
+                lastError = e;
             }
-        };
-
-        let res = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-
-        // Tự động thử fallback model nếu model vừa chọn chưa kích hoạt trên tài khoản (404)
-        if (!res.ok && res.status === 404 && modelId !== "gemini-2.5-flash" && modelId !== "gemini-2.0-flash") {
-            const fallbackModel = modelId.includes("pro") ? "gemini-2.5-pro" : "gemini-2.5-flash";
-            const fbEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent?key=${key}`;
-            res = await fetch(fbEndpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
         }
 
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
-            throw new Error(errMsg);
+        if (lastError) {
+            let msg = lastError.message;
+            if (msg.includes("high demand") || msg.includes("overloaded")) {
+                msg = "Máy chủ Google Gemini đang tạm thời quá tải lưu lượng. Khóa API vẫn hoạt động tốt, bạn có thể chuyển sang Gemini 2.5 Flash để bóc tách ngay.";
+            }
+            throw new Error(msg);
         }
 
         return true;
@@ -313,108 +332,129 @@ Trả về duy nhất 1 JSON object có định dạng:
 
         if (onProgress) onProgress("Gemini AI đang nhận diện và bóc tách bảng lịch biểu...", 65);
 
-        const requestBody = {
-            contents: contents,
-            generationConfig: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: "OBJECT",
-                    properties: {
-                        detectedWeek: { type: "INTEGER" },
-                        detectedYear: { type: "INTEGER" },
-                        detectedTitle: { type: "STRING" },
-                        items: {
-                            type: "ARRAY",
-                            items: {
-                                type: "OBJECT",
-                                properties: {
-                                    dayOfWeek: { type: "STRING" },
-                                    date: { type: "STRING" },
-                                    time: { type: "STRING" },
-                                    bloc: { type: "STRING" },
-                                    content: { type: "STRING" },
-                                    location: { type: "STRING" },
-                                    leader: { type: "STRING" },
-                                    participants: { type: "STRING" },
-                                    vehicle: { type: "STRING" }
-                                },
-                                required: ["dayOfWeek", "time", "bloc", "content"]
-                            }
-                        }
-                    },
-                    required: ["items"]
-                },
-                temperature: 0.1,
-                maxOutputTokens: 8192
+        // Danh sách mô hình theo thứ tự ưu tiên thử nghiệm
+        const candidateModels = [
+            modelId,
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-2.5-pro",
+            "gemini-1.5-flash",
+            "gemini-1.5-pro"
+        ];
+        const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
+
+        let rawJsonText = null;
+        let successfulModel = null;
+        let lastError = null;
+
+        for (let i = 0; i < uniqueModels.length; i++) {
+            const currentModel = uniqueModels[i];
+            const currentEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${key}`;
+
+            if (i > 0 && onProgress) {
+                onProgress(`Mô hình trước quá tải/bận, đang tự động chuyển sang ${currentModel}...`, 75);
             }
-        };
 
-        let res = await fetch(endpoint, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody)
-        });
-
-        // Nếu model chưa hỗ trợ hoặc trả về HTTP 404, tự động fallback sang mô hình khả dụng tương đương
-        if (!res.ok && res.status === 404 && modelId !== "gemini-2.5-flash" && modelId !== "gemini-2.0-flash") {
-            const fallbackModel = modelId.includes("pro") ? "gemini-2.5-pro" : "gemini-2.5-flash";
-            console.warn(`Model ${modelId} trả về 404, đang tự động chuyển sang ${fallbackModel}...`);
-            const fbEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent?key=${key}`;
-            res = await fetch(fbEndpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(requestBody)
-            });
-            if (!res.ok && res.status === 400) {
-                const fbFallbackBody = {
+            try {
+                // Thử 1: Cấu hình Structured Output JSON Schema
+                const structuredBody = {
                     contents: contents,
                     generationConfig: {
                         responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                detectedWeek: { type: "INTEGER" },
+                                detectedYear: { type: "INTEGER" },
+                                detectedTitle: { type: "STRING" },
+                                items: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            dayOfWeek: { type: "STRING" },
+                                            date: { type: "STRING" },
+                                            time: { type: "STRING" },
+                                            bloc: { type: "STRING" },
+                                            content: { type: "STRING" },
+                                            location: { type: "STRING" },
+                                            leader: { type: "STRING" },
+                                            participants: { type: "STRING" },
+                                            vehicle: { type: "STRING" }
+                                        },
+                                        required: ["dayOfWeek", "time", "bloc", "content"]
+                                    }
+                                }
+                            },
+                            required: ["items"]
+                        },
                         temperature: 0.1,
                         maxOutputTokens: 8192
                     }
                 };
-                res = await fetch(fbEndpoint, {
+
+                let res = await fetch(currentEndpoint, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(fbFallbackBody)
+                    body: JSON.stringify(structuredBody)
                 });
+
+                // Nếu 400 (model không hỗ trợ schema), gửi lại không kèm schema
+                if (!res.ok && res.status === 400) {
+                    const fallbackBody = {
+                        contents: contents,
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            temperature: 0.1,
+                            maxOutputTokens: 8192
+                        }
+                    };
+                    res = await fetch(currentEndpoint, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(fallbackBody)
+                    });
+                }
+
+                if (res.ok) {
+                    const responseData = await res.json();
+                    const candidate = responseData.candidates?.[0];
+                    const text = candidate?.content?.parts?.[0]?.text;
+                    if (text && text.trim()) {
+                        rawJsonText = text;
+                        successfulModel = currentModel;
+                        break;
+                    }
+                }
+
+                const errData = await res.json().catch(() => ({}));
+                const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
+
+                // Nếu lỗi do API Key không hợp lệ, dừng ngay vì các model khác cũng sẽ lỗi API Key
+                if (res.status === 403 || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
+                    throw new Error("Khóa Google Gemini API Key không chính xác hoặc đã bị vô hiệu hóa. Vui lòng kiểm tra lại!");
+                }
+
+                console.warn(`Mô hình ${currentModel} gặp lỗi (${res.status}): ${errMsg}. Đang chuyển sang mô hình dự phòng kế tiếp...`);
+                lastError = new Error(errMsg);
+            } catch (err) {
+                if (err.message && err.message.includes("không chính xác")) throw err;
+                console.warn(`Lỗi khi gọi mô hình ${currentModel}:`, err.message);
+                lastError = err;
             }
         }
 
-        // Nếu model không hỗ trợ responseSchema (HTTP 400), tự động gửi lại không kèm schema
-        if (!res.ok && res.status === 400) {
-            console.warn("Model không hỗ trợ responseSchema, đang gửi lại yêu cầu dự phòng...");
-            const fallbackBody = {
-                contents: contents,
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    temperature: 0.1,
-                    maxOutputTokens: 8192
-                }
-            };
-            res = await fetch(endpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(fallbackBody)
-            });
-        }
-
-        if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            const errMsg = errData.error?.message || `Lỗi máy chủ Gemini (${res.status}): ${res.statusText}`;
-            throw new Error(errMsg);
+        if (!rawJsonText) {
+            let msg = lastError ? lastError.message : "Gemini AI không trả về dữ liệu phù hợp.";
+            if (msg.includes("high demand") || msg.includes("overloaded")) {
+                msg = "Hệ thống máy chủ Google AI đang trong thời điểm quá tải cục bộ. Vui lòng bấm thử lại lần nữa hoặc chọn mô hình Gemini 2.5 Flash / Gemini 2.0 Flash.";
+            } else if (msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
+                msg = "Khóa API đã hết hạn mức sử dụng (Quota Exceeded). Vui lòng thử lại sau 1 phút hoặc lấy khóa mới tại Google AI Studio.";
+            }
+            throw new Error(msg);
         }
 
         if (onProgress) onProgress("Đang chuẩn hóa và đối soát cấu trúc dữ liệu...", 90);
-
-        const responseData = await res.json();
-        const candidate = responseData.candidates?.[0];
-        const rawJsonText = candidate?.content?.parts?.[0]?.text;
-
-        if (!rawJsonText) {
-            throw new Error("Gemini AI không trả về dữ liệu phù hợp. Vui lòng kiểm tra lại chất lượng tệp hoặc hình ảnh!");
-        }
 
         // Parse & sửa lỗi JSON đa tầng (Multi-layer repair & Regex Fallback)
         const parsedResult = this.parseAndRepairJson(rawJsonText, targetWeek, targetYear);
@@ -434,7 +474,8 @@ Trả về duy nhất 1 JSON object có định dạng:
             detectedYear: parsedResult.detectedYear || targetYear || 2026,
             detectedTitle: parsedResult.detectedTitle || `Lịch công tác tuần ${targetWeek || ''} năm ${targetYear || 2026}`,
             items: sanitizedItems,
-            rawCount: sanitizedItems.length
+            rawCount: sanitizedItems.length,
+            modelUsed: successfulModel || modelId
         };
     },
 

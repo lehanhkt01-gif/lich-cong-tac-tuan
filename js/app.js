@@ -1947,7 +1947,8 @@ const App = {
             if (weekLabelEl) weekLabelEl.textContent = `Tuần ${targetWeek}/${targetYear}`;
 
             this.renderAIExtractedItemsTable();
-            this.showToast(`Bóc tách thành công ${this.aiExtractedItems.length} mục công tác!`, "success");
+            const modelNotice = result.modelUsed && result.modelUsed !== selectedModel ? ` (qua ${result.modelUsed})` : '';
+            this.showToast(`Bóc tách thành công ${this.aiExtractedItems.length} mục công tác${modelNotice}!`, "success");
 
         } catch (err) {
             console.error("AI Extraction Error:", err);
