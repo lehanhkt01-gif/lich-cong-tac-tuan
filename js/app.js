@@ -12,6 +12,13 @@ const App = {
     currentSchedule: null,
     editingItemId: null,
 
+    // AI Extractor State
+    aiSelectedFile: null,
+    aiInputMode: "file",
+    aiExtractedItems: [],
+    aiTargetWeek: 35,
+    aiTargetYear: 2026,
+
     init() {
         const currentInfo = StorageService.getCurrentWeekInfo(new Date());
         this.currentYear = currentInfo.year;
@@ -1526,6 +1533,579 @@ const App = {
         setTimeout(() => {
             if (alertEl) alertEl.style.display = "none";
         }, 6000);
+    },
+
+    // =========================================================================
+    // CÀI ĐẶT HỆ THỐNG & AI GEMINI
+    // =========================================================================
+    renderSettingsView() {
+        const org = StorageService.getOrgSettings ? StorageService.getOrgSettings() : null;
+        if (org) {
+            const orgNameEl = document.getElementById("setOrgName");
+            const orgProvEl = document.getElementById("setOrgProvince");
+            const orgEmailEl = document.getElementById("setOrgEmail");
+            const orgPhoneEl = document.getElementById("setOrgPhone");
+            if (orgNameEl && org.name) orgNameEl.value = org.name;
+            if (orgProvEl && org.province) orgProvEl.value = org.province;
+            if (orgEmailEl && org.email) orgEmailEl.value = org.email;
+            if (orgPhoneEl && org.phone) orgPhoneEl.value = org.phone;
+        }
+
+        // Gemini settings
+        const keyInput = document.getElementById("settingGeminiApiKey");
+        const modelSelect = document.getElementById("settingGeminiModel");
+        if (typeof GeminiExtractorService !== "undefined") {
+            if (keyInput) keyInput.value = GeminiExtractorService.getApiKey() || "";
+            if (modelSelect) modelSelect.value = GeminiExtractorService.getModel() || "gemini-2.5-flash";
+        }
+    },
+
+    saveOrgSettings() {
+        const orgData = {
+            name: document.getElementById("setOrgName")?.value.trim() || "",
+            province: document.getElementById("setOrgProvince")?.value.trim() || "",
+            email: document.getElementById("setOrgEmail")?.value.trim() || "",
+            phone: document.getElementById("setOrgPhone")?.value.trim() || ""
+        };
+        localStorage.setItem("easup_org_settings", JSON.stringify(orgData));
+        this.showToast("Đã lưu cấu hình thông tin đơn vị thành công!", "success");
+    },
+
+    saveGeminiSettings() {
+        const key = document.getElementById("settingGeminiApiKey")?.value.trim() || "";
+        const model = document.getElementById("settingGeminiModel")?.value || "gemini-2.5-flash";
+        if (typeof GeminiExtractorService !== "undefined") {
+            GeminiExtractorService.saveApiKey(key);
+            GeminiExtractorService.saveModel(model);
+        }
+        const statusEl = document.getElementById("geminiKeyStatus");
+        if (statusEl) {
+            statusEl.textContent = key ? "✅ Đã lưu cấu hình API Key!" : "⚠️ Đã xóa API Key!";
+            statusEl.style.color = key ? "#16A34A" : "#CA8A04";
+        }
+        this.showToast("Đã lưu cấu hình AI Gemini thành công!", "success");
+    },
+
+    async testGeminiConnection() {
+        const key = document.getElementById("settingGeminiApiKey")?.value.trim() || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getApiKey() : "");
+        const model = document.getElementById("settingGeminiModel")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-2.5-flash");
+        const statusEl = document.getElementById("geminiKeyStatus");
+
+        if (!key) {
+            if (statusEl) {
+                statusEl.textContent = "❌ Vui lòng nhập API Key để kiểm tra!";
+                statusEl.style.color = "#DC2626";
+            }
+            this.showToast("Vui lòng nhập API Key!", "warning");
+            return;
+        }
+
+        if (statusEl) {
+            statusEl.textContent = "⏳ Đang kiểm tra kết nối với Google AI...";
+            statusEl.style.color = "#4F46E5";
+        }
+
+        try {
+            const res = await GeminiExtractorService.testConnection(key, model);
+            if (res.success) {
+                if (statusEl) {
+                    statusEl.textContent = "✅ Kết nối Google Gemini API thành công!";
+                    statusEl.style.color = "#16A34A";
+                }
+                this.showToast("Kết nối Google Gemini thành công!", "success");
+            } else {
+                if (statusEl) {
+                    statusEl.textContent = "❌ " + res.message;
+                    statusEl.style.color = "#DC2626";
+                }
+                this.showToast(res.message, "error");
+            }
+        } catch (err) {
+            if (statusEl) {
+                statusEl.textContent = "❌ Lỗi: " + err.message;
+                statusEl.style.color = "#DC2626";
+            }
+            this.showToast("Lỗi kết nối Gemini: " + err.message, "error");
+        }
+    },
+
+    togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        if (input.type === "password") {
+            input.type = "text";
+            if (btn) btn.textContent = "🙈";
+        } else {
+            input.type = "password";
+            if (btn) btn.textContent = "👁️";
+        }
+    },
+
+    // =========================================================================
+    // MODAL BÓC TÁCH LỊCH CÔNG TÁC BẰNG GEMINI AI
+    // =========================================================================
+    openAIExtractModal() {
+        if (!AuthService.canEdit()) {
+            this.openLoginModal("Vui lòng đăng nhập với quyền Quản trị / Lãnh đạo để sử dụng tính năng Bóc tách lịch AI!");
+            return;
+        }
+
+        // Populate target week options
+        const selectEl = document.getElementById("aiTargetWeekSelect");
+        if (selectEl) {
+            selectEl.innerHTML = "";
+            for (let w = 1; w <= 52; w++) {
+                const opt = document.createElement("option");
+                opt.value = w;
+                const range = StorageService.getWeekDateRange(w, this.currentYear);
+                opt.textContent = `Tuần ${w} (${range.start} - ${range.end}/${this.currentYear})` + (w === this.currentWeek ? " • Hiện tại" : "");
+                if (w === this.currentWeek) opt.selected = true;
+                selectEl.appendChild(opt);
+            }
+        }
+
+        // Populate API Key input if stored
+        const modalApiKeyInput = document.getElementById("aiModalApiKey");
+        if (modalApiKeyInput && typeof GeminiExtractorService !== "undefined") {
+            modalApiKeyInput.value = GeminiExtractorService.getApiKey() || "";
+        }
+
+        // Reset step view
+        this.backToAiInputStep();
+        this.clearAiSelectedFile();
+        const rawTextEl = document.getElementById("aiRawTextInput");
+        if (rawTextEl) rawTextEl.value = "";
+
+        // Setup dropzone listeners
+        this.setupAiDropzone();
+
+        this.openModal("modalAIExtractor");
+    },
+
+    setupAiDropzone() {
+        const dropzone = document.getElementById("aiDropzone");
+        if (!dropzone || dropzone.dataset.initialized) return;
+        dropzone.dataset.initialized = "true";
+
+        ["dragenter", "dragover"].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add("dragover");
+            }, false);
+        });
+
+        ["dragleave", "drop"].forEach(eventName => {
+            dropzone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove("dragover");
+            }, false);
+        });
+
+        dropzone.addEventListener("drop", (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length > 0) {
+                this.setAiSelectedFile(files[0]);
+            }
+        });
+    },
+
+    switchAiInputMode(mode) {
+        this.aiInputMode = mode;
+        const btnFile = document.getElementById("btnAiTabFile");
+        const btnText = document.getElementById("btnAiTabText");
+        const panelFile = document.getElementById("aiPanelFile");
+        const panelText = document.getElementById("aiPanelText");
+
+        if (mode === "file") {
+            btnFile?.classList.add("active");
+            if (btnFile) {
+                btnFile.style.background = "#EEF2FF";
+                btnFile.style.color = "#3730A3";
+            }
+            btnText?.classList.remove("active");
+            if (btnText) {
+                btnText.style.background = "#F8FAFC";
+                btnText.style.color = "#475569";
+            }
+            if (panelFile) panelFile.style.display = "block";
+            if (panelText) panelText.style.display = "none";
+        } else {
+            btnText?.classList.add("active");
+            if (btnText) {
+                btnText.style.background = "#EEF2FF";
+                btnText.style.color = "#3730A3";
+            }
+            btnFile?.classList.remove("active");
+            if (btnFile) {
+                btnFile.style.background = "#F8FAFC";
+                btnFile.style.color = "#475569";
+            }
+            if (panelText) panelText.style.display = "block";
+            if (panelFile) panelFile.style.display = "none";
+        }
+    },
+
+    handleAiFileSelected(event) {
+        const file = event.target.files?.[0];
+        if (file) {
+            this.setAiSelectedFile(file);
+        }
+    },
+
+    setAiSelectedFile(file) {
+        if (file.size > 25 * 1024 * 1024) {
+            alert("Kích thước tệp quá lớn (>25MB). Vui lòng chọn tệp nhỏ hơn!");
+            return;
+        }
+        this.aiSelectedFile = file;
+        const infoEl = document.getElementById("aiSelectedFileInfo");
+        const nameEl = document.getElementById("aiFileName");
+        const sizeEl = document.getElementById("aiFileSize");
+        const iconEl = document.getElementById("aiFileIcon");
+
+        if (infoEl) infoEl.style.display = "flex";
+        if (nameEl) nameEl.textContent = file.name;
+        if (sizeEl) sizeEl.textContent = `(${(file.size / 1024 / (file.size > 1048576 ? 1024 : 1)).toFixed(1)} ${file.size > 1048576 ? "MB" : "KB"})`;
+
+        const ext = file.name.split(".").pop().toLowerCase();
+        let icon = "📄";
+        if (ext === "pdf") icon = "📕";
+        else if (["doc", "docx"].includes(ext)) icon = "📘";
+        else if (["png", "jpg", "jpeg"].includes(ext)) icon = "🖼️";
+        else if (ext === "txt") icon = "📝";
+        if (iconEl) iconEl.textContent = icon;
+    },
+
+    clearAiSelectedFile() {
+        this.aiSelectedFile = null;
+        const fileInput = document.getElementById("aiFileInput");
+        if (fileInput) fileInput.value = "";
+        const infoEl = document.getElementById("aiSelectedFileInfo");
+        if (infoEl) infoEl.style.display = "none";
+    },
+
+    backToAiInputStep() {
+        const stepInput = document.getElementById("aiStepInput");
+        const stepLoading = document.getElementById("aiStepLoading");
+        const stepReview = document.getElementById("aiStepReview");
+        if (stepInput) stepInput.style.display = "block";
+        if (stepLoading) stepLoading.style.display = "none";
+        if (stepReview) stepReview.style.display = "none";
+    },
+
+    async executeAiExtraction() {
+        // API Key validation
+        let apiKey = document.getElementById("aiModalApiKey")?.value.trim();
+        if (!apiKey && typeof GeminiExtractorService !== "undefined") {
+            apiKey = GeminiExtractorService.getApiKey();
+        }
+        if (!apiKey) {
+            alert("Vui lòng nhập Google Gemini API Key để tiếp tục!\nBạn có thể lấy khóa miễn phí tại: https://aistudio.google.com/app/apikey");
+            document.getElementById("aiModalApiKey")?.focus();
+            return;
+        }
+        if (typeof GeminiExtractorService !== "undefined") {
+            GeminiExtractorService.saveApiKey(apiKey);
+        }
+
+        // Target Week & Year
+        const targetWeek = parseInt(document.getElementById("aiTargetWeekSelect")?.value || this.currentWeek, 10);
+        const targetYear = this.currentYear;
+
+        let fileToProcess = null;
+        let textToProcess = "";
+
+        if (this.aiInputMode === "file") {
+            if (!this.aiSelectedFile) {
+                alert("Vui lòng chọn hoặc kéo thả tệp lịch công tác (PDF, Word, Ảnh scan) cần bóc tách!");
+                return;
+            }
+            fileToProcess = this.aiSelectedFile;
+        } else {
+            textToProcess = document.getElementById("aiRawTextInput")?.value.trim() || "";
+            if (!textToProcess) {
+                alert("Vui lòng dán nội dung văn bản lịch công tác cần bóc tách!");
+                document.getElementById("aiRawTextInput")?.focus();
+                return;
+            }
+        }
+
+        // Transition to Step 2: Radar Loading
+        const stepInput = document.getElementById("aiStepInput");
+        const stepLoading = document.getElementById("aiStepLoading");
+        const stepReview = document.getElementById("aiStepReview");
+
+        if (stepInput) stepInput.style.display = "none";
+        if (stepLoading) stepLoading.style.display = "block";
+        if (stepReview) stepReview.style.display = "none";
+
+        const progressEl = document.getElementById("aiLoadingProgress");
+        const titleEl = document.getElementById("aiLoadingTitle");
+        const subEl = document.getElementById("aiLoadingSub");
+
+        const updateProgress = (msg, pct) => {
+            if (progressEl) progressEl.style.width = pct + "%";
+            if (titleEl) titleEl.textContent = "Đang xử lý tài liệu (" + pct + "%)...";
+            if (subEl) subEl.textContent = msg;
+        };
+
+        try {
+            updateProgress("Đang chuẩn bị dữ liệu và kết nối Gemini AI...", 20);
+
+            const result = await GeminiExtractorService.extractSchedule({
+                file: fileToProcess,
+                rawText: textToProcess,
+                targetWeek: targetWeek,
+                targetYear: targetYear,
+                apiKey: apiKey,
+                onProgress: (msg, pct) => updateProgress(msg, pct)
+            });
+
+            if (!result || !result.items || result.items.length === 0) {
+                throw new Error("Không tìm thấy mục công tác nào trong tài liệu hoặc không thể nhận diện thể thức!");
+            }
+
+            this.aiExtractedItems = result.items;
+            this.aiTargetWeek = targetWeek;
+            this.aiTargetYear = targetYear;
+
+            // Transition to Step 3: Review Table
+            if (stepInput) stepInput.style.display = "none";
+            if (stepLoading) stepLoading.style.display = "none";
+            if (stepReview) stepReview.style.display = "block";
+
+            const summaryEl = document.getElementById("aiReviewSummary");
+            if (summaryEl) summaryEl.textContent = `Đã trích xuất được ${this.aiExtractedItems.length} mục công tác (Tuần ${targetWeek}/${targetYear})`;
+
+            const weekLabelEl = document.getElementById("aiTargetWeekLabel");
+            if (weekLabelEl) weekLabelEl.textContent = `Tuần ${targetWeek}/${targetYear}`;
+
+            this.renderAIExtractedItemsTable();
+            this.showToast(`Bóc tách thành công ${this.aiExtractedItems.length} mục công tác!`, "success");
+
+        } catch (err) {
+            console.error("AI Extraction Error:", err);
+            alert("Lỗi khi bóc tách lịch bằng AI:\n" + err.message);
+            this.backToAiInputStep();
+        }
+    },
+
+    renderAIExtractedItemsTable() {
+        const tbody = document.getElementById("aiReviewTableBody");
+        if (!tbody) return;
+        tbody.innerHTML = "";
+
+        const days = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
+        const blocs = ["UBND", "Đảng ủy", "HĐND", "MTTQ", "Khác"];
+
+        this.aiExtractedItems.forEach((item, idx) => {
+            const tr = document.createElement("tr");
+            tr.dataset.index = idx;
+            tr.style.borderBottom = "1px solid #E2E8F0";
+
+            let dayOpts = "";
+            days.forEach(d => {
+                dayOpts += `<option value="${d}" ${item.dayOfWeek === d ? "selected" : ""}>${d}</option>`;
+            });
+
+            let blocOpts = "";
+            blocs.forEach(b => {
+                blocOpts += `<option value="${b}" ${item.bloc === b ? "selected" : ""}>${b}</option>`;
+            });
+
+            tr.innerHTML = `
+                <td style="text-align: center; vertical-align: middle; padding: 6px 4px;">
+                    <input type="checkbox" class="ai-item-check" data-index="${idx}" ${item._checked !== false ? "checked" : ""}>
+                </td>
+                <td style="padding: 4px;">
+                    <select class="ai-cell-input ai-field-day" style="width: 100%; padding: 4px; font-weight: 700; border: 1px solid #CBD5E1; border-radius: 4px;">
+                        ${dayOpts}
+                    </select>
+                    <input type="text" class="ai-cell-input ai-field-date" value="${escapeHTML(item.date || '')}" placeholder="DD/MM/YYYY" style="width: 100%; margin-top: 3px; font-size: 11px; padding: 2px 4px; border: 1px solid #E2E8F0; border-radius: 4px;">
+                </td>
+                <td style="padding: 4px;">
+                    <input type="text" class="ai-cell-input ai-field-time" value="${escapeHTML(item.time || '08h00')}" placeholder="08h00" style="width: 100%; font-weight: 600; padding: 4px; border: 1px solid #CBD5E1; border-radius: 4px;">
+                </td>
+                <td style="padding: 4px;">
+                    <select class="ai-cell-input ai-field-bloc" style="width: 100%; font-weight: 700; padding: 4px; border: 1px solid #CBD5E1; border-radius: 4px;">
+                        ${blocOpts}
+                    </select>
+                </td>
+                <td style="padding: 4px;">
+                    <textarea class="ai-cell-input ai-field-content" rows="2" style="width: 100%; font-size: 12.5px; padding: 4px; border: 1px solid #CBD5E1; border-radius: 4px; resize: vertical;">${escapeHTML(item.content || '')}</textarea>
+                </td>
+                <td style="padding: 4px;">
+                    <input type="text" class="ai-cell-input ai-field-leader" value="${escapeHTML(item.leader || '')}" placeholder="Chủ trì / Lãnh đạo" style="width: 100%; font-weight: 600; font-size: 12px; padding: 4px; border: 1px solid #CBD5E1; border-radius: 4px;">
+                </td>
+                <td style="padding: 4px;">
+                    <input type="text" class="ai-cell-input ai-field-location" value="${escapeHTML(item.location || '')}" placeholder="Địa điểm..." style="width: 100%; font-size: 12px; padding: 4px; border: 1px solid #CBD5E1; border-radius: 4px;">
+                </td>
+                <td style="padding: 4px;">
+                    <input type="text" class="ai-cell-input ai-field-participants" value="${escapeHTML(item.participants || '')}" placeholder="Thành phần..." style="width: 100%; font-size: 11.5px; padding: 4px; border: 1px solid #CBD5E1; border-radius: 4px;">
+                </td>
+                <td style="text-align: center; vertical-align: middle; padding: 4px;">
+                    <button type="button" onclick="App.deleteAiExtractedRow(${idx})" style="background: none; border: none; color: #DC2626; cursor: pointer; font-size: 15px; font-weight: bold;" title="Xóa hàng">✕</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    },
+
+    toggleAiSelectAll(checked) {
+        document.querySelectorAll(".ai-item-check").forEach(cb => {
+            cb.checked = checked;
+        });
+    },
+
+    addAiReviewRow() {
+        this.syncCurrentReviewEdits();
+        this.aiExtractedItems.push({
+            id: "item_ai_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+            dayOfWeek: "Thứ Hai",
+            date: "",
+            time: "08h00",
+            bloc: "UBND",
+            content: "Nội dung công tác mới...",
+            leader: "Lãnh đạo UBND xã",
+            location: "Hội trường UBND xã",
+            participants: "",
+            vehicle: "Tự túc phương tiện",
+            _checked: true
+        });
+        this.renderAIExtractedItemsTable();
+    },
+
+    deleteAiExtractedRow(index) {
+        this.syncCurrentReviewEdits();
+        this.aiExtractedItems.splice(index, 1);
+        this.renderAIExtractedItemsTable();
+        const summaryEl = document.getElementById("aiReviewSummary");
+        if (summaryEl) summaryEl.textContent = `Đã trích xuất được ${this.aiExtractedItems.length} mục công tác`;
+    },
+
+    syncCurrentReviewEdits() {
+        const rows = document.querySelectorAll("#aiReviewTableBody tr");
+        const updated = [];
+        rows.forEach((r) => {
+            const idx = parseInt(r.dataset.index, 10);
+            const orig = this.aiExtractedItems[idx] || {};
+            const isChecked = r.querySelector(".ai-item-check")?.checked ?? true;
+            const day = r.querySelector(".ai-field-day")?.value || "Thứ Hai";
+            const date = r.querySelector(".ai-field-date")?.value.trim() || "";
+            const time = r.querySelector(".ai-field-time")?.value.trim() || "08h00";
+            const bloc = r.querySelector(".ai-field-bloc")?.value || "UBND";
+            const content = r.querySelector(".ai-field-content")?.value.trim() || "";
+            const leader = r.querySelector(".ai-field-leader")?.value.trim() || "";
+            const location = r.querySelector(".ai-field-location")?.value.trim() || "";
+            const participants = r.querySelector(".ai-field-participants")?.value.trim() || "";
+
+            updated.push({
+                ...orig,
+                id: orig.id || "item_ai_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+                dayOfWeek: day,
+                date: date,
+                time: time,
+                bloc: bloc,
+                content: content,
+                leader: leader,
+                location: location,
+                participants: participants,
+                vehicle: orig.vehicle || "Tự túc phương tiện",
+                _checked: isChecked
+            });
+        });
+        this.aiExtractedItems = updated;
+    },
+
+    async applyAIExtractedItemsToSchedule() {
+        this.syncCurrentReviewEdits();
+        const selectedItems = this.aiExtractedItems.filter(item => item._checked !== false);
+
+        if (selectedItems.length === 0) {
+            alert("Vui lòng tích chọn ít nhất 1 mục công tác để nạp vào lịch!");
+            return;
+        }
+
+        const importMode = document.querySelector('input[name="aiImportMode"]:checked')?.value || "replace";
+        const targetWeek = this.aiTargetWeek || this.currentWeek;
+        const targetYear = this.aiTargetYear || this.currentYear;
+
+        let schedule = StorageService.getScheduleByWeek(targetYear, targetWeek);
+        const user = AuthService.getCurrentUser();
+        const nowStr = new Date().toLocaleString("vi-VN");
+
+        if (!schedule) {
+            const dateRange = StorageService.getWeekDateRange(targetWeek, targetYear);
+            schedule = {
+                year: targetYear,
+                weekNumber: targetWeek,
+                title: `LỊCH CÔNG TÁC TUẦN ${targetWeek} NĂM ${targetYear}`,
+                startDate: dateRange.startISO || `${targetYear}-01-01`,
+                endDate: dateRange.endISO || `${targetYear}-01-07`,
+                status: "published",
+                updatedBy: user ? user.fullName : "Super Admin",
+                lastUpdated: nowStr,
+                items: []
+            };
+        } else {
+            schedule.updatedBy = user ? user.fullName : "Super Admin";
+            schedule.lastUpdated = nowStr;
+        }
+
+        const cleanItems = selectedItems.map(item => {
+            const { _checked, ...rest } = item;
+            return {
+                ...rest,
+                id: rest.id || "item_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6)
+            };
+        });
+
+        if (importMode === "replace") {
+            schedule.items = cleanItems;
+        } else {
+            schedule.items = [...(schedule.items || []), ...cleanItems];
+        }
+
+        // Sắp xếp thứ tự ngày & giờ
+        const dayOrder = { "Thứ Hai": 1, "Thứ Ba": 2, "Thứ Tư": 3, "Thứ Năm": 4, "Thứ Sáu": 5, "Thứ Bảy": 6, "Chủ Nhật": 7 };
+        schedule.items.sort((a, b) => {
+            const dA = dayOrder[a.dayOfWeek] || 99;
+            const dB = dayOrder[b.dayOfWeek] || 99;
+            if (dA !== dB) return dA - dB;
+            return (a.time || "").localeCompare(b.time || "");
+        });
+
+        // Lưu vào LocalStorage
+        StorageService.saveSchedule(schedule);
+
+        // Lưu vết lịch sử
+        AuditService.logChange(
+            "AI_EXTRACT_SCHEDULE",
+            `Bóc tách tự động bằng AI và nạp ${cleanItems.length} mục vào Lịch Tuần ${targetWeek}/${targetYear} (Chế độ: ${importMode === 'replace' ? 'Thay thế' : 'Thêm mới'})`,
+            user ? user.fullName : "Super Admin"
+        );
+
+        // Đồng bộ lên VPS
+        try {
+            await StorageService.syncScheduleToVPS(schedule);
+        } catch (e) {
+            console.warn("VPS Sync Warning:", e);
+        }
+
+        // Chuyển tới tuần vừa nạp và làm mới giao diện
+        this.currentWeek = targetWeek;
+        this.currentYear = targetYear;
+        this.populateWeekOptions();
+        this.loadCurrentSchedule();
+        this.renderAll();
+
+        // Đóng modal
+        this.closeModal("modalAIExtractor");
+
+        this.showToast(`🎉 Đã nạp thành công ${cleanItems.length} mục công tác vào Lịch Tuần ${targetWeek}/${targetYear}!`, "success");
     },
 
     // =========================================================================

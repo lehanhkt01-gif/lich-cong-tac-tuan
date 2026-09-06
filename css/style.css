@@ -2581,3 +2581,258 @@ body {
 .print-only-footer {
     display: none;
 }
+
+/* ==========================================================================
+   AI GEMINI EXTRACTOR - PHÂN HỆ BÓC TÁCH LỊCH THÔNG MINH
+   ========================================================================== */
+.btn-ai-extract {
+    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #DB2777 100%);
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 7px 15px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-ai-extract:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.5);
+    filter: brightness(1.08);
+}
+
+.btn-ai-extract .ai-sparkle-icon {
+    font-size: 14px;
+    animation: aiSparklePulse 2s infinite ease-in-out;
+}
+
+.btn-ai-extract-sm {
+    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+    color: #FFFFFF !important;
+    border: none;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+    transition: all 0.2s ease;
+}
+
+.btn-ai-extract-sm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.45);
+    filter: brightness(1.08);
+}
+
+@keyframes aiSparklePulse {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.9; }
+    50% { transform: scale(1.25) rotate(15deg); opacity: 1; filter: drop-shadow(0 0 4px #FDE047); }
+}
+
+/* Modal AI Styles */
+.modal-ai-header {
+    background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4C1D95 100%) !important;
+    color: #FFFFFF !important;
+}
+
+.ai-tab-pill {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid #E2E8F0;
+    background: #F8FAFC;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.ai-tab-pill.active {
+    background: #4F46E5;
+    color: #FFFFFF;
+    border-color: #4F46E5;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+}
+
+/* Dropzone */
+.ai-dropzone {
+    border: 2px dashed #818CF8;
+    background: #F5F3FF;
+    border-radius: 12px;
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+}
+
+.ai-dropzone:hover,
+.ai-dropzone.dragover {
+    border-color: #4F46E5;
+    background: #EEF2FF;
+    transform: scale(1.005);
+}
+
+.ai-dropzone-icon {
+    font-size: 38px;
+    margin-bottom: 8px;
+    display: block;
+    animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.ai-file-format-tags {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.ai-tag {
+    background: #FFFFFF;
+    border: 1px solid #CBD5E1;
+    color: #475569;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.ai-tag.pdf { border-color: #FCA5A5; color: #DC2626; background: #FEF2F2; }
+.ai-tag.word { border-color: #93C5FD; color: #1D4ED8; background: #EFF6FF; }
+.ai-tag.img { border-color: #86EFAC; color: #15803D; background: #F0FDF4; }
+.ai-tag.txt { border-color: #FDE047; color: #A16207; background: #FEFCE8; }
+
+/* Loading Animation State */
+.ai-loading-box {
+    text-align: center;
+    padding: 35px 20px;
+    background: #FAFAFE;
+    border-radius: 12px;
+    border: 1px solid #E0E7FF;
+}
+
+.ai-scanner-pulse {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 16px auto;
+    background: linear-gradient(135deg, #4F46E5, #9333EA);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: #FFFFFF;
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7);
+    animation: aiPulseRadar 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+
+@keyframes aiPulseRadar {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 18px rgba(124, 58, 237, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(124, 58, 237, 0); }
+}
+
+.ai-progress-bar-container {
+    width: 100%;
+    max-width: 380px;
+    height: 8px;
+    background: #E2E8F0;
+    border-radius: 4px;
+    margin: 14px auto;
+    overflow: hidden;
+    position: relative;
+}
+
+.ai-progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4F46E5, #9333EA, #EC4899);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* Review Table */
+.ai-review-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.ai-review-table th {
+    background: #F1F5F9;
+    color: #1E293B;
+    font-weight: 700;
+    padding: 9px 10px;
+    border: 1px solid #E2E8F0;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.ai-review-table td {
+    padding: 8px 10px;
+    border: 1px solid #E2E8F0;
+    vertical-align: top;
+    background: #FFFFFF;
+}
+
+.ai-review-table tr.unselected td {
+    opacity: 0.45;
+    background: #F8FAFC;
+}
+
+.ai-input-cell {
+    width: 100%;
+    border: 1px solid transparent;
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-size: 12.5px;
+    background: transparent;
+    font-family: inherit;
+    color: inherit;
+    transition: all 0.2s ease;
+}
+
+.ai-input-cell:hover {
+    border-color: #CBD5E1;
+    background: #F8FAFC;
+}
+
+.ai-input-cell:focus {
+    border-color: #6366F1;
+    background: #FFFFFF;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.ai-select-bloc-sm {
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 700;
+    border: 1px solid #CBD5E1;
+    background: #FFFFFF;
+    cursor: pointer;
+}
+
