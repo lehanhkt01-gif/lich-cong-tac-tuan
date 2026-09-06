@@ -476,10 +476,13 @@
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label">Mô hình AI:</label>
                             <select id="settingGeminiModel" class="form-select">
-                                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Nhanh & Chuẩn nhất)</option>
-                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Văn bản dài/phức tạp)</option>
+                                <option value="gemini-3.1-pro">Gemini 3.1 Pro (Siêu Trí Tuệ - Phân Tích Chuyên Sâu Cực Cao)</option>
+                                <option value="gemini-3.8-flash">Gemini 3.8 Flash (Siêu Nhanh - Thông Minh Vượt Trội)</option>
+                                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Khuyên dùng - Nhanh & Chuẩn nhất)</option>
+                                <option value="gemini-2.5-pro">Gemini 2.5 Pro (Văn bản dài & Đa ngữ cảnh)</option>
+                                <option value="gemini-2.0-flash">Gemini 2.0 Flash (Tốc độ cao)</option>
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro (Bản ổn định)</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash (Bản tiêu chuẩn)</option>
                             </select>
                         </div>
                     </div>
@@ -988,8 +991,8 @@
             <div class="modal-body" style="padding: 20px 24px; max-height: 80vh; overflow-y: auto;">
                 <!-- BƯỚC 1: NHẬP LIỆU & TẢI FILE -->
                 <div id="aiStepInput">
-                    <!-- Tuần đích & API Key Quick Check -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px;">
+                    <!-- Tuần đích, Mô hình AI & API Key Quick Check -->
+                    <div style="display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 12px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 18px; margin-bottom: 18px;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" style="font-weight: 700; color: #1E293B;">🎯 Nạp vào lịch tuần:</label>
                             <select id="aiTargetWeekSelect" class="form-select" style="font-weight: 600;">
@@ -997,9 +1000,21 @@
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label" style="font-weight: 700; color: #1E293B;">🤖 Mô hình AI:</label>
+                            <select id="aiModalModelSelect" class="form-select" style="font-weight: 600;">
+                                <option value="gemini-3.1-pro">Gemini 3.1 Pro (Siêu Trí Tuệ - Chuyên Sâu)</option>
+                                <option value="gemini-3.8-flash">Gemini 3.8 Flash (Siêu Nhanh - Thông Minh)</option>
+                                <option value="gemini-2.5-flash">Gemini 2.5 Flash (Khuyên dùng - Nhanh & Chuẩn)</option>
+                                <option value="gemini-2.5-pro">Gemini 2.5 Pro (Văn bản dài/phức tạp)</option>
+                                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" style="font-weight: 700; color: #1E293B; display: flex; justify-content: space-between;">
                                 <span>🔑 Gemini API Key:</span>
-                                <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size: 11.5px; color: #4F46E5; text-decoration: underline;">Lấy khóa miễn phí</a>
+                                <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size: 11.5px; color: #4F46E5; text-decoration: underline;">Lấy khóa</a>
                             </label>
                             <div style="position: relative;">
                                 <input type="password" id="aiModalApiKey" class="form-input" placeholder="Dán khóa API (AIzaSy...)" style="font-family: monospace; font-size: 13px; padding-right: 36px;">
@@ -1135,13 +1150,13 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20260907_01"></script>
-    <script src="js/storage.js?v=20260907_01"></script>
-    <script src="js/auth.js?v=20260907_01"></script>
-    <script src="js/audit.js?v=20260907_01"></script>
-    <script src="js/email-service.js?v=20260907_01"></script>
-    <script src="js/export-service.js?v=20260907_01"></script>
-    <script src="js/ai-extractor.js?v=20260907_01"></script>
-    <script src="js/app.js?v=20260907_01"></script>
+    <script src="js/data.js?v=20260907_02"></script>
+    <script src="js/storage.js?v=20260907_02"></script>
+    <script src="js/auth.js?v=20260907_02"></script>
+    <script src="js/audit.js?v=20260907_02"></script>
+    <script src="js/email-service.js?v=20260907_02"></script>
+    <script src="js/export-service.js?v=20260907_02"></script>
+    <script src="js/ai-extractor.js?v=20260907_02"></script>
+    <script src="js/app.js?v=20260907_02"></script>
 </body>
 </html>

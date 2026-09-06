@@ -1716,6 +1716,12 @@ const App = {
                 modalApiKeyInput.value = GeminiExtractorService.getApiKey() || "";
             }
 
+            // Populate AI Model select if stored
+            const modalModelSelect = document.getElementById("aiModalModelSelect");
+            if (modalModelSelect && typeof GeminiExtractorService !== "undefined") {
+                modalModelSelect.value = GeminiExtractorService.getModel() || "gemini-3.1-pro";
+            }
+
             // Reset step view
             this.backToAiInputStep();
             this.clearAiSelectedFile();
@@ -1861,6 +1867,12 @@ const App = {
             GeminiExtractorService.saveApiKey(apiKey);
         }
 
+        // Selected AI Model
+        const selectedModel = document.getElementById("aiModalModelSelect")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-3.1-pro");
+        if (typeof GeminiExtractorService !== "undefined") {
+            GeminiExtractorService.saveModel(selectedModel);
+        }
+
         // Target Week & Year
         const targetWeek = parseInt(document.getElementById("aiTargetWeekSelect")?.value || this.currentWeek, 10);
         const targetYear = this.currentYear;
@@ -1903,7 +1915,7 @@ const App = {
         };
 
         try {
-            updateProgress("Đang chuẩn bị dữ liệu và kết nối Gemini AI...", 20);
+            updateProgress("Đang kết nối Gemini AI (" + selectedModel + ")...", 20);
 
             const result = await GeminiExtractorService.extractSchedule({
                 file: fileToProcess,
@@ -1911,6 +1923,7 @@ const App = {
                 targetWeek: targetWeek,
                 targetYear: targetYear,
                 apiKey: apiKey,
+                model: selectedModel,
                 onProgress: (msg, pct) => updateProgress(msg, pct)
             });
 

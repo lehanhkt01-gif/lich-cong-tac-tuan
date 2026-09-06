@@ -11,10 +11,13 @@ const GEMINI_CONFIG_KEYS = {
 };
 
 const AVAILABLE_GEMINI_MODELS = [
-    { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (Khuyên dùng - Nhanh & Chính xác nhất)", default: true },
+    { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro (Siêu Trí Tuệ - Phân Tích & Bóc Tách Chuyên Sâu Cực Cao)" },
+    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Siêu Nhanh Thế Hệ Mới - Thông Minh Vượt Trội)" },
+    { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (Khuyên dùng - Cân bằng tốc độ & chuẩn xác)", default: true },
+    { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (Phân tích văn bản dài, đa ngữ cảnh)" },
     { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (Tốc độ cao, đa phương thức)" },
-    { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (Bản tiêu chuẩn ổn định)" },
-    { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (Phân tích chuyên sâu văn bản phức tạp)" }
+    { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (Bản ổn định - Văn bản dài/phức tạp)" },
+    { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (Tiêu chuẩn ổn định)" }
 ];
 
 const GeminiExtractorService = {
@@ -68,7 +71,7 @@ const GeminiExtractorService = {
         }
 
         const modelId = model || this.getModel();
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
+        let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
 
         const payload = {
             contents: [
@@ -83,11 +86,22 @@ const GeminiExtractorService = {
             }
         };
 
-        const res = await fetch(endpoint, {
+        let res = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
+
+        // Tự động thử fallback model nếu model vừa chọn chưa kích hoạt trên tài khoản (404)
+        if (!res.ok && res.status === 404 && modelId !== "gemini-2.5-flash" && modelId !== "gemini-2.0-flash") {
+            const fallbackModel = modelId.includes("pro") ? "gemini-2.5-pro" : "gemini-2.5-flash";
+            const fbEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent?key=${key}`;
+            res = await fetch(fbEndpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+        }
 
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
@@ -206,15 +220,15 @@ Trả về duy nhất 1 JSON object có định dạng:
     },
 
     // Hàm chính: Bóc tách tệp hoặc văn bản bằng Gemini API
-    async extractSchedule({ file = null, rawText = "", targetWeek = null, targetYear = null, apiKey = null, onProgress = null }) {
+    async extractSchedule({ file = null, rawText = "", targetWeek = null, targetYear = null, apiKey = null, model = null, onProgress = null }) {
         const key = (apiKey || this.getApiKey()).trim();
         if (!key) {
             throw new Error("Chưa cấu hình Gemini API Key! Vui lòng nhập API Key để tiếp tục.");
         }
         this.saveApiKey(key);
 
-        const modelId = this.getModel();
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
+        const modelId = model || this.getModel();
+        let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
 
         if (onProgress) onProgress("Đang chuẩn bị nội dung tài liệu...", 20);
 
@@ -340,6 +354,33 @@ Trả về duy nhất 1 JSON object có định dạng:
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestBody)
         });
+
+        // Nếu model chưa hỗ trợ hoặc trả về HTTP 404, tự động fallback sang mô hình khả dụng tương đương
+        if (!res.ok && res.status === 404 && modelId !== "gemini-2.5-flash" && modelId !== "gemini-2.0-flash") {
+            const fallbackModel = modelId.includes("pro") ? "gemini-2.5-pro" : "gemini-2.5-flash";
+            console.warn(`Model ${modelId} trả về 404, đang tự động chuyển sang ${fallbackModel}...`);
+            const fbEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${fallbackModel}:generateContent?key=${key}`;
+            res = await fetch(fbEndpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody)
+            });
+            if (!res.ok && res.status === 400) {
+                const fbFallbackBody = {
+                    contents: contents,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        temperature: 0.1,
+                        maxOutputTokens: 8192
+                    }
+                };
+                res = await fetch(fbEndpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(fbFallbackBody)
+                });
+            }
+        }
 
         // Nếu model không hỗ trợ responseSchema (HTTP 400), tự động gửi lại không kèm schema
         if (!res.ok && res.status === 400) {
