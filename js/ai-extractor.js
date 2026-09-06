@@ -303,16 +303,61 @@ Trả về duy nhất 1 JSON object có định dạng:
             contents: contents,
             generationConfig: {
                 responseMimeType: "application/json",
+                responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                        detectedWeek: { type: "INTEGER" },
+                        detectedYear: { type: "INTEGER" },
+                        detectedTitle: { type: "STRING" },
+                        items: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    dayOfWeek: { type: "STRING" },
+                                    date: { type: "STRING" },
+                                    time: { type: "STRING" },
+                                    bloc: { type: "STRING" },
+                                    content: { type: "STRING" },
+                                    location: { type: "STRING" },
+                                    leader: { type: "STRING" },
+                                    participants: { type: "STRING" },
+                                    vehicle: { type: "STRING" }
+                                },
+                                required: ["dayOfWeek", "time", "bloc", "content"]
+                            }
+                        }
+                    },
+                    required: ["items"]
+                },
                 temperature: 0.1,
                 maxOutputTokens: 8192
             }
         };
 
-        const res = await fetch(endpoint, {
+        let res = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(requestBody)
         });
+
+        // Nếu model không hỗ trợ responseSchema (HTTP 400), tự động gửi lại không kèm schema
+        if (!res.ok && res.status === 400) {
+            console.warn("Model không hỗ trợ responseSchema, đang gửi lại yêu cầu dự phòng...");
+            const fallbackBody = {
+                contents: contents,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    temperature: 0.1,
+                    maxOutputTokens: 8192
+                }
+            };
+            res = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(fallbackBody)
+            });
+        }
 
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
@@ -330,32 +375,16 @@ Trả về duy nhất 1 JSON object có định dạng:
             throw new Error("Gemini AI không trả về dữ liệu phù hợp. Vui lòng kiểm tra lại chất lượng tệp hoặc hình ảnh!");
         }
 
-        let parsedResult = null;
-        try {
-            parsedResult = JSON.parse(rawJsonText);
-        } catch (e) {
-            try {
-                const cleanJson = rawJsonText.replace(/```json/gi, '').replace(/```/g, '').trim();
-                parsedResult = JSON.parse(cleanJson);
-            } catch (e2) {
-                const firstBrace = rawJsonText.indexOf('{');
-                const lastBrace = rawJsonText.lastIndexOf('}');
-                const firstBracket = rawJsonText.indexOf('[');
-                const lastBracket = rawJsonText.lastIndexOf(']');
-                
-                if (firstBrace !== -1 && lastBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
-                    parsedResult = JSON.parse(rawJsonText.substring(firstBrace, lastBrace + 1));
-                } else if (firstBracket !== -1 && lastBracket !== -1) {
-                    parsedResult = JSON.parse(rawJsonText.substring(firstBracket, lastBracket + 1));
-                } else {
-                    throw new Error("Không thể phân tích dữ liệu JSON trả về từ AI: " + e.message);
-                }
-            }
-        }
+        // Parse & sửa lỗi JSON đa tầng (Multi-layer repair & Regex Fallback)
+        const parsedResult = this.parseAndRepairJson(rawJsonText, targetWeek, targetYear);
 
         // Chuẩn hóa và làm sạch mảng items
         const rawItems = Array.isArray(parsedResult) ? parsedResult : (parsedResult.items || []);
         const sanitizedItems = this.sanitizeExtractedItems(rawItems, targetWeek, targetYear);
+
+        if (sanitizedItems.length === 0) {
+            throw new Error("Không trích xuất được mục lịch công tác nào. Vui lòng kiểm tra lại nội dung tài liệu!");
+        }
 
         if (onProgress) onProgress("Hoàn tất bóc tách thành công!", 100);
 
@@ -366,6 +395,122 @@ Trả về duy nhất 1 JSON object có định dạng:
             items: sanitizedItems,
             rawCount: sanitizedItems.length
         };
+    },
+
+    // Bộ giải mã và sửa lỗi JSON đa tầng chống gãy cú pháp
+    parseAndRepairJson(rawText, targetWeek, targetYear) {
+        if (!rawText || !rawText.trim()) {
+            throw new Error("Không nhận được dữ liệu từ Gemini AI!");
+        }
+
+        let text = rawText.trim();
+
+        // 1. Gỡ bỏ markdown code block nếu có
+        text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+        // 2. Thử parse trực tiếp
+        try {
+            return JSON.parse(text);
+        } catch (e1) {
+            console.warn("JSON.parse trực tiếp thất bại, đang tiến hành sửa lỗi cú pháp:", e1.message);
+        }
+
+        // 3. Cố gắng lấy chuỗi con từ { đến } hoặc [ đến ]
+        const firstBrace = text.indexOf('{');
+        const lastBrace = text.lastIndexOf('}');
+        const firstBracket = text.indexOf('[');
+        const lastBracket = text.lastIndexOf(']');
+
+        let candidateText = text;
+        if (firstBrace !== -1 && lastBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+            candidateText = text.substring(firstBrace, lastBrace + 1);
+        } else if (firstBracket !== -1 && lastBracket !== -1) {
+            candidateText = text.substring(firstBracket, lastBracket + 1);
+        }
+
+        // 4. Sửa các lỗi phổ biến: trailing commas, ký tự điều khiển lạ
+        try {
+            let cleaned = candidateText
+                .replace(/,\s*([\]\}])/g, '$1') // Xóa trailing comma
+                .replace(/[\x00-\x1F\x7F]/g, (match) => (match === '\n' || match === '\r' || match === '\t') ? match : ' ');
+            return JSON.parse(cleaned);
+        } catch (e2) {
+            console.warn("Sửa trailing comma thất bại:", e2.message);
+        }
+
+        // 5. Xử lý trường hợp JSON bị cắt cụt (Truncated JSON do giới hạn token)
+        try {
+            let truncated = candidateText;
+            const lastItemEnd = truncated.lastIndexOf('}');
+            if (lastItemEnd !== -1) {
+                let fixed = truncated.substring(0, lastItemEnd + 1);
+                if (!fixed.endsWith(']}') && !fixed.endsWith(']')) {
+                    if (fixed.includes('"items"')) {
+                        fixed += ']}';
+                    } else if (fixed.startsWith('[')) {
+                        fixed += ']';
+                    } else {
+                        fixed += '}';
+                    }
+                }
+                fixed = fixed.replace(/,\s*([\]\}])/g, '$1');
+                return JSON.parse(fixed);
+            }
+        } catch (e3) {
+            console.warn("Sửa JSON bị cắt ngắn thất bại:", e3.message);
+        }
+
+        // 6. PHƯƠNG PHÁP CỨU HỘ CUỐI CÙNG (FALLBACK CỰC MẠNH): Bóc tách từng mục qua Regex
+        console.log("Kích hoạt chế độ Cứu hộ Regex cho từng mục công tác...");
+        const items = this.extractItemsViaRegex(text, targetWeek, targetYear);
+        if (items.length > 0) {
+            return {
+                detectedWeek: targetWeek || 36,
+                detectedYear: targetYear || 2026,
+                detectedTitle: `Lịch công tác tuần ${targetWeek || 36} năm ${targetYear || 2026}`,
+                items: items
+            };
+        }
+
+        throw new Error("Dữ liệu phản hồi từ AI không đúng cấu trúc JSON: " + (rawText.substring(0, 200) + "..."));
+    },
+
+    // Bóc tách từng mục công tác bằng biểu thức chính quy (Regex Fallback)
+    extractItemsViaRegex(text, targetWeek, targetYear) {
+        const items = [];
+        const blockRegex = /\{([^{}]*(?:"dayOfWeek"|"content"|"thứ")[^{}]*)\}/gis;
+        let match;
+
+        const getProp = (block, propNames) => {
+            for (const name of propNames) {
+                const r = new RegExp(`"${name}"\\s*:\\s*"([^"\\\\]*(?:\\\\.[^"\\\\]*)*)"`, 'i');
+                const m = block.match(r);
+                if (m && m[1]) return m[1].replace(/\\"/g, '"').replace(/\\n/g, ' ').trim();
+            }
+            return "";
+        };
+
+        while ((match = blockRegex.exec(text)) !== null) {
+            const block = match[1];
+            const dayOfWeek = getProp(block, ["dayOfWeek", "day", "thu", "thứ"]);
+            const content = getProp(block, ["content", "noiDung", "nội dung", "title", "task"]);
+            
+            if (dayOfWeek || content) {
+                items.push({
+                    dayOfWeek: dayOfWeek || "Thứ Hai",
+                    date: getProp(block, ["date", "ngay", "ngày"]),
+                    time: getProp(block, ["time", "gio", "giờ"]) || "08h00",
+                    bloc: getProp(block, ["bloc", "khoi", "khối"]) || "UBND",
+                    content: content || "(Chưa có nội dung)",
+                    location: getProp(block, ["location", "diaDiem", "địa điểm"]) || "UBND xã",
+                    leader: getProp(block, ["leader", "chuTri", "chủ trì", "lanhDao", "lãnh đạo"]) || "Lãnh đạo UBND",
+                    participants: getProp(block, ["participants", "thanhPhan", "thành phần"]) || "",
+                    vehicle: getProp(block, ["vehicle", "phuongTien", "phương tiện"]) || "Tự túc phương tiện"
+                });
+            }
+        }
+
+        return items;
     },
 
     // Làm sạch và chuẩn hóa danh sách các mục công tác
