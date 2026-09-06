@@ -53,17 +53,12 @@ const GeminiExtractorService = {
         this.setModel(modelId);
     },
 
-    // Kiểm tra kết nối dạng helper trả về object success
-    async testConnection(apiKey, model = null) {
-        try {
-            await this.testApiKey(apiKey, model);
-            return { success: true };
-        } catch (err) {
-            return { success: false, message: err.message };
-        }
+    // Hàm tạm dừng (sleep) phục vụ cơ chế Exponential Backoff
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     },
 
-    // Kiểm tra API Key có hợp lệ không (hỗ trợ tự động fallback nếu model quá tải 503 hoặc 404)
+    // Kiểm tra API Key có hợp lệ không (hỗ trợ Exponential Backoff thử lại 3 lần và fallback)
     async testApiKey(apiKey, model = null) {
         const key = (apiKey || this.getApiKey()).trim();
         if (!key) {
@@ -95,35 +90,53 @@ const GeminiExtractorService = {
                 }
             };
 
-            try {
-                const res = await fetch(endpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    const res = await fetch(endpoint, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
 
-                if (res.ok) {
-                    return true;
+                    if (res.ok) {
+                        return true;
+                    }
+
+                    const errData = await res.json().catch(() => ({}));
+                    const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
+
+                    if (res.status === 403 || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
+                        throw new Error("Khóa Google Gemini API Key không chính xác hoặc đã bị vô hiệu hóa. Vui lòng kiểm tra lại!");
+                    }
+
+                    const isOverloaded = res.status === 503 || res.status === 429 || res.status >= 500 ||
+                        errMsg.includes("high demand") || errMsg.includes("overloaded") || errMsg.includes("spikes in demand");
+
+                    if (isOverloaded && attempt < 3) {
+                        const delay = Math.round(2000 * Math.pow(1.5, attempt - 1)); // Lần 1: 2s, Lần 2: 3s
+                        console.warn(`[Test API] Máy chủ quá tải (${res.status}). Đang tạm dừng ${delay}ms để thử lại lần ${attempt + 1}/3...`);
+                        await this.sleep(delay);
+                        continue;
+                    }
+
+                    lastError = new Error(errMsg);
+                    break;
+                } catch (e) {
+                    if (e.message && e.message.includes("không chính xác")) throw e;
+                    lastError = e;
+                    if (attempt < 3) {
+                        await this.sleep(2000);
+                        continue;
+                    }
+                    break;
                 }
-
-                const errData = await res.json().catch(() => ({}));
-                const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
-
-                if (res.status === 403 || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
-                    throw new Error("Khóa Google Gemini API Key không chính xác hoặc đã bị vô hiệu hóa. Vui lòng kiểm tra lại!");
-                }
-
-                lastError = new Error(errMsg);
-            } catch (e) {
-                if (e.message && e.message.includes("không chính xác")) throw e;
-                lastError = e;
             }
         }
 
         if (lastError) {
             let msg = lastError.message;
             if (msg.includes("high demand") || msg.includes("overloaded")) {
-                msg = "Máy chủ Google Gemini đang tạm thời quá tải lưu lượng. Khóa API vẫn hoạt động tốt, bạn có thể chuyển sang Gemini 2.5 Flash để bóc tách ngay.";
+                msg = "Máy chủ Google Gemini đang tạm thời quá tải lưu lượng. Hệ thống đã tự động thử lại 3 lần nhưng chưa kết nối được. Bạn có thể chọn mô hình Gemini 2.5 Flash để bóc tách ngay.";
             }
             throw new Error(msg);
         }
@@ -355,92 +368,132 @@ Trả về duy nhất 1 JSON object có định dạng:
                 onProgress(`Mô hình trước quá tải/bận, đang tự động chuyển sang ${currentModel}...`, 75);
             }
 
-            try {
-                // Thử 1: Cấu hình Structured Output JSON Schema
-                const structuredBody = {
-                    contents: contents,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "OBJECT",
-                            properties: {
-                                detectedWeek: { type: "INTEGER" },
-                                detectedYear: { type: "INTEGER" },
-                                detectedTitle: { type: "STRING" },
-                                items: {
-                                    type: "ARRAY",
-                                    items: {
-                                        type: "OBJECT",
-                                        properties: {
-                                            dayOfWeek: { type: "STRING" },
-                                            date: { type: "STRING" },
-                                            time: { type: "STRING" },
-                                            bloc: { type: "STRING" },
-                                            content: { type: "STRING" },
-                                            location: { type: "STRING" },
-                                            leader: { type: "STRING" },
-                                            participants: { type: "STRING" },
-                                            vehicle: { type: "STRING" }
-                                        },
-                                        required: ["dayOfWeek", "time", "bloc", "content"]
-                                    }
-                                }
-                            },
-                            required: ["items"]
-                        },
-                        temperature: 0.1,
-                        maxOutputTokens: 8192
+            let modelSucceeded = false;
+
+            // Cơ chế Exponential Backoff: Thử lại tối đa 3 lần cho mỗi mô hình khi gặp lỗi quá tải
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    if (attempt > 1 && onProgress) {
+                        onProgress(`Đang tự động thử lại ngầm lần ${attempt}/3 với mô hình ${currentModel}...`, 70 + attempt * 2);
                     }
-                };
 
-                let res = await fetch(currentEndpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(structuredBody)
-                });
-
-                // Nếu 400 (model không hỗ trợ schema), gửi lại không kèm schema
-                if (!res.ok && res.status === 400) {
-                    const fallbackBody = {
+                    // Thử 1: Cấu hình Structured Output JSON Schema
+                    const structuredBody = {
                         contents: contents,
                         generationConfig: {
                             responseMimeType: "application/json",
+                            responseSchema: {
+                                type: "OBJECT",
+                                properties: {
+                                    detectedWeek: { type: "INTEGER" },
+                                    detectedYear: { type: "INTEGER" },
+                                    detectedTitle: { type: "STRING" },
+                                    items: {
+                                        type: "ARRAY",
+                                        items: {
+                                            type: "OBJECT",
+                                            properties: {
+                                                dayOfWeek: { type: "STRING" },
+                                                date: { type: "STRING" },
+                                                time: { type: "STRING" },
+                                                bloc: { type: "STRING" },
+                                                content: { type: "STRING" },
+                                                location: { type: "STRING" },
+                                                leader: { type: "STRING" },
+                                                participants: { type: "STRING" },
+                                                vehicle: { type: "STRING" }
+                                            },
+                                            required: ["dayOfWeek", "time", "bloc", "content"]
+                                        }
+                                    }
+                                },
+                                required: ["items"]
+                            },
                             temperature: 0.1,
                             maxOutputTokens: 8192
                         }
                     };
-                    res = await fetch(currentEndpoint, {
+
+                    let res = await fetch(currentEndpoint, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(fallbackBody)
+                        body: JSON.stringify(structuredBody)
                     });
-                }
 
-                if (res.ok) {
-                    const responseData = await res.json();
-                    const candidate = responseData.candidates?.[0];
-                    const text = candidate?.content?.parts?.[0]?.text;
-                    if (text && text.trim()) {
-                        rawJsonText = text;
-                        successfulModel = currentModel;
-                        break;
+                    // Nếu 400 (model không hỗ trợ schema), gửi lại không kèm schema
+                    if (!res.ok && res.status === 400) {
+                        const fallbackBody = {
+                            contents: contents,
+                            generationConfig: {
+                                responseMimeType: "application/json",
+                                temperature: 0.1,
+                                maxOutputTokens: 8192
+                            }
+                        };
+                        res = await fetch(currentEndpoint, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(fallbackBody)
+                        });
                     }
+
+                    if (res.ok) {
+                        const responseData = await res.json();
+                        const candidate = responseData.candidates?.[0];
+                        const text = candidate?.content?.parts?.[0]?.text;
+                        if (text && text.trim()) {
+                            rawJsonText = text;
+                            successfulModel = currentModel;
+                            modelSucceeded = true;
+                            break;
+                        }
+                    }
+
+                    const errData = await res.json().catch(() => ({}));
+                    const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
+
+                    // Nếu lỗi do API Key không hợp lệ, dừng ngay vì các model khác cũng sẽ lỗi API Key
+                    if (res.status === 403 || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
+                        throw new Error("Khóa Google Gemini API Key không chính xác hoặc đã bị vô hiệu hóa. Vui lòng kiểm tra lại!");
+                    }
+
+                    // Kiểm tra lỗi quá tải / bận máy chủ / rate limit
+                    const isOverloaded = res.status === 503 || res.status === 429 || res.status >= 500 ||
+                        errMsg.includes("high demand") || errMsg.includes("overloaded") || errMsg.includes("spikes in demand") || errMsg.includes("temporarily");
+
+                    if (isOverloaded && attempt < 3) {
+                        // Exponential Backoff: lần 1 dừng 2s (2000ms), lần 2 dừng 3s (3000ms)
+                        const delay = Math.round(2000 * Math.pow(1.5, attempt - 1));
+                        console.warn(`[Exponential Backoff] Máy chủ quá tải (${res.status}: ${errMsg}). Tạm dừng ${delay}ms và ngầm gọi lại lần ${attempt + 1}/3...`);
+                        if (onProgress) {
+                            onProgress(`Máy chủ AI đang quá tải cục bộ, hệ thống đang tạm dừng ${Math.round(delay / 1000)}s rồi tự động gọi lại lần ${attempt + 1}/3...`, 70 + attempt * 2);
+                        }
+                        await this.sleep(delay);
+                        continue;
+                    }
+
+                    console.warn(`Mô hình ${currentModel} gặp lỗi (${res.status}): ${errMsg}.`);
+                    lastError = new Error(errMsg);
+                    break;
+                } catch (err) {
+                    if (err.message && err.message.includes("không chính xác")) throw err;
+                    console.warn(`Lỗi khi gọi mô hình ${currentModel} (Lần ${attempt}/3):`, err.message);
+                    lastError = err;
+
+                    if (attempt < 3) {
+                        const delay = Math.round(2000 * Math.pow(1.5, attempt - 1));
+                        if (onProgress) {
+                            onProgress(`Mất kết nối hoặc quá tải, tạm dừng ${Math.round(delay / 1000)}s rồi tự động thử lại lần ${attempt + 1}/3...`, 70 + attempt * 2);
+                        }
+                        await this.sleep(delay);
+                        continue;
+                    }
+                    break;
                 }
+            }
 
-                const errData = await res.json().catch(() => ({}));
-                const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
-
-                // Nếu lỗi do API Key không hợp lệ, dừng ngay vì các model khác cũng sẽ lỗi API Key
-                if (res.status === 403 || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
-                    throw new Error("Khóa Google Gemini API Key không chính xác hoặc đã bị vô hiệu hóa. Vui lòng kiểm tra lại!");
-                }
-
-                console.warn(`Mô hình ${currentModel} gặp lỗi (${res.status}): ${errMsg}. Đang chuyển sang mô hình dự phòng kế tiếp...`);
-                lastError = new Error(errMsg);
-            } catch (err) {
-                if (err.message && err.message.includes("không chính xác")) throw err;
-                console.warn(`Lỗi khi gọi mô hình ${currentModel}:`, err.message);
-                lastError = err;
+            if (modelSucceeded) {
+                break;
             }
         }
 
