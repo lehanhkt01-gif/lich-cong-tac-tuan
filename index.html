@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=20260906_23">
+    <link rel="stylesheet" href="css/style.css?v=20260906_30">
 
     <!-- JSZip for in-browser Word docx parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -140,7 +140,7 @@
             </ul>
 
             <div class="nav-actions-quick">
-                <button type="button" class="btn-ai-extract" onclick="App.openAIExtractModal()" title="Bóc tách lịch công tác tự động bằng AI Gemini">
+                <button type="button" class="btn-ai-extract auth-require-admin" id="btnAIExtract" onclick="App.openAIExtractModal()" style="display: none;" title="Bóc tách lịch công tác tự động bằng AI Gemini (Dành cho Super Admin)">
                     <span>✨</span> Bóc Tách Lịch AI
                 </button>
                 <button type="button" class="btn-restore-data auth-require-login" onclick="App.openBackupModal()" style="display: none; background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; padding: 7px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; align-items: center; gap: 6px; transition: all 0.2s;" title="Trung tâm Sao lưu & Khôi phục dữ liệu an toàn">
@@ -199,15 +199,10 @@
                         </div>
                     </div>
 
-                    <!-- Các nút thao tác lịch -->
-                    <div style="display: flex; gap: 8px; align-items: center;">
-                        <button type="button" class="btn-ai-extract" onclick="App.openAIExtractModal()" style="padding: 7px 14px; font-size: 13px;" title="Tải file PDF, Word, Ảnh hoặc dán văn bản để AI tự động trích xuất các mục lịch">
-                            <span>✨</span> BÓC TÁCH LỊCH AI
-                        </button>
-                        <button class="btn-primary-create auth-require-edit" onclick="App.openEditItemModal()">
-                            <span>+</span> THÊM MỤC CÔNG TÁC
-                        </button>
-                    </div>
+                    <!-- Nút thêm công tác mới -->
+                    <button class="btn-primary-create auth-require-edit" onclick="App.openEditItemModal()">
+                        <span>+</span> THÊM MỤC CÔNG TÁC
+                    </button>
                 </div>
 
                 <!-- Hàng 2: Khối công tác Pills & Search -->
@@ -1138,13 +1133,13 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20260906_23"></script>
-    <script src="js/storage.js?v=20260906_23"></script>
-    <script src="js/auth.js?v=20260906_23"></script>
-    <script src="js/audit.js?v=20260906_23"></script>
-    <script src="js/email-service.js?v=20260906_23"></script>
-    <script src="js/export-service.js?v=20260906_23"></script>
-    <script src="js/ai-extractor.js?v=20260906_23"></script>
-    <script src="js/app.js?v=20260906_23"></script>
+    <script src="js/data.js?v=20260906_30"></script>
+    <script src="js/storage.js?v=20260906_30"></script>
+    <script src="js/auth.js?v=20260906_30"></script>
+    <script src="js/audit.js?v=20260906_30"></script>
+    <script src="js/email-service.js?v=20260906_30"></script>
+    <script src="js/export-service.js?v=20260906_30"></script>
+    <script src="js/ai-extractor.js?v=20260906_30"></script>
+    <script src="js/app.js?v=20260906_30"></script>
 </body>
 </html>

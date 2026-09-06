@@ -248,6 +248,12 @@ const App = {
         document.getElementById("cadreSearchInput")?.addEventListener("input", () => this.renderCadresView());
         document.getElementById("cadreDeptFilter")?.addEventListener("change", () => this.renderCadresView());
 
+        // Nút Bóc tách lịch AI
+        document.getElementById("btnAIExtract")?.addEventListener("click", (e) => {
+            e.preventDefault();
+            this.openAIExtractModal();
+        });
+
         // Lắng nghe sự kiện đồng bộ dữ liệu từ máy chủ
         window.addEventListener("schedules-synced", () => {
             this.populateWeekOptions();
@@ -1645,33 +1651,39 @@ const App = {
     // MODAL BÓC TÁCH LỊCH CÔNG TÁC BẰNG GEMINI AI
     // =========================================================================
     openAIExtractModal() {
-        if (!AuthService.canEdit()) {
-            this.openLoginModal("Vui lòng đăng nhập với quyền Quản trị / Lãnh đạo để sử dụng tính năng Bóc tách lịch AI!");
-            return;
+        try {
+            console.log("App.openAIExtractModal called");
+            if (!AuthService.isAdmin() && !AuthService.canEdit()) {
+                this.openLoginModal("Vui lòng đăng nhập với quyền Super Admin để sử dụng tính năng Bóc tách lịch AI!");
+                return;
+            }
+
+            // Populate target week options
+            const selectEl = document.getElementById("aiTargetWeekSelect");
+            if (selectEl && typeof StorageService !== "undefined" && StorageService.populateWeekSelect) {
+                StorageService.populateWeekSelect(selectEl, this.currentWeek, this.currentYear);
+            }
+
+            // Populate API Key input if stored
+            const modalApiKeyInput = document.getElementById("aiModalApiKey");
+            if (modalApiKeyInput && typeof GeminiExtractorService !== "undefined") {
+                modalApiKeyInput.value = GeminiExtractorService.getApiKey() || "";
+            }
+
+            // Reset step view
+            this.backToAiInputStep();
+            this.clearAiSelectedFile();
+            const rawTextEl = document.getElementById("aiRawTextInput");
+            if (rawTextEl) rawTextEl.value = "";
+
+            // Setup dropzone listeners
+            this.setupAiDropzone();
+
+            this.openModal("modalAIExtractor");
+        } catch (err) {
+            console.error("Lỗi khi mở giao diện Bóc tách AI:", err);
+            alert("Lỗi khi mở giao diện Bóc tách AI: " + err.message);
         }
-
-        // Populate target week options
-        const selectEl = document.getElementById("aiTargetWeekSelect");
-        if (selectEl) {
-            StorageService.populateWeekSelect(selectEl, this.currentWeek, this.currentYear);
-        }
-
-        // Populate API Key input if stored
-        const modalApiKeyInput = document.getElementById("aiModalApiKey");
-        if (modalApiKeyInput && typeof GeminiExtractorService !== "undefined") {
-            modalApiKeyInput.value = GeminiExtractorService.getApiKey() || "";
-        }
-
-        // Reset step view
-        this.backToAiInputStep();
-        this.clearAiSelectedFile();
-        const rawTextEl = document.getElementById("aiRawTextInput");
-        if (rawTextEl) rawTextEl.value = "";
-
-        // Setup dropzone listeners
-        this.setupAiDropzone();
-
-        this.openModal("modalAIExtractor");
     },
 
     setupAiDropzone() {
@@ -2104,11 +2116,21 @@ const App = {
     // UTILS & TOAST
     // =========================================================================
     openModal(modalId) {
-        document.getElementById(modalId)?.classList.add("show");
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add("show");
+            modal.style.display = "flex";
+            document.body.style.overflow = "hidden";
+        }
     },
 
     closeModal(modalId) {
-        document.getElementById(modalId)?.classList.remove("show");
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove("show");
+            modal.style.display = "none";
+            document.body.style.overflow = "";
+        }
     },
 
     showToast(message, type = "info") {
@@ -2136,6 +2158,11 @@ const App = {
         }, 3500);
     }
 };
+
+// Đăng ký App lên window toàn cục
+if (typeof window !== "undefined") {
+    window.App = App;
+}
 
 // Khởi chạy khi DOM sẵn sàng
 document.addEventListener("DOMContentLoaded", () => {
