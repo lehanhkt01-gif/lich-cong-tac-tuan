@@ -835,13 +835,27 @@ const INITIAL_DATA = {
             year: 2026,
             weekNumber: 36,
             title: "Lịch công tác tuần 36 năm 2026",
+            startDate: "2026-09-07",
+            endDate: "2026-09-13",
+            status: "published",
+            lastUpdated: "2026-09-06 08:00",
+            updatedBy: "Hà Tường Vi (Chánh Văn phòng)",
+            approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
+            note: "Lịch công tác tuần 36.",
+            items: []
+        },
+        {
+            id: "sched_2026_w35",
+            year: 2026,
+            weekNumber: 35,
+            title: "Lịch công tác tuần 35 năm 2026",
             startDate: "2026-08-31",
             endDate: "2026-09-06",
             status: "published",
             lastUpdated: "2026-09-02 08:30",
             updatedBy: "Hà Tường Vi (Super Admin (Chánh Văn phòng))",
             approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
-            note: "Lịch công tác tuần 36.",
+            note: "Lịch công tác tuần 35.",
             items: [
                 {
                     id: "item_1788266460531_387",
@@ -909,17 +923,17 @@ const INITIAL_DATA = {
             ]
         },
         {
-            id: "sched_2026_w35",
+            id: "sched_2026_w34",
             year: 2026,
-            weekNumber: 35,
-            title: "Lịch công tác tuần 35 năm 2026",
+            weekNumber: 34,
+            title: "Lịch công tác tuần 34 năm 2026",
             startDate: "2026-08-24",
             endDate: "2026-08-30",
             status: "published",
             lastUpdated: "2026-08-31 08:30",
             updatedBy: "Hà Tường Vi (Chánh Văn phòng)",
             approvedBy: "Nguyễn Bá Bân (Chủ tịch UBND xã)",
-            note: "Lịch công tác tuần.",
+            note: "Lịch công tác tuần 34.",
             items: []
         }
     ],

@@ -108,14 +108,19 @@ const StorageService = {
         });
     },
 
-    // Tính toán thông tin Tuần hiện tại theo thời gian thực tế (Chuẩn ISO-8601: Bắt đầu từ Thứ 2, kết thúc Chủ Nhật)
+    // Tính toán thông tin Tuần hiện tại theo thời gian thực tế (Số thứ tự tuần trừ đi 1: Tuần 1 bắt đầu từ đầu năm, tuần 37 ISO tương ứng Tuần 36)
     getCurrentWeekInfo(date = new Date()) {
         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
         const dayNum = d.getUTCDay() || 7;
         d.setUTCDate(d.getUTCDate() + 4 - dayNum);
         const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        const year = d.getUTCFullYear();
+        const isoWeekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        let weekNo = isoWeekNo - 1;
+        let year = d.getUTCFullYear();
+        if (weekNo < 1) {
+            year -= 1;
+            weekNo = 52;
+        }
 
         const monday = this.getMondayOfWeek(weekNo, year);
         const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
@@ -136,17 +141,17 @@ const StorageService = {
         };
     },
 
-    // Lấy ngày Thứ Hai đầu tuần cho bất kỳ tuần nào trong năm (Chuẩn ISO-8601)
+    // Lấy ngày Thứ Hai đầu tuần cho bất kỳ tuần nào trong năm (Số tuần trừ 1 so với ISO-8601)
     getMondayOfWeek(weekNo, year) {
         const y = parseInt(year, 10);
         const w = parseInt(weekNo, 10);
-        // ISO-8601: Ngày 4 tháng 1 luôn thuộc Tuần 1 của năm
+        // ISO-8601: Ngày 4 tháng 1 luôn thuộc Tuần 1 ISO của năm
         const jan4 = new Date(y, 0, 4);
         const dayOfWeekJan4 = jan4.getDay() || 7; // 1 = Thứ Hai, ..., 7 = Chủ Nhật
-        // Ngày Thứ Hai đầu tiên của Tuần 1
-        const monWeek1 = new Date(y, 0, 4 - (dayOfWeekJan4 - 1));
-        // Ngày Thứ Hai của Tuần w
-        const monday = new Date(monWeek1.getFullYear(), monWeek1.getMonth(), monWeek1.getDate() + (w - 1) * 7);
+        // Ngày Thứ Hai đầu tiên của Tuần 1 ISO
+        const monIsoWeek1 = new Date(y, 0, 4 - (dayOfWeekJan4 - 1));
+        // Số tuần trừ 1 theo lịch làm việc thực tế (Tuần 1 tương ứng Tuần 2 ISO, Tuần 36 tương ứng Tuần 37 ISO)
+        const monday = new Date(monIsoWeek1.getFullYear(), monIsoWeek1.getMonth(), monIsoWeek1.getDate() + w * 7);
         return monday;
     },
 
@@ -222,11 +227,22 @@ const StorageService = {
                 localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
             }
 
-            // Đồng bộ dữ liệu lịch: XÓA TOÀN BỘ LỊCH CÔNG TÁC MẪU TỰ ĐỘNG TẠO, CHỈ ĐỂ LỊCH DO CÁN BỘ TẠO
+            // Đồng bộ dữ liệu lịch: Chuẩn hóa số thứ tự tuần (trừ 1) và cập nhật ngày tháng
             let schedules = this.getAllSchedules();
             let schedChanged = false;
             if (Array.isArray(schedules)) {
                 schedules.forEach(s => {
+                    // Tự động điều chỉnh lại số tuần theo ngày bắt đầu nếu có lịch cũ
+                    if (s && s.startDate && s.year) {
+                        const targetInfo = this.getCurrentWeekInfo(new Date(s.startDate + "T12:00:00"));
+                        if (targetInfo && targetInfo.weekNumber && s.weekNumber !== targetInfo.weekNumber) {
+                            s.weekNumber = targetInfo.weekNumber;
+                            s.id = `sched_${s.year}_w${s.weekNumber}`;
+                            s.title = `Lịch công tác tuần ${s.weekNumber} năm ${s.year}`;
+                            schedChanged = true;
+                        }
+                    }
+
                     if (s && s.items) {
                         const originalLen = s.items.length;
                         // Loại bỏ các mục mẫu ban đầu (item_35_xx, item_34_xx)

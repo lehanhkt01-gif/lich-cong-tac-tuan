@@ -87,15 +87,17 @@ def write_json_file(file_path, data, backup=True):
             return False
 
 def get_week_start_end(year, week_no):
-    from datetime import date
+    from datetime import date, timedelta
     try:
-        monday = date.fromisocalendar(int(year), int(week_no), 1)
-        sunday = date.fromisocalendar(int(year), int(week_no), 7)
+        # Số tuần trừ 1 so với ISO (Tuần w tương ứng ISO week w+1)
+        iso_week = int(week_no) + 1
+        monday = date.fromisocalendar(int(year), iso_week, 1)
+        sunday = date.fromisocalendar(int(year), iso_week, 7)
         return monday.strftime("%Y-%m-%d"), sunday.strftime("%Y-%m-%d")
     except Exception:
         jan4 = date(int(year), 1, 4)
         mon1 = jan4 - timedelta(days=jan4.isoweekday() - 1)
-        target_mon = mon1 + timedelta(weeks=int(week_no) - 1)
+        target_mon = mon1 + timedelta(weeks=int(week_no))
         target_sun = target_mon + timedelta(days=6)
         return target_mon.strftime("%Y-%m-%d"), target_sun.strftime("%Y-%m-%d")
 
@@ -112,7 +114,12 @@ def normalize_schedules(schedules):
 # Khởi tạo tệp dữ liệu mặc định nếu chưa có
 def init_data_files():
     now = datetime.now()
-    year, week_no, day = now.isocalendar()
+    iso_year, iso_week, day = now.isocalendar()
+    week_no = iso_week - 1
+    year = iso_year
+    if week_no < 1:
+        year -= 1
+        week_no = 52
     monday_str, sunday_str = get_week_start_end(year, week_no)
 
     if not os.path.exists(SCHEDULES_FILE):
@@ -173,7 +180,12 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
         if path == "/api/schedules":
             schedules = read_json_file(SCHEDULES_FILE, [])
             now = datetime.now()
-            year, week_no, day = now.isocalendar()
+            iso_year, iso_week, day = now.isocalendar()
+            week_no = iso_week - 1
+            year = iso_year
+            if week_no < 1:
+                year -= 1
+                week_no = 52
             curr_id = f"sched_{year}_w{week_no}"
             monday_str, sunday_str = get_week_start_end(year, week_no)
             if not any(s.get("id") == curr_id or (s.get("year") == year and s.get("weekNumber") == week_no) for s in schedules):
