@@ -7,13 +7,13 @@
 const GEMINI_CONFIG_KEYS = {
     API_KEY: "easup_gemini_api_key",
     MODEL: "easup_gemini_model",
-    DEFAULT_MODEL: "gemini-2.5-flash"
+    DEFAULT_MODEL: "gemini-3.8-flash"
 };
 
 const AVAILABLE_GEMINI_MODELS = [
+    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Siêu Nhanh - Thông Minh Vượt Trội)", default: true },
     { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro (Siêu Trí Tuệ - Phân Tích & Bóc Tách Chuyên Sâu Cực Cao)" },
-    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Siêu Nhanh Thế Hệ Mới - Thông Minh Vượt Trội)" },
-    { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (Khuyên dùng - Cân bằng tốc độ & chuẩn xác)", default: true },
+    { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (Khuyên dùng - Cân bằng tốc độ & chuẩn xác)" },
     { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (Phân tích văn bản dài, đa ngữ cảnh)" },
     { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (Tốc độ cao, đa phương thức)" },
     { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (Bản ổn định - Văn bản dài/phức tạp)" },
@@ -26,12 +26,13 @@ const GeminiExtractorService = {
         return localStorage.getItem(GEMINI_CONFIG_KEYS.API_KEY) || "";
     },
 
-    // Lưu API Key
+    // Lưu API Key (hỗ trợ cả chuẩn mới AQ.Ab8... và AIzaSy...)
     setApiKey(key) {
         if (!key) {
             localStorage.removeItem(GEMINI_CONFIG_KEYS.API_KEY);
         } else {
-            localStorage.setItem(GEMINI_CONFIG_KEYS.API_KEY, key.trim());
+            const cleanKey = key.trim().replace(/^["']|["']$/g, "").trim();
+            localStorage.setItem(GEMINI_CONFIG_KEYS.API_KEY, cleanKey);
         }
     },
 
@@ -58,16 +59,37 @@ const GeminiExtractorService = {
         return new Promise(resolve => setTimeout(resolve, ms));
     },
 
-    // Kiểm tra API Key có hợp lệ không (hỗ trợ Exponential Backoff thử lại 3 lần và fallback)
+    // Kiểm tra kết nối API Key và trả về kết quả có cấu trúc cho giao diện Settings
+    async testConnection(apiKey, model = null) {
+        try {
+            await this.testApiKey(apiKey, model);
+            const rawKey = (apiKey || this.getApiKey() || "").trim();
+            const isAQKey = rawKey.startsWith("AQ.");
+            const keyTypeStr = isAQKey ? "chuẩn mới AQ.Ab8..." : "chuẩn AIzaSy...";
+            return {
+                success: true,
+                message: `Kết nối Google Gemini thành công! Đã xác thực khóa (${keyTypeStr}) hoạt động hoàn hảo.`
+            };
+        } catch (err) {
+            return {
+                success: false,
+                message: err.message || "Không thể kết nối đến Google Gemini API"
+            };
+        }
+    },
+
+    // Kiểm tra API Key có hợp lệ không (hỗ trợ cả chuẩn mới AQ.Ab8... và AIzaSy...)
     async testApiKey(apiKey, model = null) {
-        const key = (apiKey || this.getApiKey()).trim();
+        let key = (apiKey || this.getApiKey() || "").trim();
+        key = key.replace(/^["']|["']$/g, "").trim();
         if (!key) {
-            throw new Error("Vui lòng nhập Gemini API Key!");
+            throw new Error("Vui lòng nhập Gemini API Key (hỗ trợ chuẩn mới AQ.Ab8... hoặc AIzaSy...)!");
         }
 
-        const modelId = model || this.getModel();
+        const modelId = model || this.getModel() || "gemini-3.8-flash";
         const candidateModels = [
             modelId,
+            "gemini-3.8-flash",
             "gemini-2.5-flash",
             "gemini-2.0-flash",
             "gemini-1.5-flash"
@@ -76,7 +98,7 @@ const GeminiExtractorService = {
         let lastError = null;
 
         for (const m of uniqueModels) {
-            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(key)}`;
             const payload = {
                 contents: [
                     {
@@ -94,7 +116,10 @@ const GeminiExtractorService = {
                 try {
                     const res = await fetch(endpoint, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": key
+                        },
                         body: JSON.stringify(payload)
                     });
 
@@ -105,8 +130,8 @@ const GeminiExtractorService = {
                     const errData = await res.json().catch(() => ({}));
                     const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
 
-                    if (res.status === 403 || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
-                        throw new Error("Khóa Google Gemini API Key không chính xác hoặc đã bị vô hiệu hóa. Vui lòng kiểm tra lại!");
+                    if (res.status === 403 || (res.status === 400 && errMsg.includes("API key")) || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
+                        throw new Error("Khóa Google Gemini API Key không chính xác hoặc chưa được cấp quyền. Vui lòng kiểm tra lại khóa (chuẩn mới AQ.Ab8... hoặc AIzaSy...)!");
                     }
 
                     const isOverloaded = res.status === 503 || res.status === 429 || res.status >= 500 ||
@@ -122,7 +147,7 @@ const GeminiExtractorService = {
                     lastError = new Error(errMsg);
                     break;
                 } catch (e) {
-                    if (e.message && e.message.includes("không chính xác")) throw e;
+                    if (e.message && (e.message.includes("không chính xác") || e.message.includes("chưa được cấp quyền"))) throw e;
                     lastError = e;
                     if (attempt < 3) {
                         await this.sleep(2000);
@@ -136,7 +161,7 @@ const GeminiExtractorService = {
         if (lastError) {
             let msg = lastError.message;
             if (msg.includes("high demand") || msg.includes("overloaded")) {
-                msg = "Máy chủ Google Gemini đang tạm thời quá tải lưu lượng. Hệ thống đã tự động thử lại 3 lần nhưng chưa kết nối được. Bạn có thể chọn mô hình Gemini 2.5 Flash để bóc tách ngay.";
+                msg = "Máy chủ Google Gemini đang tạm thời quá tải lưu lượng. Hệ thống đã tự động thử lại 3 lần nhưng chưa kết nối được. Bạn có thể chọn mô hình Gemini 3.8 Flash hoặc Gemini 2.5 Flash để bóc tách ngay.";
             }
             throw new Error(msg);
         }
@@ -253,14 +278,15 @@ Trả về duy nhất 1 JSON object có định dạng:
 
     // Hàm chính: Bóc tách tệp hoặc văn bản bằng Gemini API
     async extractSchedule({ file = null, rawText = "", targetWeek = null, targetYear = null, apiKey = null, model = null, onProgress = null }) {
-        const key = (apiKey || this.getApiKey()).trim();
+        let key = (apiKey || this.getApiKey() || "").trim();
+        key = key.replace(/^["']|["']$/g, "").trim();
         if (!key) {
-            throw new Error("Chưa cấu hình Gemini API Key! Vui lòng nhập API Key để tiếp tục.");
+            throw new Error("Chưa cấu hình Gemini API Key! Vui lòng nhập API Key (chuẩn mới AQ.Ab8... hoặc AIzaSy...) để tiếp tục.");
         }
         this.saveApiKey(key);
 
-        const modelId = model || this.getModel();
-        let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${key}`;
+        const modelId = model || this.getModel() || "gemini-3.8-flash";
+        let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(key)}`;
 
         if (onProgress) onProgress("Đang chuẩn bị nội dung tài liệu...", 20);
 
@@ -348,6 +374,7 @@ Trả về duy nhất 1 JSON object có định dạng:
         // Danh sách mô hình theo thứ tự ưu tiên thử nghiệm
         const candidateModels = [
             modelId,
+            "gemini-3.8-flash",
             "gemini-2.5-flash",
             "gemini-2.0-flash",
             "gemini-2.5-pro",
@@ -362,7 +389,7 @@ Trả về duy nhất 1 JSON object có định dạng:
 
         for (let i = 0; i < uniqueModels.length; i++) {
             const currentModel = uniqueModels[i];
-            const currentEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${key}`;
+            const currentEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${encodeURIComponent(key)}`;
 
             if (i > 0 && onProgress) {
                 onProgress(`Mô hình trước quá tải/bận, đang tự động chuyển sang ${currentModel}...`, 75);
@@ -416,7 +443,10 @@ Trả về duy nhất 1 JSON object có định dạng:
 
                     let res = await fetch(currentEndpoint, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": key
+                        },
                         body: JSON.stringify(structuredBody)
                     });
 
@@ -432,7 +462,10 @@ Trả về duy nhất 1 JSON object có định dạng:
                         };
                         res = await fetch(currentEndpoint, {
                             method: "POST",
-                            headers: { "Content-Type": "application/json" },
+                            headers: {
+                                "Content-Type": "application/json",
+                                "x-goog-api-key": key
+                            },
                             body: JSON.stringify(fallbackBody)
                         });
                     }
@@ -453,8 +486,8 @@ Trả về duy nhất 1 JSON object có định dạng:
                     const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
 
                     // Nếu lỗi do API Key không hợp lệ, dừng ngay vì các model khác cũng sẽ lỗi API Key
-                    if (res.status === 403 || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
-                        throw new Error("Khóa Google Gemini API Key không chính xác hoặc đã bị vô hiệu hóa. Vui lòng kiểm tra lại!");
+                    if (res.status === 403 || (res.status === 400 && errMsg.includes("API key")) || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
+                        throw new Error("Khóa Google Gemini API Key không chính xác hoặc chưa được cấp quyền. Vui lòng kiểm tra lại khóa (chuẩn mới AQ.Ab8... hoặc AIzaSy...)!");
                     }
 
                     // Kiểm tra lỗi quá tải / bận máy chủ / rate limit

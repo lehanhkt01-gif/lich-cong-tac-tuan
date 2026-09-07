@@ -460,24 +460,24 @@
                         <span>✨</span> Cấu Hình Trí Tuệ Nhân Tạo (Google Gemini API)
                     </h3>
                     <p style="font-size: 13px; color: #64748B; margin-bottom: 16px;">
-                        Cung cấp API Key từ Google AI Studio (miễn phí) để kích hoạt tính năng tự động bóc tách lịch từ văn bản PDF, Word (.docx), Ảnh quét (.png/.jpg) hoặc nội dung sao chép.
+                        Cung cấp API Key từ Google AI Studio (miễn phí) để kích hoạt tính năng tự động bóc tách lịch từ văn bản PDF, Word (.docx), Ảnh quét (.png/.jpg) hoặc nội dung sao chép. Hỗ trợ đầy đủ cả chuẩn khóa xác thực mới <strong>AQ.Ab8...</strong> và chuẩn cũ <strong>AIzaSy...</strong>.
                     </p>
                     <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-bottom: 14px;">
                         <div class="form-group" style="margin-bottom: 0;">
-                            <label class="form-label">Google Gemini API Key:</label>
+                            <label class="form-label">Google Gemini API Key (AQ.Ab8... / AIzaSy...):</label>
                             <div style="position: relative;">
-                                <input type="password" id="settingGeminiApiKey" class="form-input" placeholder="AIzaSy..." style="padding-right: 40px; font-family: monospace;">
+                                <input type="password" id="settingGeminiApiKey" class="form-input" placeholder="AQ.Ab8... hoặc AIzaSy..." style="padding-right: 40px; font-family: monospace;">
                                 <button type="button" class="btn-toggle-password" onclick="App.togglePasswordVisibility('settingGeminiApiKey', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer;">👁️</button>
                             </div>
                             <div style="font-size: 12px; color: #94A3B8; margin-top: 4px;">
-                                Chưa có khóa? Lấy miễn phí tại: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #2563EB; text-decoration: underline;">Google AI Studio (Miễn phí)</a>
+                                Chưa có khóa? Lấy miễn phí tại: <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #2563EB; text-decoration: underline; font-weight: 600;">Google AI Studio (Miễn phí)</a> &bull; <span style="color: #059669; font-weight: 600;">✓ Đã hỗ trợ chuẩn mới AQ.Ab8...</span>
                             </div>
                         </div>
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label">Mô hình AI:</label>
                             <select id="settingGeminiModel" class="form-select">
+                                <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Siêu Nhanh - Thông Minh Vượt Trội)</option>
                                 <option value="gemini-3.1-pro">Gemini 3.1 Pro (Siêu Trí Tuệ - Phân Tích Chuyên Sâu Cực Cao)</option>
-                                <option value="gemini-3.8-flash">Gemini 3.8 Flash (Siêu Nhanh - Thông Minh Vượt Trội)</option>
                                 <option value="gemini-2.5-flash">Gemini 2.5 Flash (Khuyên dùng - Nhanh & Chuẩn nhất)</option>
                                 <option value="gemini-2.5-pro">Gemini 2.5 Pro (Văn bản dài & Đa ngữ cảnh)</option>
                                 <option value="gemini-2.0-flash">Gemini 2.0 Flash (Tốc độ cao)</option>
@@ -1002,8 +1002,8 @@
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label" style="font-weight: 700; color: #1E293B;">🤖 Mô hình AI:</label>
                             <select id="aiModalModelSelect" class="form-select" style="font-weight: 600;">
+                                <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Siêu Nhanh - Thông Minh)</option>
                                 <option value="gemini-3.1-pro">Gemini 3.1 Pro (Siêu Trí Tuệ - Chuyên Sâu)</option>
-                                <option value="gemini-3.8-flash">Gemini 3.8 Flash (Siêu Nhanh - Thông Minh)</option>
                                 <option value="gemini-2.5-flash">Gemini 2.5 Flash (Khuyên dùng - Nhanh & Chuẩn)</option>
                                 <option value="gemini-2.5-pro">Gemini 2.5 Pro (Văn bản dài/phức tạp)</option>
                                 <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
@@ -1017,7 +1017,7 @@
                                 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size: 11.5px; color: #4F46E5; text-decoration: underline;">Lấy khóa</a>
                             </label>
                             <div style="position: relative;">
-                                <input type="password" id="aiModalApiKey" class="form-input" placeholder="Dán khóa API (AIzaSy...)" style="font-family: monospace; font-size: 13px; padding-right: 36px;">
+                                <input type="password" id="aiModalApiKey" class="form-input" placeholder="Dán khóa API (AQ.Ab8... hoặc AIzaSy...)" style="font-family: monospace; font-size: 13px; padding-right: 36px;">
                                 <button type="button" class="btn-toggle-password" onclick="App.togglePasswordVisibility('aiModalApiKey', this)" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer;">👁️</button>
                             </div>
                         </div>
@@ -1150,13 +1150,13 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20260907_03"></script>
-    <script src="js/storage.js?v=20260907_03"></script>
-    <script src="js/auth.js?v=20260907_03"></script>
-    <script src="js/audit.js?v=20260907_03"></script>
-    <script src="js/email-service.js?v=20260907_03"></script>
-    <script src="js/export-service.js?v=20260907_03"></script>
-    <script src="js/ai-extractor.js?v=20260907_03"></script>
-    <script src="js/app.js?v=20260907_03"></script>
+    <script src="js/data.js?v=20260907_04"></script>
+    <script src="js/storage.js?v=20260907_04"></script>
+    <script src="js/auth.js?v=20260907_04"></script>
+    <script src="js/audit.js?v=20260907_04"></script>
+    <script src="js/email-service.js?v=20260907_04"></script>
+    <script src="js/export-service.js?v=20260907_04"></script>
+    <script src="js/ai-extractor.js?v=20260907_04"></script>
+    <script src="js/app.js?v=20260907_04"></script>
 </body>
 </html>
