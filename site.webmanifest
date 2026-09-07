@@ -1,0 +1,24 @@
+{
+  "name": "Cổng Thông Tin Lịch Công Tác Tuần UBND Xã Ea Súp",
+  "short_name": "Lịch Công Tác Ea Súp",
+  "icons": [
+    {
+      "src": "assets/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#1E3A8A",
+  "background_color": "#F8FAFC",
+  "display": "standalone"
+}

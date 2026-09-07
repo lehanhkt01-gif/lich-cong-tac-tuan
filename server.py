@@ -26,6 +26,10 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(BACKUPS_DIR, exist_ok=True)
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 
+mimetypes.add_type('image/x-icon', '.ico')
+mimetypes.add_type('image/png', '.png')
+mimetypes.add_type('application/manifest+json', '.webmanifest')
+
 SCHEDULES_FILE = os.path.join(DATA_DIR, "schedules.json")
 CADRES_FILE = os.path.join(DATA_DIR, "cadres.json")
 AUDIT_LOGS_FILE = os.path.join(DATA_DIR, "audit_logs.json")
@@ -174,6 +178,23 @@ class LichCongTacHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed_url = urllib.parse.urlparse(self.path)
         path = parsed_url.path
+
+        # Phục vụ biểu tượng trang web Favicon trực tiếp
+        if path == "/favicon.ico":
+            ico_file = os.path.join(BASE_DIR, "favicon.ico")
+            if os.path.exists(ico_file):
+                try:
+                    with open(ico_file, "rb") as f:
+                        ico_bytes = f.read()
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'image/x-icon')
+                    self.send_header('Content-Length', str(len(ico_bytes)))
+                    self.send_header('Cache-Control', 'public, max-age=86400')
+                    self.end_headers()
+                    self.wfile.write(ico_bytes)
+                    return
+                except Exception:
+                    pass
 
         # REST API Routes
         if path == "/api/status":
