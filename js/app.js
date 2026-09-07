@@ -1608,7 +1608,7 @@ const App = {
         const modelSelect = document.getElementById("settingGeminiModel");
         if (typeof GeminiExtractorService !== "undefined") {
             if (keyInput) keyInput.value = GeminiExtractorService.getApiKey() || "";
-            if (modelSelect) modelSelect.value = GeminiExtractorService.getModel() || "gemini-3.8-flash";
+            if (modelSelect) modelSelect.value = GeminiExtractorService.getModel() || "gemini-2.0-flash";
         }
     },
 
@@ -1629,7 +1629,7 @@ const App = {
     saveGeminiSettings() {
         let key = document.getElementById("settingGeminiApiKey")?.value.trim() || "";
         key = key.replace(/^["']|["']$/g, "").trim();
-        const model = document.getElementById("settingGeminiModel")?.value || "gemini-3.8-flash";
+        const model = document.getElementById("settingGeminiModel")?.value || "gemini-2.0-flash";
         if (typeof GeminiExtractorService !== "undefined") {
             GeminiExtractorService.saveApiKey(key);
             GeminiExtractorService.saveModel(model);
@@ -1662,7 +1662,7 @@ const App = {
     async testGeminiConnection() {
         let key = document.getElementById("settingGeminiApiKey")?.value.trim() || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getApiKey() : "");
         key = key.replace(/^["']|["']$/g, "").trim();
-        const model = document.getElementById("settingGeminiModel")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-3.8-flash");
+        const model = document.getElementById("settingGeminiModel")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-2.0-flash");
         const statusEl = document.getElementById("geminiKeyStatus");
 
         if (!key) {
@@ -1754,7 +1754,7 @@ const App = {
             // Populate AI Model select if stored
             const modalModelSelect = document.getElementById("aiModalModelSelect");
             if (modalModelSelect && typeof GeminiExtractorService !== "undefined") {
-                modalModelSelect.value = GeminiExtractorService.getModel() || "gemini-3.8-flash";
+                modalModelSelect.value = GeminiExtractorService.getModel() || "gemini-2.0-flash";
             }
 
             // Reset step view
@@ -1909,7 +1909,7 @@ const App = {
         }
 
         // Selected AI Model
-        const selectedModel = document.getElementById("aiModalModelSelect")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-3.8-flash");
+        const selectedModel = document.getElementById("aiModalModelSelect")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-2.0-flash");
         if (typeof GeminiExtractorService !== "undefined") {
             GeminiExtractorService.saveModel(selectedModel);
         }

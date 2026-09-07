@@ -7,17 +7,15 @@
 const GEMINI_CONFIG_KEYS = {
     API_KEY: "easup_gemini_api_key",
     MODEL: "easup_gemini_model",
-    DEFAULT_MODEL: "gemini-3.8-flash"
+    DEFAULT_MODEL: "gemini-2.0-flash"
 };
 
 const AVAILABLE_GEMINI_MODELS = [
-    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Siêu Nhanh - Thông Minh Vượt Trội)", default: true },
-    { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro (Siêu Trí Tuệ - Phân Tích & Bóc Tách Chuyên Sâu Cực Cao)" },
-    { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (Khuyên dùng - Cân bằng tốc độ & chuẩn xác)" },
-    { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (Phân tích văn bản dài, đa ngữ cảnh)" },
-    { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (Tốc độ cao, đa phương thức)" },
-    { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (Bản ổn định - Văn bản dài/phức tạp)" },
-    { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (Tiêu chuẩn ổn định)" }
+    { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (Khuyên dùng - Siêu Nhanh, Thông Minh & Ổn Định Nhất)", default: true },
+    { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (Bản Chuẩn Quốc Tế - Tốc Độ Cao & Ổn Định)" },
+    { id: "gemini-1.5-flash-8b", name: "Gemini 1.5 Flash 8B (Bản Siêu Tiết Kiệm & Nhanh)" },
+    { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (Bản Chuyên Sâu - Đọc Văn Bản Dài & Phức Tạp)" },
+    { id: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash Lite (Tiết Kiệm Quota)" }
 ];
 
 const GeminiExtractorService = {
@@ -50,14 +48,16 @@ const GeminiExtractorService = {
         }
     },
 
-    // Lấy Model AI đang chọn
+    // Lấy Model AI đang chọn (tự động chuẩn hóa nếu là model cũ hoặc không tồn tại)
     getModel() {
-        return localStorage.getItem(GEMINI_CONFIG_KEYS.MODEL) || GEMINI_CONFIG_KEYS.DEFAULT_MODEL;
+        const stored = localStorage.getItem(GEMINI_CONFIG_KEYS.MODEL);
+        return this.normalizeModelId(stored || GEMINI_CONFIG_KEYS.DEFAULT_MODEL);
     },
 
     // Lưu Model AI
     setModel(modelId) {
-        localStorage.setItem(GEMINI_CONFIG_KEYS.MODEL, modelId || GEMINI_CONFIG_KEYS.DEFAULT_MODEL);
+        const normalized = this.normalizeModelId(modelId || GEMINI_CONFIG_KEYS.DEFAULT_MODEL);
+        localStorage.setItem(GEMINI_CONFIG_KEYS.MODEL, normalized);
     },
 
     saveApiKey(key) {
@@ -66,6 +66,66 @@ const GeminiExtractorService = {
 
     saveModel(modelId) {
         this.setModel(modelId);
+    },
+
+    // Chuẩn hóa Model ID (chuyển đổi bất kỳ model ảo hoặc cũ sang model chính thức có sẵn của Google)
+    normalizeModelId(modelId, availableModels = []) {
+        if (!modelId) return "gemini-2.0-flash";
+        let m = modelId.trim().toLowerCase();
+        
+        // Nếu có danh sách live models từ Google API
+        if (Array.isArray(availableModels) && availableModels.length > 0) {
+            if (availableModels.includes(m)) return m;
+            const matchFlash = availableModels.find(x => x.includes("2.0-flash") || x.includes("1.5-flash") || x.includes("flash"));
+            if (matchFlash) return matchFlash;
+            return availableModels[0];
+        }
+
+        // Mapping model ảo / cũ sang model thật chính thức của Google
+        if (m.includes("3.8") || m.includes("2.5") || m.includes("2.0")) {
+            return "gemini-2.0-flash";
+        }
+        if (m.includes("3.1") || (m.includes("pro") && !m.includes("flash"))) {
+            return "gemini-1.5-pro";
+        }
+        if (m.includes("8b")) {
+            return "gemini-1.5-flash-8b";
+        }
+        if (m.includes("flash")) {
+            return "gemini-1.5-flash";
+        }
+        return "gemini-2.0-flash";
+    },
+
+    // Lấy danh sách các mô hình thực tế mà Google API Key này có quyền gọi (ModelService.ListModels)
+    async getSupportedModels(apiKey) {
+        const key = (apiKey || this.getApiKey()).trim().replace(/^["']|["']$/g, "").trim();
+        if (!key) return [];
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`;
+            const res = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": key
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.models && Array.isArray(data.models)) {
+                    // Lọc chỉ các model hỗ trợ generateContent
+                    const validModels = data.models
+                        .filter(m => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes("generateContent"))
+                        .map(m => m.name.replace(/^models\//, ''));
+                    if (validModels.length > 0) {
+                        return validModels;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("Lỗi khi tự động truy vấn danh sách model từ Google AI Studio:", e.message);
+        }
+        return [];
     },
 
     // Hàm tạm dừng (sleep) phục vụ cơ chế Exponential Backoff
@@ -100,14 +160,31 @@ const GeminiExtractorService = {
             throw new Error("Vui lòng nhập Gemini API Key (hỗ trợ chuẩn mới AQ.Ab8... hoặc AIzaSy...)!");
         }
 
-        const modelId = model || this.getModel() || "gemini-3.8-flash";
-        const candidateModels = [
-            modelId,
-            "gemini-3.8-flash",
-            "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-flash"
-        ];
+        // Tự động truy vấn danh sách model thực từ Google API (ModelService.ListModels)
+        const liveModels = await this.getSupportedModels(key);
+        const userModel = this.normalizeModelId(model || this.getModel(), liveModels);
+
+        let candidateModels = [];
+        if (liveModels.length > 0) {
+            candidateModels = [
+                userModel,
+                ...liveModels.filter(m => m.includes("flash")),
+                ...liveModels.filter(m => m.includes("pro")),
+                ...liveModels
+            ];
+        } else {
+            candidateModels = [
+                userModel,
+                "gemini-2.0-flash",
+                "gemini-1.5-flash",
+                "gemini-1.5-flash-latest",
+                "gemini-1.5-flash-001",
+                "gemini-1.5-flash-002",
+                "gemini-1.5-flash-8b",
+                "gemini-1.5-pro",
+                "gemini-1.5-pro-latest"
+            ];
+        }
         const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
         let lastError = null;
 
@@ -148,11 +225,16 @@ const GeminiExtractorService = {
                         throw new Error("Khóa Google Gemini API Key không chính xác hoặc chưa được cấp quyền. Vui lòng kiểm tra lại khóa (chuẩn mới AQ.Ab8... hoặc AIzaSy...)!");
                     }
 
+                    if (res.status === 404 || errMsg.includes("not found for API version") || errMsg.includes("not supported for generateContent")) {
+                        // Model không hỗ trợ hoặc không có trong project, chuyển ngay sang model kế tiếp
+                        break;
+                    }
+
                     const isOverloaded = res.status === 503 || res.status === 429 || res.status >= 500 ||
                         errMsg.includes("high demand") || errMsg.includes("overloaded") || errMsg.includes("spikes in demand");
 
                     if (isOverloaded && attempt < 3) {
-                        const delay = Math.round(2000 * Math.pow(1.5, attempt - 1)); // Lần 1: 2s, Lần 2: 3s
+                        const delay = Math.round(2000 * Math.pow(1.5, attempt - 1));
                         console.warn(`[Test API] Máy chủ quá tải (${res.status}). Đang tạm dừng ${delay}ms để thử lại lần ${attempt + 1}/3...`);
                         await this.sleep(delay);
                         continue;
@@ -175,7 +257,7 @@ const GeminiExtractorService = {
         if (lastError) {
             let msg = lastError.message;
             if (msg.includes("high demand") || msg.includes("overloaded")) {
-                msg = "Máy chủ Google Gemini đang tạm thời quá tải lưu lượng. Hệ thống đã tự động thử lại 3 lần nhưng chưa kết nối được. Bạn có thể chọn mô hình Gemini 3.8 Flash hoặc Gemini 2.5 Flash để bóc tách ngay.";
+                msg = "Máy chủ Google Gemini đang tạm thời quá tải lưu lượng. Hệ thống đã tự động thử lại 3 lần nhưng chưa kết nối được. Vui lòng thử lại sau giây lát.";
             }
             throw new Error(msg);
         }
@@ -299,8 +381,7 @@ Trả về duy nhất 1 JSON object có định dạng:
         }
         this.saveApiKey(key);
 
-        const modelId = model || this.getModel() || "gemini-3.8-flash";
-        let endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(key)}`;
+        const rawModelId = model || this.getModel() || "gemini-2.0-flash";
 
         if (onProgress) onProgress("Đang chuẩn bị nội dung tài liệu...", 20);
 
@@ -312,7 +393,7 @@ Trả về duy nhất 1 JSON object có định dạng:
 
             // 1. Tệp Word (.docx)
             if (fileName.endsWith('.docx')) {
-                if (onProgress) onProgress("Đang trích xuất văn bản từ tệp Word (.docx)...", 40);
+                if (onProgress) onProgress("Đang trích xuất văn bản từ tệp Word (.docx)...", 35);
                 const docText = await this.extractTextFromDocx(file);
                 contents.push({
                     role: "user",
@@ -324,7 +405,7 @@ Trả về duy nhất 1 JSON object có định dạng:
             }
             // 2. Tệp PDF
             else if (fileName.endsWith('.pdf') || file.type === "application/pdf") {
-                if (onProgress) onProgress("Đang mã hóa tệp PDF và gửi tới Gemini Vision...", 40);
+                if (onProgress) onProgress("Đang mã hóa tệp PDF và gửi tới Gemini Vision...", 35);
                 const base64Data = await this.fileToBase64(file);
                 contents.push({
                     role: "user",
@@ -342,7 +423,7 @@ Trả về duy nhất 1 JSON object có định dạng:
             }
             // 3. Tệp Hình ảnh (Scan / Ảnh chụp lịch họp)
             else if (file.type.startsWith("image/") || /\.(jpg|jpeg|png|webp|bmp)$/i.test(fileName)) {
-                if (onProgress) onProgress("Đang quét ảnh văn bản bằng Gemini Multimodal Vision...", 40);
+                if (onProgress) onProgress("Đang quét ảnh văn bản bằng Gemini Multimodal Vision...", 35);
                 const base64Data = await this.fileToBase64(file);
                 contents.push({
                     role: "user",
@@ -360,7 +441,7 @@ Trả về duy nhất 1 JSON object có định dạng:
             }
             // 4. Tệp Text (.txt, .csv)
             else {
-                if (onProgress) onProgress("Đang đọc tệp văn bản...", 40);
+                if (onProgress) onProgress("Đang đọc tệp văn bản...", 35);
                 const textContent = await file.text();
                 contents.push({
                     role: "user",
@@ -371,7 +452,7 @@ Trả về duy nhất 1 JSON object có định dạng:
                 });
             }
         } else if (rawText && rawText.trim()) {
-            if (onProgress) onProgress("Đang xử lý văn bản dán trực tiếp...", 40);
+            if (onProgress) onProgress("Đang xử lý văn bản dán trực tiếp...", 35);
             contents.push({
                 role: "user",
                 parts: [
@@ -383,19 +464,36 @@ Trả về duy nhất 1 JSON object có định dạng:
             throw new Error("Vui lòng tải lên một tệp (PDF, Word, Ảnh scan) hoặc dán văn bản lịch công tác!");
         }
 
-        if (onProgress) onProgress("Gemini AI đang nhận diện và bóc tách bảng lịch biểu...", 65);
+        if (onProgress) onProgress("Đang kiểm tra và chọn mô hình AI khả dụng nhất...", 50);
 
-        // Danh sách mô hình theo thứ tự ưu tiên thử nghiệm
-        const candidateModels = [
-            modelId,
-            "gemini-3.8-flash",
-            "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-2.5-pro",
-            "gemini-1.5-flash",
-            "gemini-1.5-pro"
-        ];
+        // Tự động truy vấn danh sách model thực tế từ Google API (ModelService.ListModels)
+        const liveModels = await this.getSupportedModels(key);
+        const userModel = this.normalizeModelId(rawModelId, liveModels);
+
+        let candidateModels = [];
+        if (liveModels.length > 0) {
+            candidateModels = [
+                userModel,
+                ...liveModels.filter(m => m.includes("flash")),
+                ...liveModels.filter(m => m.includes("pro")),
+                ...liveModels
+            ];
+        } else {
+            candidateModels = [
+                userModel,
+                "gemini-2.0-flash",
+                "gemini-1.5-flash",
+                "gemini-1.5-flash-latest",
+                "gemini-1.5-flash-001",
+                "gemini-1.5-flash-002",
+                "gemini-1.5-flash-8b",
+                "gemini-1.5-pro",
+                "gemini-1.5-pro-latest"
+            ];
+        }
         const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
+
+        if (onProgress) onProgress("Gemini AI đang nhận diện và bóc tách bảng lịch biểu...", 65);
 
         let rawJsonText = null;
         let successfulModel = null;
@@ -406,7 +504,7 @@ Trả về duy nhất 1 JSON object có định dạng:
             const currentEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${encodeURIComponent(key)}`;
 
             if (i > 0 && onProgress) {
-                onProgress(`Mô hình trước quá tải/bận, đang tự động chuyển sang ${currentModel}...`, 75);
+                onProgress(`Đang chuyển sang mô hình dự phòng ${currentModel}...`, 75);
             }
 
             let modelSucceeded = false;
@@ -504,6 +602,13 @@ Trả về duy nhất 1 JSON object có định dạng:
                         throw new Error("Khóa Google Gemini API Key không chính xác hoặc chưa được cấp quyền. Vui lòng kiểm tra lại khóa (chuẩn mới AQ.Ab8... hoặc AIzaSy...)!");
                     }
 
+                    // Nếu 404 (model không tìm thấy hoặc không hỗ trợ trong project), bỏ qua ngay sang model kế tiếp
+                    if (res.status === 404 || errMsg.includes("not found for API version") || errMsg.includes("not supported for generateContent")) {
+                        console.warn(`Mô hình ${currentModel} không hỗ trợ hoặc không khả dụng (404), chuyển ngay sang mô hình kế tiếp...`);
+                        lastError = new Error(errMsg);
+                        break;
+                    }
+
                     // Kiểm tra lỗi quá tải / bận máy chủ / rate limit
                     const isOverloaded = res.status === 503 || res.status === 429 || res.status >= 500 ||
                         errMsg.includes("high demand") || errMsg.includes("overloaded") || errMsg.includes("spikes in demand") || errMsg.includes("temporarily");
@@ -523,7 +628,7 @@ Trả về duy nhất 1 JSON object có định dạng:
                     lastError = new Error(errMsg);
                     break;
                 } catch (err) {
-                    if (err.message && err.message.includes("không chính xác")) throw err;
+                    if (err.message && (err.message.includes("không chính xác") || err.message.includes("chưa được cấp quyền"))) throw err;
                     console.warn(`Lỗi khi gọi mô hình ${currentModel} (Lần ${attempt}/3):`, err.message);
                     lastError = err;
 
@@ -547,7 +652,7 @@ Trả về duy nhất 1 JSON object có định dạng:
         if (!rawJsonText) {
             let msg = lastError ? lastError.message : "Gemini AI không trả về dữ liệu phù hợp.";
             if (msg.includes("high demand") || msg.includes("overloaded")) {
-                msg = "Hệ thống máy chủ Google AI đang trong thời điểm quá tải cục bộ. Vui lòng bấm thử lại lần nữa hoặc chọn mô hình Gemini 2.5 Flash / Gemini 2.0 Flash.";
+                msg = "Hệ thống máy chủ Google AI đang trong thời điểm quá tải cục bộ. Vui lòng bấm thử lại lần nữa.";
             } else if (msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
                 msg = "Khóa API đã hết hạn mức sử dụng (Quota Exceeded). Vui lòng thử lại sau 1 phút hoặc lấy khóa mới tại Google AI Studio.";
             }
