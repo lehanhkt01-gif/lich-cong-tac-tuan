@@ -1613,13 +1613,16 @@ const App = {
     },
 
     saveOrgSettings() {
-        const orgData = {
-            name: document.getElementById("setOrgName")?.value.trim() || "",
-            province: document.getElementById("setOrgProvince")?.value.trim() || "",
-            email: document.getElementById("setOrgEmail")?.value.trim() || "",
-            phone: document.getElementById("setOrgPhone")?.value.trim() || ""
-        };
-        localStorage.setItem("easup_org_settings", JSON.stringify(orgData));
+        const orgData = StorageService.getOrgSettings ? StorageService.getOrgSettings() : {};
+        orgData.name = document.getElementById("setOrgName")?.value.trim() || "";
+        orgData.province = document.getElementById("setOrgProvince")?.value.trim() || "";
+        orgData.email = document.getElementById("setOrgEmail")?.value.trim() || "";
+        orgData.phone = document.getElementById("setOrgPhone")?.value.trim() || "";
+        if (StorageService.saveOrgSettings) {
+            StorageService.saveOrgSettings(orgData);
+        } else {
+            localStorage.setItem("easup_org_settings", JSON.stringify(orgData));
+        }
         this.showToast("Đã lưu cấu hình thông tin đơn vị thành công!", "success");
     },
 
@@ -1631,18 +1634,29 @@ const App = {
             GeminiExtractorService.saveApiKey(key);
             GeminiExtractorService.saveModel(model);
         }
+
+        // Lưu đa tầng vào Org Settings và đồng bộ máy chủ VPS
+        const orgData = StorageService.getOrgSettings ? StorageService.getOrgSettings() : {};
+        orgData.geminiApiKey = key;
+        orgData.geminiModel = model;
+        if (StorageService.saveOrgSettings) {
+            StorageService.saveOrgSettings(orgData);
+        } else {
+            localStorage.setItem("easup_org_settings", JSON.stringify(orgData));
+        }
+
         const statusEl = document.getElementById("geminiKeyStatus");
         if (statusEl) {
             if (key) {
                 const isAQ = key.startsWith("AQ.");
-                statusEl.textContent = `✅ Đã lưu cấu hình API Key (${isAQ ? 'Chuẩn mới AQ.Ab8...' : 'Chuẩn AIzaSy...'})!`;
+                statusEl.textContent = `✅ Đã lưu cố định API Key (${isAQ ? 'Chuẩn mới AQ.Ab8...' : 'Chuẩn AIzaSy...'}) vĩnh viễn!`;
                 statusEl.style.color = "#16A34A";
             } else {
                 statusEl.textContent = "⚠️ Đã xóa API Key!";
                 statusEl.style.color = "#CA8A04";
             }
         }
-        this.showToast("Đã lưu cấu hình AI Gemini thành công!", "success");
+        this.showToast("Đã lưu cấu hình AI Gemini vĩnh viễn thành công!", "success");
     },
 
     async testGeminiConnection() {
@@ -1718,10 +1732,23 @@ const App = {
                 StorageService.populateWeekSelect(selectEl, this.currentWeek, this.currentYear);
             }
 
-            // Populate API Key input if stored
-            const modalApiKeyInput = document.getElementById("aiModalApiKey");
-            if (modalApiKeyInput && typeof GeminiExtractorService !== "undefined") {
-                modalApiKeyInput.value = GeminiExtractorService.getApiKey() || "";
+            // Kiểm tra trạng thái API Key cố định
+            const currentApiKey = (typeof GeminiExtractorService !== "undefined") ? GeminiExtractorService.getApiKey() : "";
+            const statusBadge = document.getElementById("aiModalApiKeyStatusBadge");
+            const statusText = document.getElementById("aiModalApiKeyStatusText");
+            if (statusBadge && statusText) {
+                if (currentApiKey) {
+                    const isAQ = currentApiKey.startsWith("AQ.");
+                    statusBadge.style.background = "#ECFDF5";
+                    statusBadge.style.color = "#065F46";
+                    statusBadge.style.borderColor = "#A7F3D0";
+                    statusText.textContent = `Đã kích hoạt API Key (${isAQ ? 'Chuẩn AQ.Ab8...' : 'Chuẩn AIzaSy...'})`;
+                } else {
+                    statusBadge.style.background = "#FEF2F2";
+                    statusBadge.style.color = "#991B1B";
+                    statusBadge.style.borderColor = "#FECACA";
+                    statusText.textContent = `Chưa có API Key! Bấm Cài đặt để thêm`;
+                }
             }
 
             // Populate AI Model select if stored
@@ -1744,6 +1771,18 @@ const App = {
             console.error("Lỗi khi mở giao diện Bóc tách AI:", err);
             alert("Lỗi khi mở giao diện Bóc tách AI: " + err.message);
         }
+    },
+
+    openSettingsViewFromModal() {
+        this.closeModal("modalAIExtractor");
+        this.switchView("settings");
+        setTimeout(() => {
+            const keyInput = document.getElementById("settingGeminiApiKey");
+            if (keyInput) {
+                keyInput.focus();
+                keyInput.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }, 200);
     },
 
     setupAiDropzone() {
@@ -1861,18 +1900,12 @@ const App = {
     },
 
     async executeAiExtraction() {
-        // API Key validation
-        let apiKey = document.getElementById("aiModalApiKey")?.value.trim();
-        if (!apiKey && typeof GeminiExtractorService !== "undefined") {
-            apiKey = GeminiExtractorService.getApiKey();
-        }
+        // Kiểm tra API Key từ Cài Đặt Hệ Thống
+        let apiKey = (typeof GeminiExtractorService !== "undefined") ? GeminiExtractorService.getApiKey() : "";
         if (!apiKey) {
-            alert("Vui lòng nhập Google Gemini API Key để tiếp tục!\nBạn có thể lấy khóa miễn phí tại: https://aistudio.google.com/app/apikey");
-            document.getElementById("aiModalApiKey")?.focus();
+            alert("Hệ thống chưa tìm thấy Google Gemini API Key trong Cài Đặt Hệ Thống!\n\nVui lòng vào mục '⚙️ Cài đặt hệ thống' -> 'Cấu hình Trí tuệ nhân tạo (Gemini AI)' để lưu API Key một lần duy nhất, hệ thống sẽ ghi nhớ vĩnh viễn không cần nhập lại.");
+            this.openSettingsViewFromModal();
             return;
-        }
-        if (typeof GeminiExtractorService !== "undefined") {
-            GeminiExtractorService.saveApiKey(apiKey);
         }
 
         // Selected AI Model
@@ -2006,8 +2039,8 @@ const App = {
                         ${blocOpts}
                     </select>
                 </td>
-                <td style="padding: 4px;">
-                    <textarea class="ai-cell-input ai-field-content" rows="2" style="width: 100%; font-size: 12.5px; padding: 4px; border: 1px solid #CBD5E1; border-radius: 4px; resize: vertical;">${escapeHTML(item.content || '')}</textarea>
+                <td class="col-ai-content" style="padding: 6px;">
+                    <textarea class="ai-cell-input ai-field-content" rows="3" style="width: 100%; min-height: 68px; font-size: 13px; line-height: 1.45; padding: 6px 8px; border: 1.5px solid #94A3B8; border-radius: 6px; resize: vertical; box-sizing: border-box; font-family: inherit; font-weight: 500; color: #0F172A;">${escapeHTML(item.content || '')}</textarea>
                 </td>
                 <td style="padding: 4px;">
                     <input type="text" class="ai-cell-input ai-field-leader" value="${escapeHTML(item.leader || '')}" placeholder="Chủ trì / Lãnh đạo" style="width: 100%; font-weight: 600; font-size: 12px; padding: 4px; border: 1px solid #CBD5E1; border-radius: 4px;">

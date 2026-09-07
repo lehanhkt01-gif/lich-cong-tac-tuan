@@ -21,18 +21,32 @@ const AVAILABLE_GEMINI_MODELS = [
 ];
 
 const GeminiExtractorService = {
-    // Lấy API Key đã lưu
+    // Lấy API Key đã lưu (ghi nhớ vĩnh viễn không cần nhập lại)
     getApiKey() {
-        return localStorage.getItem(GEMINI_CONFIG_KEYS.API_KEY) || "";
+        let key = localStorage.getItem(GEMINI_CONFIG_KEYS.API_KEY) || localStorage.getItem("gemini_api_key_permanent");
+        if (!key) {
+            try {
+                const org = JSON.parse(localStorage.getItem("easup_org_settings") || "{}");
+                if (org && org.geminiApiKey) key = org.geminiApiKey;
+            } catch (e) {}
+        }
+        return key ? key.trim() : "";
     },
 
-    // Lưu API Key (hỗ trợ cả chuẩn mới AQ.Ab8... và AIzaSy...)
+    // Lưu API Key (hỗ trợ cả chuẩn mới AQ.Ab8... và AIzaSy... lưu đa tầng vĩnh viễn)
     setApiKey(key) {
         if (!key) {
             localStorage.removeItem(GEMINI_CONFIG_KEYS.API_KEY);
+            localStorage.removeItem("gemini_api_key_permanent");
         } else {
             const cleanKey = key.trim().replace(/^["']|["']$/g, "").trim();
             localStorage.setItem(GEMINI_CONFIG_KEYS.API_KEY, cleanKey);
+            localStorage.setItem("gemini_api_key_permanent", cleanKey);
+            try {
+                const org = JSON.parse(localStorage.getItem("easup_org_settings") || "{}");
+                org.geminiApiKey = cleanKey;
+                localStorage.setItem("easup_org_settings", JSON.stringify(org));
+            } catch (e) {}
         }
     },
 

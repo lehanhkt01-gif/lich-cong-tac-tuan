@@ -920,6 +920,30 @@ const StorageService = {
         });
     },
 
+    getOrgSettings() {
+        try {
+            const data = localStorage.getItem("easup_org_settings");
+            return data ? JSON.parse(data) : {};
+        } catch (e) {
+            return {};
+        }
+    },
+
+    saveOrgSettings(orgData) {
+        try {
+            localStorage.setItem("easup_org_settings", JSON.stringify(orgData));
+            if (typeof fetch !== "undefined") {
+                fetch(`${API_BASE_URL}/api/organization`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(orgData)
+                }).catch(() => {});
+            }
+        } catch (e) {
+            console.warn("Lỗi lưu cấu hình đơn vị:", e);
+        }
+    },
+
     async syncWithServer() {
         try {
             const res = await fetch(`${API_BASE_URL}/api/schedules`, { cache: 'no-store' });
@@ -932,6 +956,25 @@ const StorageService = {
                     }
                 }
             }
+
+            // Đồng bộ cấu hình cơ quan & API key từ máy chủ
+            try {
+                const resOrg = await fetch(`${API_BASE_URL}/api/organization`, { cache: 'no-store' });
+                if (resOrg.ok) {
+                    const serverOrg = await resOrg.json();
+                    if (serverOrg && typeof serverOrg === 'object' && !Array.isArray(serverOrg)) {
+                        const localOrg = this.getOrgSettings();
+                        const merged = { ...localOrg, ...serverOrg };
+                        localStorage.setItem("easup_org_settings", JSON.stringify(merged));
+                        if (serverOrg.geminiApiKey && typeof GeminiExtractorService !== 'undefined') {
+                            const currentKey = GeminiExtractorService.getApiKey();
+                            if (!currentKey) {
+                                GeminiExtractorService.saveApiKey(serverOrg.geminiApiKey);
+                            }
+                        }
+                    }
+                }
+            } catch (eOrg) {}
         } catch (e) {
             console.log("Offline mode / Chưa kết nối backend");
         }
