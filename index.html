@@ -50,7 +50,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=20260906_30">
+    <link rel="stylesheet" href="css/style.css?v=20260909_01">
 
     <!-- JSZip for in-browser Word docx parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -1064,25 +1064,32 @@
                         </button>
                     </div>
 
-                    <!-- Khu vực 1: Kéo thả Tệp -->
+                    <!-- Khu vực 1: Kéo thả Tệp hoặc Bấm vào bất kỳ đâu để tải lên -->
                     <div id="aiFileSection" style="display: block;">
-                        <div class="ai-dropzone" id="aiDropzone" onclick="document.getElementById('aiFileInput').click()">
-                            <input type="file" id="aiFileInput" accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg,.webp,.bmp" style="display: none;" onchange="App.handleAiFileSelected(this.files)">
+                        <div class="ai-dropzone" id="aiDropzone" onclick="App.triggerAiFilePicker(event)" title="Bấm vào bất kỳ đâu trong khung này để chọn tệp từ máy tính, hoặc kéo thả tệp vào">
+                            <input type="file" id="aiFileInput" accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg,.webp,.bmp" style="display: none;" onchange="App.handleAiFileSelected(event)">
                             <div class="ai-dropzone-icon">📄</div>
-                            <div class="ai-dropzone-title">Kéo thả tệp lịch công tác vào đây, hoặc <span style="color: #4F46E5; text-decoration: underline;">bấm để duyệt</span></div>
-                            <div class="ai-dropzone-hint">Hỗ trợ: PDF, Word (.docx), Ảnh scan (.jpg, .png), Văn bản (.txt). Tối đa 25MB.</div>
+                            <div class="ai-dropzone-title">
+                                <span style="font-weight: 700; color: #1E1B4B; font-size: 15px;">Bấm vào đây để tải tệp lên</span> hoặc kéo thả tệp vào khung này
+                            </div>
+                            <div style="margin: 9px 0 6px 0;">
+                                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 18px; background: linear-gradient(135deg, #4338CA 0%, #6366F1 100%); color: #FFFFFF; font-weight: 700; font-size: 13px; border-radius: 6px; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3); pointer-events: none;">
+                                    📁 Bấm để duyệt chọn tệp từ máy tính...
+                                </span>
+                            </div>
+                            <div class="ai-dropzone-hint" style="color: #64748B; font-size: 12.5px;">Hỗ trợ: PDF, Word (.docx, .doc), Ảnh scan (.jpg, .png), Văn bản (.txt). Tối đa 25MB.</div>
                         </div>
 
                         <!-- File đã chọn preview -->
-                        <div id="aiSelectedFileInfo" style="display: none; margin-top: 12px; background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 10px 14px; align-items: center; justify-content: space-between;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <span style="font-size: 20px;" id="aiSelectedFileIcon">📄</span>
+                        <div id="aiSelectedFileInfo" style="display: none; margin-top: 12px; background: #F0FDF4; border: 1.5px solid #86EFAC; border-radius: 8px; padding: 12px 16px; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 24px;" id="aiSelectedFileIcon">📄</span>
                                 <div>
-                                    <div id="aiSelectedFileName" style="font-weight: 700; color: #166534; font-size: 13.5px;">lich_tuan_36.pdf</div>
-                                    <div id="aiSelectedFileSize" style="font-size: 12px; color: #15803D;">2.4 MB</div>
+                                    <div id="aiSelectedFileName" style="font-weight: 700; color: #166534; font-size: 14px;">lich_tuan.pdf</div>
+                                    <div id="aiSelectedFileSize" style="font-size: 12px; color: #15803D; font-weight: 600;">2.4 MB</div>
                                 </div>
                             </div>
-                            <button type="button" onclick="App.clearAiSelectedFile()" style="background: none; border: none; color: #DC2626; font-size: 18px; cursor: pointer;" title="Xóa tệp">✕</button>
+                            <button type="button" onclick="App.clearAiSelectedFile()" style="background: #FEE2E2; border: 1px solid #FECACA; color: #DC2626; border-radius: 6px; padding: 5px 12px; font-size: 13px; font-weight: 700; cursor: pointer;" title="Chọn tệp khác">✕ Đổi tệp khác</button>
                         </div>
                     </div>
 
@@ -1188,13 +1195,13 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20260907_06"></script>
-    <script src="js/storage.js?v=20260907_06"></script>
-    <script src="js/auth.js?v=20260907_06"></script>
-    <script src="js/audit.js?v=20260907_06"></script>
-    <script src="js/email-service.js?v=20260907_06"></script>
-    <script src="js/export-service.js?v=20260907_06"></script>
-    <script src="js/ai-extractor.js?v=20260907_06"></script>
-    <script src="js/app.js?v=20260907_06"></script>
+    <script src="js/data.js?v=20260909_01"></script>
+    <script src="js/storage.js?v=20260909_01"></script>
+    <script src="js/auth.js?v=20260909_01"></script>
+    <script src="js/audit.js?v=20260909_01"></script>
+    <script src="js/email-service.js?v=20260909_01"></script>
+    <script src="js/export-service.js?v=20260909_01"></script>
+    <script src="js/ai-extractor.js?v=20260909_01"></script>
+    <script src="js/app.js?v=20260909_01"></script>
 </body>
 </html>

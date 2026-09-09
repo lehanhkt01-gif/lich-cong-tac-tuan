@@ -1790,6 +1790,12 @@ const App = {
         if (!dropzone || dropzone.dataset.initialized) return;
         dropzone.dataset.initialized = "true";
 
+        // Bấm vào bất kỳ đâu trong khung dropzone để mở hộp thoại chọn tệp
+        dropzone.addEventListener("click", (e) => {
+            this.triggerAiFilePicker(e);
+        });
+
+        // Xử lý kéo thả tệp (Drag & Drop)
         ["dragenter", "dragover"].forEach(eventName => {
             dropzone.addEventListener(eventName, (e) => {
                 e.preventDefault();
@@ -1815,23 +1821,34 @@ const App = {
         });
     },
 
+    triggerAiFilePicker(e) {
+        if (e && e.target && e.target.id === "aiFileInput") return;
+        const fileInput = document.getElementById("aiFileInput");
+        if (fileInput) {
+            fileInput.value = "";
+            fileInput.click();
+        }
+    },
+
     switchAiInputMode(mode) {
         this.aiInputMode = mode;
         const btnFile = document.getElementById("btnAiTabFile");
-        const btnText = document.getElementById("btnAiTabText");
-        const panelFile = document.getElementById("aiPanelFile");
-        const panelText = document.getElementById("aiPanelText");
+        const btnText = document.getElementById("btnAiTabRaw") || document.getElementById("btnAiTabText");
+        const panelFile = document.getElementById("aiFileSection") || document.getElementById("aiPanelFile");
+        const panelText = document.getElementById("aiRawSection") || document.getElementById("aiPanelText");
 
         if (mode === "file") {
             btnFile?.classList.add("active");
             if (btnFile) {
                 btnFile.style.background = "#EEF2FF";
                 btnFile.style.color = "#3730A3";
+                btnFile.style.borderColor = "#818CF8";
             }
             btnText?.classList.remove("active");
             if (btnText) {
-                btnText.style.background = "#F8FAFC";
-                btnText.style.color = "#475569";
+                btnText.style.background = "#FFFFFF";
+                btnText.style.color = "#64748B";
+                btnText.style.borderColor = "#CBD5E1";
             }
             if (panelFile) panelFile.style.display = "block";
             if (panelText) panelText.style.display = "none";
@@ -1840,11 +1857,13 @@ const App = {
             if (btnText) {
                 btnText.style.background = "#EEF2FF";
                 btnText.style.color = "#3730A3";
+                btnText.style.borderColor = "#818CF8";
             }
             btnFile?.classList.remove("active");
             if (btnFile) {
-                btnFile.style.background = "#F8FAFC";
-                btnFile.style.color = "#475569";
+                btnFile.style.background = "#FFFFFF";
+                btnFile.style.color = "#64748B";
+                btnFile.style.borderColor = "#CBD5E1";
             }
             if (panelText) panelText.style.display = "block";
             if (panelFile) panelFile.style.display = "none";
@@ -1852,32 +1871,48 @@ const App = {
     },
 
     handleAiFileSelected(event) {
-        const file = event.target.files?.[0];
+        let file = null;
+        if (event instanceof File) {
+            file = event;
+        } else if (event && event.target && event.target.files && event.target.files.length > 0) {
+            file = event.target.files[0];
+        } else if (event && event.length > 0) {
+            file = event[0];
+        } else {
+            const input = document.getElementById("aiFileInput");
+            if (input && input.files && input.files.length > 0) {
+                file = input.files[0];
+            }
+        }
         if (file) {
             this.setAiSelectedFile(file);
         }
     },
 
     setAiSelectedFile(file) {
+        if (!file) return;
         if (file.size > 25 * 1024 * 1024) {
             alert("Kích thước tệp quá lớn (>25MB). Vui lòng chọn tệp nhỏ hơn!");
             return;
         }
         this.aiSelectedFile = file;
         const infoEl = document.getElementById("aiSelectedFileInfo");
-        const nameEl = document.getElementById("aiFileName");
-        const sizeEl = document.getElementById("aiFileSize");
-        const iconEl = document.getElementById("aiFileIcon");
+        const nameEl = document.getElementById("aiSelectedFileName") || document.getElementById("aiFileName");
+        const sizeEl = document.getElementById("aiSelectedFileSize") || document.getElementById("aiFileSize");
+        const iconEl = document.getElementById("aiSelectedFileIcon") || document.getElementById("aiFileIcon");
 
         if (infoEl) infoEl.style.display = "flex";
         if (nameEl) nameEl.textContent = file.name;
-        if (sizeEl) sizeEl.textContent = `(${(file.size / 1024 / (file.size > 1048576 ? 1024 : 1)).toFixed(1)} ${file.size > 1048576 ? "MB" : "KB"})`;
+        const sizeStr = file.size > 1048576 
+            ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
+            : `${(file.size / 1024).toFixed(1)} KB`;
+        if (sizeEl) sizeEl.textContent = sizeStr;
 
         const ext = file.name.split(".").pop().toLowerCase();
         let icon = "📄";
         if (ext === "pdf") icon = "📕";
         else if (["doc", "docx"].includes(ext)) icon = "📘";
-        else if (["png", "jpg", "jpeg"].includes(ext)) icon = "🖼️";
+        else if (["png", "jpg", "jpeg", "webp", "bmp"].includes(ext)) icon = "🖼️";
         else if (ext === "txt") icon = "📝";
         if (iconEl) iconEl.textContent = icon;
     },

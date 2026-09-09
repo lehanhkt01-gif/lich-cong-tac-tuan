@@ -2671,13 +2671,14 @@ body {
 
 /* Dropzone */
 .ai-dropzone {
-    border: 2px dashed #818CF8;
-    background: #F5F3FF;
+    border: 2.5px dashed #818CF8;
+    background: #F8FAFC;
     border-radius: 12px;
-    padding: 28px 20px;
+    padding: 26px 20px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.25s ease;
+    user-select: none;
+    transition: all 0.2s ease;
     position: relative;
 }
 
@@ -2685,7 +2686,13 @@ body {
 .ai-dropzone.dragover {
     border-color: #4F46E5;
     background: #EEF2FF;
-    transform: scale(1.005);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.15);
+}
+
+.ai-dropzone:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
 }
 
 .ai-dropzone-icon {
