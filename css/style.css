@@ -2671,10 +2671,10 @@ body {
 
 /* Dropzone */
 .ai-dropzone {
-    border: 2.5px dashed #818CF8;
+    border: 2px dashed #818CF8;
     background: #F8FAFC;
-    border-radius: 12px;
-    padding: 26px 20px;
+    border-radius: 10px;
+    padding: 18px 16px;
     text-align: center;
     cursor: pointer;
     user-select: none;
@@ -2687,17 +2687,17 @@ body {
     border-color: #4F46E5;
     background: #EEF2FF;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.12);
 }
 
 .ai-dropzone:active {
     transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.18);
 }
 
 .ai-dropzone-icon {
-    font-size: 38px;
-    margin-bottom: 8px;
+    font-size: 32px;
+    margin-bottom: 6px;
     display: block;
     animation: floatIcon 3s ease-in-out infinite;
 }
@@ -2778,10 +2778,19 @@ body {
     transition: width 0.3s ease;
 }
 
-/* Review Table */
+/* AI Modal Container - Thu gọn 50% kích thước ban đầu */
 .ai-modal-container {
-    max-width: 1420px !important;
-    width: 96vw !important;
+    max-width: 760px !important;
+    width: 92vw !important;
+    margin: 20px auto !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    transition: max-width 0.25s ease, width 0.25s ease !important;
+}
+
+.ai-modal-container.ai-modal-review {
+    max-width: 1060px !important;
+    width: 95vw !important;
 }
 
 .ai-review-table {

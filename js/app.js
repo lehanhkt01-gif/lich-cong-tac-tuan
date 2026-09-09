@@ -1763,6 +1763,9 @@ const App = {
             const rawTextEl = document.getElementById("aiRawTextInput");
             if (rawTextEl) rawTextEl.value = "";
 
+            const appendRadio = document.querySelector('input[name="aiImportMode"][value="append"]');
+            if (appendRadio) appendRadio.checked = true;
+
             // Setup dropzone listeners
             this.setupAiDropzone();
 
@@ -1926,12 +1929,19 @@ const App = {
     },
 
     backToAiInputStep() {
+        const modalEl = document.getElementById("modalAIExtractor");
+        const modalContainer = modalEl ? modalEl.querySelector(".ai-modal-container") : null;
+        if (modalContainer) modalContainer.classList.remove("ai-modal-review");
+
         const stepInput = document.getElementById("aiStepInput");
         const stepLoading = document.getElementById("aiStepLoading");
         const stepReview = document.getElementById("aiStepReview");
         if (stepInput) stepInput.style.display = "block";
         if (stepLoading) stepLoading.style.display = "none";
         if (stepReview) stepReview.style.display = "none";
+
+        const appendRadio = document.querySelector('input[name="aiImportMode"][value="append"]');
+        if (appendRadio) appendRadio.checked = true;
     },
 
     async executeAiExtraction() {
@@ -2012,9 +2022,17 @@ const App = {
             this.aiTargetYear = targetYear;
 
             // Transition to Step 3: Review Table
+            const modalEl = document.getElementById("modalAIExtractor");
+            const modalContainer = modalEl ? modalEl.querySelector(".ai-modal-container") : null;
+            if (modalContainer) modalContainer.classList.add("ai-modal-review");
+
             if (stepInput) stepInput.style.display = "none";
             if (stepLoading) stepLoading.style.display = "none";
             if (stepReview) stepReview.style.display = "block";
+
+            // Đặt mặc định chọn giữ lịch cũ & thêm các mục mới
+            const appendRadio = document.querySelector('input[name="aiImportMode"][value="append"]');
+            if (appendRadio) appendRadio.checked = true;
 
             const summaryEl = document.getElementById("aiReviewSummary");
             if (summaryEl) summaryEl.textContent = `Đã trích xuất được ${this.aiExtractedItems.length} mục công tác (Tuần ${targetWeek}/${targetYear})`;
@@ -2173,7 +2191,7 @@ const App = {
             return;
         }
 
-        const importMode = document.querySelector('input[name="aiImportMode"]:checked')?.value || "replace";
+        const importMode = document.querySelector('input[name="aiImportMode"]:checked')?.value || "append";
         const targetWeek = this.aiTargetWeek || this.currentWeek;
         const targetYear = this.aiTargetYear || this.currentYear;
 
