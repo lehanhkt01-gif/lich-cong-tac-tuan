@@ -686,6 +686,13 @@ const App = {
                 }
             }
 
+            if (attachment && typeof attachment === 'object') {
+                if (attachment.dataUrl) delete attachment.dataUrl;
+                if (attachment.url && typeof attachment.url === 'string' && attachment.url.startsWith("data:") && attachment.url.length > 30000) {
+                    attachment.url = "";
+                }
+            }
+
             const itemData = {
                 id: this.editingItemId || null,
                 dayOfWeek,

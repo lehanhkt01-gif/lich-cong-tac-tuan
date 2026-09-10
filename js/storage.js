@@ -227,22 +227,118 @@ const StorageService = {
         return startDateStr;
     },
 
+    // Làm sạch và tối ưu hóa dữ liệu lịch trước khi ghi vào LocalStorage (loại bỏ base64 dataUrl lớn)
+    cleanSchedulesForStorage(schedules) {
+        if (!Array.isArray(schedules)) return schedules;
+        return schedules.map(s => {
+            if (!s || !Array.isArray(s.items)) return s;
+            const cleanItems = s.items.map(item => {
+                if (!item) return item;
+                const cleanItem = { ...item };
+                if (cleanItem.attachment && typeof cleanItem.attachment === 'object') {
+                    const att = { ...cleanItem.attachment };
+                    if (att.dataUrl) {
+                        delete att.dataUrl;
+                    }
+                    if (att.url && typeof att.url === 'string' && att.url.startsWith("data:") && att.url.length > 30000) {
+                        att.url = ""; // Tránh tràn quota 5MB LocalStorage
+                    }
+                    cleanItem.attachment = att;
+                }
+                return cleanItem;
+            });
+            return { ...s, items: cleanItems };
+        });
+    },
+
+    // Ghi dữ liệu an toàn vào LocalStorage chống lỗi QuotaExceededError (5MB limit)
+    safeSetLocalStorage(key, value) {
+        let valueStr = typeof value === "string" ? value : JSON.stringify(value);
+        if (key === STORAGE_KEYS.SCHEDULES) {
+            try {
+                const parsed = typeof value === "string" ? JSON.parse(value) : value;
+                const cleaned = this.cleanSchedulesForStorage(parsed);
+                valueStr = JSON.stringify(cleaned);
+            } catch (err) {}
+        }
+
+        try {
+            localStorage.setItem(key, valueStr);
+        } catch (e) {
+            console.warn(`LocalStorage Quota exceeded on key '${key}'. Performing emergency cleanup...`, e);
+            try {
+                // 1. Dọn dẹp sạch dataUrl trong schedules
+                const rawSchedules = localStorage.getItem(STORAGE_KEYS.SCHEDULES);
+                if (rawSchedules) {
+                    try {
+                        const parsed = JSON.parse(rawSchedules);
+                        const cleaned = this.cleanSchedulesForStorage(parsed);
+                        localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(cleaned));
+                    } catch (err) {}
+                }
+
+                // 2. Cắt giảm nhật ký Audit Logs giữ 30 dòng gần nhất
+                const rawLogs = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
+                if (rawLogs) {
+                    try {
+                        const parsedLogs = JSON.parse(rawLogs);
+                        if (Array.isArray(parsedLogs)) {
+                            localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(parsedLogs.slice(0, 30)));
+                        }
+                    } catch (err) {}
+                }
+
+                // 3. Cắt giảm email logs giữ 15 dòng gần nhất
+                const rawMail = localStorage.getItem(STORAGE_KEYS.EMAIL_LOGS);
+                if (rawMail) {
+                    try {
+                        const parsedMail = JSON.parse(rawMail);
+                        if (Array.isArray(parsedMail)) {
+                            localStorage.setItem(STORAGE_KEYS.EMAIL_LOGS, JSON.stringify(parsedMail.slice(0, 15)));
+                        }
+                    } catch (err) {}
+                }
+
+                // Thử ghi lại
+                if (key === STORAGE_KEYS.SCHEDULES) {
+                    const parsed = typeof value === "string" ? JSON.parse(value) : value;
+                    const cleaned = this.cleanSchedulesForStorage(parsed);
+                    localStorage.setItem(key, JSON.stringify(cleaned));
+                } else {
+                    localStorage.setItem(key, valueStr);
+                }
+            } catch (retryErr) {
+                console.warn("Storage quota full after cleanup. Data remains safe in memory and on server.", retryErr);
+            }
+        }
+    },
+
     // Khởi tạo dữ liệu nếu chưa có trong LocalStorage
     init() {
+        // Tự động dọn sạch base64 dataUrl cũ bị đầy trong LocalStorage từ các phiên trước
+        try {
+            const existingRaw = localStorage.getItem(STORAGE_KEYS.SCHEDULES);
+            if (existingRaw) {
+                const parsed = JSON.parse(existingRaw);
+                const cleaned = this.cleanSchedulesForStorage(parsed);
+                this.safeSetLocalStorage(STORAGE_KEYS.SCHEDULES, cleaned);
+            }
+        } catch (cleanErr) {}
+
         if (!localStorage.getItem(STORAGE_KEYS.SCHEDULES)) {
             this.resetToDefault();
         } else {
             // Đồng bộ thông tin tổ chức mới nhất
             const currentOrg = this.getOrganization();
             if (currentOrg.district || !currentOrg.logoUrl) {
-                localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(INITIAL_DATA.organization));
+                this.safeSetLocalStorage(STORAGE_KEYS.ORGANIZATION, INITIAL_DATA.organization);
             }
 
             // Đồng bộ danh bạ và tài khoản hệ thống nếu chưa đủ
             const users = this.getUsers();
             if (!users || users.length < 6 || !users.some(u => u.username === "vyhatuong")) {
-                localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_DATA.users));
-                localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
+                this.safeSetLocalStorage(STORAGE_KEYS.USERS, INITIAL_DATA.users);
+                this.safeSetLocalStorage(STORAGE_KEYS.CADRES, INITIAL_DATA.cadres);
             }
 
             // Đồng bộ dữ liệu lịch: Chuẩn hóa số thứ tự tuần (trừ 1) và cập nhật ngày tháng
@@ -284,7 +380,7 @@ const StorageService = {
                     }
                 });
                 if (schedChanged) {
-                    localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
+                    this.safeSetLocalStorage(STORAGE_KEYS.SCHEDULES, schedules);
                 }
             }
 
@@ -292,7 +388,7 @@ const StorageService = {
             let auditLogs = this.getAuditLogs();
             if (Array.isArray(auditLogs) && auditLogs.some(l => l.id && String(l.id).startsWith("log_00"))) {
                 auditLogs = auditLogs.filter(l => !l.id || !String(l.id).startsWith("log_00"));
-                localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(auditLogs));
+                this.safeSetLocalStorage(STORAGE_KEYS.AUDIT_LOGS, auditLogs);
             }
         }
 
@@ -302,21 +398,21 @@ const StorageService = {
 
     // Khôi phục về dữ liệu mẫu mặc định
     resetToDefault() {
-        localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(INITIAL_DATA.organization));
-        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_DATA.users));
+        this.safeSetLocalStorage(STORAGE_KEYS.ORGANIZATION, INITIAL_DATA.organization);
+        this.safeSetLocalStorage(STORAGE_KEYS.USERS, INITIAL_DATA.users);
         localStorage.removeItem(STORAGE_KEYS.CURRENT_USER); // Mặc định ở chế độ Khách
-        localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(INITIAL_DATA.cadres));
-        localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(INITIAL_DATA.schedules));
-        localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_DATA.auditLogs));
-        localStorage.setItem(STORAGE_KEYS.EMAIL_LOGS, JSON.stringify(INITIAL_DATA.emailLogs));
-        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify({
+        this.safeSetLocalStorage(STORAGE_KEYS.CADRES, INITIAL_DATA.cadres);
+        this.safeSetLocalStorage(STORAGE_KEYS.SCHEDULES, INITIAL_DATA.schedules);
+        this.safeSetLocalStorage(STORAGE_KEYS.AUDIT_LOGS, INITIAL_DATA.auditLogs);
+        this.safeSetLocalStorage(STORAGE_KEYS.EMAIL_LOGS, INITIAL_DATA.emailLogs);
+        this.safeSetLocalStorage(STORAGE_KEYS.SETTINGS, {
             autoNotifyOnSave: true,
             defaultYear: 2026,
             defaultWeek: 35,
             smtpHost: "mail.daklak.gov.vn",
             smtpPort: "587",
             smtpSender: "ubnd.easup@daklak.gov.vn"
-        }));
+        });
     },
 
     // Lấy thông tin đơn vị
@@ -326,7 +422,7 @@ const StorageService = {
     },
 
     setOrganization(org) {
-        localStorage.setItem(STORAGE_KEYS.ORGANIZATION, JSON.stringify(org));
+        this.safeSetLocalStorage(STORAGE_KEYS.ORGANIZATION, org);
     },
 
     // Lấy danh sách tài khoản
@@ -706,7 +802,7 @@ const StorageService = {
         if (schedule.items) {
             schedule.items = this.sortScheduleItems(schedule.items);
         }
-        const schedules = this.getAllSchedules();
+        let schedules = this.getAllSchedules();
         const index = schedules.findIndex(s => s.id === schedule.id);
         
         schedule.lastUpdated = new Date().toISOString().replace('T', ' ').substring(0, 16);
@@ -723,7 +819,8 @@ const StorageService = {
             schedules.unshift(schedule);
         }
 
-        localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
+        schedules = this.cleanSchedulesForStorage(schedules);
+        this.safeSetLocalStorage(STORAGE_KEYS.SCHEDULES, schedules);
         this.persistScheduleToServer(schedule);
         return schedule;
     },
@@ -750,6 +847,16 @@ const StorageService = {
         // Tự động gán ngày dương lịch chính xác nếu chưa có
         if (schedule.startDate && (!item.date || item.dayOfWeek)) {
             item.date = this.calculateDateForDay(schedule.startDate, item.dayOfWeek);
+        }
+
+        // Làm sạch tệp đính kèm nếu có base64 dataUrl lớn
+        if (item.attachment && typeof item.attachment === 'object') {
+            if (item.attachment.dataUrl) {
+                delete item.attachment.dataUrl;
+            }
+            if (item.attachment.url && typeof item.attachment.url === 'string' && item.attachment.url.startsWith("data:") && item.attachment.url.length > 30000) {
+                item.attachment.url = "";
+            }
         }
 
         const itemIndex = schedule.items.findIndex(i => i && i.id === item.id);
@@ -820,7 +927,11 @@ const StorageService = {
         };
 
         logs.unshift(newLog);
-        localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(logs));
+        // Giữ tối đa 100 log để không chiếm quá nhiều LocalStorage
+        if (logs.length > 100) {
+            logs.length = 100;
+        }
+        this.safeSetLocalStorage(STORAGE_KEYS.AUDIT_LOGS, logs);
         this.persistAuditLogToServer(newLog);
         return newLog;
     },
@@ -839,7 +950,10 @@ const StorageService = {
             ...emailEntry
         };
         logs.unshift(newLog);
-        localStorage.setItem(STORAGE_KEYS.EMAIL_LOGS, JSON.stringify(logs));
+        if (logs.length > 50) {
+            logs.length = 50;
+        }
+        this.safeSetLocalStorage(STORAGE_KEYS.EMAIL_LOGS, logs);
         return newLog;
     },
 
@@ -850,7 +964,7 @@ const StorageService = {
     },
 
     saveSettings(settings) {
-        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+        this.safeSetLocalStorage(STORAGE_KEYS.SETTINGS, settings);
     },
 
     // Xuất toàn bộ CSDL ra JSON
@@ -890,17 +1004,18 @@ const StorageService = {
                     s.items = this.sortScheduleItems(s.items);
                 }
             });
-            localStorage.setItem(STORAGE_KEYS.SCHEDULES, JSON.stringify(schedules));
+            const cleaned = this.cleanSchedulesForStorage(schedules);
+            this.safeSetLocalStorage(STORAGE_KEYS.SCHEDULES, cleaned);
         }
     },
 
     saveCadres(cadres) {
         if (Array.isArray(cadres)) {
-            localStorage.setItem(STORAGE_KEYS.CADRES, JSON.stringify(cadres));
+            this.safeSetLocalStorage(STORAGE_KEYS.CADRES, cadres);
         }
     },
 
-    // Tải lên tệp đính kèm (PDF, Ảnh, Word) lên máy chủ VPS hoặc lưu base64
+    // Tải lên tệp đính kèm (PDF, Ảnh, Word) lên máy chủ VPS
     async uploadAttachment(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -930,7 +1045,7 @@ const StorageService = {
                                 size: data.size || `${(file.size / 1024).toFixed(1)} KB`,
                                 type: file.type,
                                 url: `${API_BASE_URL}${data.url}`,
-                                dataUrl: base64Data,
+                                // Không lưu base64 dataUrl để tránh tràn bộ nhớ LocalStorage 5MB
                                 uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
                                 uploader: uploaderName
                             });
@@ -938,7 +1053,7 @@ const StorageService = {
                         }
                     }
                 } catch (err) {
-                    console.log("Upload lên VPS lỗi, dùng fallback Base64 cục bộ:", err);
+                    console.log("Upload lên VPS lỗi:", err);
                 }
 
                 // Fallback nếu chạy offline
@@ -948,8 +1063,7 @@ const StorageService = {
                     badge: `📄 GM (${file.name.length > 20 ? file.name.substring(0, 18) + '...' : file.name})`,
                     size: `${(file.size / 1024).toFixed(1)} KB`,
                     type: file.type,
-                    url: base64Data,
-                    dataUrl: base64Data,
+                    url: file.size < 25000 ? base64Data : "",
                     uploadDate: new Date().toISOString().replace('T', ' ').substring(0, 16),
                     uploader: uploaderName
                 });
