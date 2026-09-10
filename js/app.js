@@ -521,6 +521,10 @@ const App = {
             return;
         }
 
+        if (!this.currentSchedule) {
+            this.currentSchedule = StorageService.getScheduleByWeek(this.currentYear, this.currentWeek);
+        }
+
         this.editingItemId = itemId;
         const modal = document.getElementById("modalEditItem");
         const modalTitle = document.getElementById("modalEditItemTitle");
@@ -539,11 +543,13 @@ const App = {
             attachment: null
         };
 
-        if (itemId) {
-            const found = (this.currentSchedule.items || []).find(i => i.id === itemId);
+        if (itemId && this.currentSchedule) {
+            const found = (this.currentSchedule.items || []).find(i => i && i.id === itemId);
             if (found) {
                 item = JSON.parse(JSON.stringify(found));
                 this.originalItemState = JSON.parse(JSON.stringify(found));
+            } else {
+                this.originalItemState = null;
             }
             if (modalTitle) modalTitle.textContent = "✏️ Chỉnh sửa mục công tác";
         } else {
@@ -551,21 +557,26 @@ const App = {
             if (modalTitle) modalTitle.textContent = "➕ Thêm mới mục công tác tuần";
         }
 
-        // Điền form
-        document.getElementById("formItemDay").value = item.dayOfWeek;
-        document.getElementById("formItemTime").value = item.time;
-        document.getElementById("formItemBloc").value = item.bloc || "UBND";
-        document.getElementById("formItemContent").value = item.content;
-        document.getElementById("formItemLocation").value = item.location;
-        document.getElementById("formItemLeader").value = item.leader;
-        document.getElementById("formItemParticipants").value = item.participants;
-        document.getElementById("formItemVehicle").value = item.vehicle || "Tự túc phương tiện";
-        document.getElementById("formEditReason").value = itemId ? "Điều chỉnh thời gian/nội dung họp" : "Thêm mới cuộc họp";
+        // Điền form an toàn
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = (val !== undefined && val !== null) ? val : "";
+        };
+
+        setVal("formItemDay", item.dayOfWeek || "Thứ Hai");
+        setVal("formItemTime", item.time || "08h00");
+        setVal("formItemBloc", item.bloc || "UBND");
+        setVal("formItemContent", item.content || "");
+        setVal("formItemLocation", item.location || "Hội trường lớn UBND xã");
+        setVal("formItemLeader", item.leader || "");
+        setVal("formItemParticipants", item.participants || "");
+        setVal("formItemVehicle", item.vehicle || "Tự túc phương tiện");
+        setVal("formEditReason", itemId ? "Điều chỉnh thời gian/nội dung họp" : "Thêm mới cuộc họp");
 
         // Attachment box
         this.renderAttachmentUploadBox(item.attachment);
 
-        modal.classList.add("show");
+        if (modal) modal.classList.add("show");
     },
 
     renderAttachmentUploadBox(attachment) {
@@ -623,109 +634,179 @@ const App = {
     },
 
     saveItemFromModal() {
-        if (!AuthService.canEdit()) {
-            this.openLoginModal("Vui lòng đăng nhập tài khoản để thực hiện thao tác này!");
-            return;
-        }
+        try {
+            if (!AuthService.canEdit()) {
+                this.openLoginModal("Vui lòng đăng nhập tài khoản để thực hiện thao tác này!");
+                return;
+            }
 
-        const dayOfWeek = document.getElementById("formItemDay").value;
-        const time = document.getElementById("formItemTime").value.trim();
-        const bloc = document.getElementById("formItemBloc").value;
-        const content = document.getElementById("formItemContent").value.trim();
-        const location = document.getElementById("formItemLocation").value.trim();
-        const leader = document.getElementById("formItemLeader").value.trim();
-        const participants = document.getElementById("formItemParticipants").value.trim();
-        const vehicle = document.getElementById("formItemVehicle").value;
-        const reason = document.getElementById("formEditReason").value.trim();
+            const getVal = (id) => {
+                const el = document.getElementById(id);
+                return el ? el.value.trim() : "";
+            };
 
-        if (!time || !content || !location || !leader) {
-            alert("Vui lòng điền đầy đủ các thông tin bắt buộc: Giờ, Nội dung, Địa điểm, Lãnh đạo dự!");
-            return;
-        }
+            const dayOfWeek = document.getElementById("formItemDay") ? document.getElementById("formItemDay").value : "Thứ Hai";
+            const time = getVal("formItemTime");
+            const bloc = document.getElementById("formItemBloc") ? document.getElementById("formItemBloc").value : "UBND";
+            const content = getVal("formItemContent");
+            const location = getVal("formItemLocation");
+            const leader = getVal("formItemLeader");
+            const participants = getVal("formItemParticipants");
+            const vehicle = getVal("formItemVehicle") || "Tự túc phương tiện";
+            const reason = getVal("formEditReason") || (this.editingItemId ? "Điều chỉnh thời gian/nội dung họp" : "Thêm mới cuộc họp");
 
-        const previewBox = document.getElementById("attachmentPreviewArea");
-        let attachment = null;
-        if (previewBox && previewBox.hasAttribute("data-attached")) {
-            try {
-                attachment = JSON.parse(previewBox.getAttribute("data-attached"));
-            } catch (e) {}
-        }
+            if (!time || !content || !location || !leader) {
+                alert("Vui lòng điền đầy đủ các thông tin bắt buộc: Giờ họp, Nội dung công tác, Địa điểm và Lãnh đạo dự/chủ trì!");
+                return;
+            }
 
-        const itemData = {
-            id: this.editingItemId,
-            dayOfWeek,
-            time,
-            bloc,
-            content,
-            location,
-            leader,
-            participants,
-            vehicle,
-            attachment
-        };
+            // Đảm bảo có currentSchedule
+            if (!this.currentSchedule) {
+                this.currentSchedule = StorageService.getScheduleByWeek(this.currentYear, this.currentWeek);
+            }
+            if (!this.currentSchedule) {
+                const all = StorageService.getAllSchedules();
+                if (all && all.length > 0) {
+                    this.currentSchedule = all[0];
+                } else {
+                    this.currentSchedule = StorageService.createWeekSchedule(this.currentWeek || 37, this.currentYear || 2026);
+                }
+            }
 
-        const result = StorageService.saveScheduleItem(this.currentSchedule.id, itemData);
-        if (result) {
-            // Ghi nhật ký Audit Trail
-            const action = this.editingItemId ? "UPDATE" : "CREATE";
-            AuditService.logItemChange(result.schedule, action, this.originalItemState, result.newItem, reason);
+            const previewBox = document.getElementById("attachmentPreviewArea");
+            let attachment = null;
+            if (previewBox && previewBox.hasAttribute("data-attached")) {
+                try {
+                    const rawAttr = previewBox.getAttribute("data-attached");
+                    if (rawAttr) {
+                        attachment = JSON.parse(rawAttr);
+                    }
+                } catch (e) {
+                    console.warn("Lỗi đọc tệp đính kèm:", e);
+                }
+            }
 
-            sessionStorage.setItem("activeWeek", this.currentWeek);
-            sessionStorage.setItem("activeYear", this.currentYear);
-            sessionStorage.setItem("flashToast", JSON.stringify({
-                message: this.editingItemId ? "Đã cập nhật mục công tác thành công!" : "Đã thêm mục công tác mới vào lịch tuần!",
-                type: "success"
-            }));
+            const itemData = {
+                id: this.editingItemId || null,
+                dayOfWeek,
+                time,
+                bloc,
+                content,
+                location,
+                leader,
+                participants,
+                vehicle,
+                attachment
+            };
 
-            // Tự động tải lại trang hiện hành
-            window.location.reload();
+            const scheduleId = this.currentSchedule ? this.currentSchedule.id : null;
+            const result = StorageService.saveScheduleItem(scheduleId, itemData);
+
+            if (result && result.schedule) {
+                this.currentSchedule = result.schedule;
+
+                // Ghi nhật ký Audit Trail an toàn
+                try {
+                    const action = this.editingItemId ? "UPDATE" : "CREATE";
+                    AuditService.logItemChange(result.schedule, action, this.originalItemState, result.newItem || itemData, reason);
+                } catch (auditErr) {
+                    console.warn("Lỗi ghi audit trail (không chặn lưu):", auditErr);
+                }
+
+                // Đóng modal
+                this.closeModal("modalEditItem");
+
+                // Lưu thông tin toast flash
+                sessionStorage.setItem("activeWeek", this.currentWeek || result.schedule.weekNumber);
+                sessionStorage.setItem("activeYear", this.currentYear || result.schedule.year);
+                sessionStorage.setItem("flashToast", JSON.stringify({
+                    message: this.editingItemId ? "Đã cập nhật mục công tác và ghi vết sửa thành công!" : "Đã thêm mục công tác mới vào lịch tuần thành công!",
+                    type: "success"
+                }));
+
+                // Tự động tải lại trang hiện hành
+                window.location.reload();
+            } else {
+                alert("Không thể lưu mục công tác vào cơ sở dữ liệu. Vui lòng thử lại!");
+            }
+        } catch (err) {
+            console.error("Lỗi khi lưu mục công tác:", err);
+            alert("Có lỗi xảy ra khi lưu: " + err.message);
         }
     },
 
     duplicateItem(itemId) {
-        if (!AuthService.canEdit()) {
-            this.openLoginModal("Vui lòng đăng nhập tài khoản để nhân bản mục công tác!");
-            return;
-        }
+        try {
+            if (!AuthService.canEdit()) {
+                this.openLoginModal("Vui lòng đăng nhập tài khoản để nhân bản mục công tác!");
+                return;
+            }
 
-        const item = this.currentSchedule.items.find(i => i.id === itemId);
-        if (!item) return;
+            if (!this.currentSchedule) {
+                this.currentSchedule = StorageService.getScheduleByWeek(this.currentYear, this.currentWeek);
+            }
+            if (!this.currentSchedule || !this.currentSchedule.items) return;
 
-        const copy = JSON.parse(JSON.stringify(item));
-        copy.id = null;
-        copy.content = "[Nhân bản] " + copy.content;
+            const item = this.currentSchedule.items.find(i => i && i.id === itemId);
+            if (!item) return;
 
-        const result = StorageService.saveScheduleItem(this.currentSchedule.id, copy);
-        if (result) {
-            AuditService.logItemChange(result.schedule, "CREATE", null, result.newItem, "Nhân bản từ mục trước");
-            sessionStorage.setItem("activeWeek", this.currentWeek);
-            sessionStorage.setItem("activeYear", this.currentYear);
-            sessionStorage.setItem("flashToast", JSON.stringify({
-                message: "Đã nhân bản mục công tác!",
-                type: "success"
-            }));
-            window.location.reload();
+            const copy = JSON.parse(JSON.stringify(item));
+            copy.id = null;
+            copy.content = "[Nhân bản] " + copy.content;
+
+            const result = StorageService.saveScheduleItem(this.currentSchedule.id, copy);
+            if (result && result.schedule) {
+                this.currentSchedule = result.schedule;
+                try {
+                    AuditService.logItemChange(result.schedule, "CREATE", null, result.newItem, "Nhân bản từ mục trước");
+                } catch (e) {}
+
+                sessionStorage.setItem("activeWeek", this.currentWeek || result.schedule.weekNumber);
+                sessionStorage.setItem("activeYear", this.currentYear || result.schedule.year);
+                sessionStorage.setItem("flashToast", JSON.stringify({
+                    message: "Đã nhân bản mục công tác thành công!",
+                    type: "success"
+                }));
+                window.location.reload();
+            }
+        } catch (err) {
+            console.error("Lỗi duplicateItem:", err);
+            alert("Lỗi nhân bản: " + err.message);
         }
     },
 
     deleteItem(itemId) {
-        if (!AuthService.canDelete()) {
-            this.openLoginModal("Chỉ Super Admin (Lãnh đạo đơn vị) mới có quyền xóa mục công tác!");
-            return;
-        }
+        try {
+            if (!AuthService.canDelete()) {
+                this.openLoginModal("Chỉ Super Admin (Lãnh đạo đơn vị) mới có quyền xóa mục công tác!");
+                return;
+            }
 
-        if (!confirm("Bạn có chắc chắn muốn xóa mục công tác này khỏi lịch tuần?")) return;
+            if (!confirm("Bạn có chắc chắn muốn xóa mục công tác này khỏi lịch tuần?")) return;
 
-        const result = StorageService.deleteScheduleItem(this.currentSchedule.id, itemId);
-        if (result) {
-            AuditService.logItemChange(result.schedule, "DELETE", result.deletedItem, null, "Xóa theo yêu cầu điều chỉnh lịch");
-            sessionStorage.setItem("activeWeek", this.currentWeek);
-            sessionStorage.setItem("activeYear", this.currentYear);
-            sessionStorage.setItem("flashToast", JSON.stringify({
-                message: "Đã xóa mục công tác khỏi lịch tuần!",
-                type: "success"
-            }));
-            window.location.reload();
+            if (!this.currentSchedule) {
+                this.currentSchedule = StorageService.getScheduleByWeek(this.currentYear, this.currentWeek);
+            }
+            if (!this.currentSchedule) return;
+
+            const result = StorageService.deleteScheduleItem(this.currentSchedule.id, itemId);
+            if (result && result.schedule) {
+                this.currentSchedule = result.schedule;
+                try {
+                    AuditService.logItemChange(result.schedule, "DELETE", result.deletedItem, null, "Xóa theo yêu cầu điều chỉnh lịch");
+                } catch (e) {}
+
+                sessionStorage.setItem("activeWeek", this.currentWeek || result.schedule.weekNumber);
+                sessionStorage.setItem("activeYear", this.currentYear || result.schedule.year);
+                sessionStorage.setItem("flashToast", JSON.stringify({
+                    message: "Đã xóa mục công tác khỏi lịch tuần!",
+                    type: "success"
+                }));
+                window.location.reload();
+            }
+        } catch (err) {
+            console.error("Lỗi deleteItem:", err);
+            alert("Lỗi khi xóa: " + err.message);
         }
     },
 

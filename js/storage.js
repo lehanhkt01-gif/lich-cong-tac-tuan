@@ -469,6 +469,18 @@ const StorageService = {
         }
     },
 
+    async persistAuditLogToServer(logEntry) {
+        try {
+            await fetch(`${API_BASE_URL}/api/audit-logs`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(logEntry)
+            });
+        } catch (e) {
+            // Offline fallback
+        }
+    },
+
     async deleteItemFromServer(weekId, itemId) {
         try {
             await fetch(`${API_BASE_URL}/api/schedules/delete-item`, {
@@ -719,6 +731,14 @@ const StorageService = {
     // Thêm hoặc cập nhật một mục công tác trong tuần
     saveScheduleItem(weekId, item) {
         let schedule = this.getScheduleById(weekId);
+        if (!schedule && weekId) {
+            const match = String(weekId).match(/sched_(\d+)_w(\d+)/i) || String(weekId).match(/week_(\d+)_(\d+)/i);
+            if (match) {
+                const y = parseInt(match[1].length === 4 ? match[1] : match[2], 10);
+                const w = parseInt(match[1].length === 4 ? match[2] : match[1], 10);
+                schedule = this.getScheduleByWeek(y, w);
+            }
+        }
         if (!schedule) {
             const schedules = this.getAllSchedules();
             schedule = schedules && schedules.length > 0 ? schedules[0] : null;
@@ -732,7 +752,7 @@ const StorageService = {
             item.date = this.calculateDateForDay(schedule.startDate, item.dayOfWeek);
         }
 
-        const itemIndex = schedule.items.findIndex(i => i.id === item.id);
+        const itemIndex = schedule.items.findIndex(i => i && i.id === item.id);
         let oldItem = null;
 
         if (itemIndex >= 0 && item.id) {
@@ -744,6 +764,11 @@ const StorageService = {
         }
 
         schedule.items = this.sortScheduleItems(schedule.items);
+        schedule.lastUpdated = new Date().toISOString().replace('T', ' ').substring(0, 16);
+        const currentUser = this.getCurrentUser();
+        if (currentUser && currentUser.fullName) {
+            schedule.updatedBy = currentUser.fullName;
+        }
         this.saveSchedule(schedule);
         this.persistItemToServer(schedule.id, item);
         return { schedule, oldItem, newItem: item };
@@ -751,11 +776,24 @@ const StorageService = {
 
     // Xóa một mục công tác
     deleteScheduleItem(weekId, itemId) {
-        const schedule = this.getScheduleById(weekId);
+        let schedule = this.getScheduleById(weekId);
+        if (!schedule && weekId) {
+            const match = String(weekId).match(/sched_(\d+)_w(\d+)/i) || String(weekId).match(/week_(\d+)_(\d+)/i);
+            if (match) {
+                const y = parseInt(match[1].length === 4 ? match[1] : match[2], 10);
+                const w = parseInt(match[1].length === 4 ? match[2] : match[1], 10);
+                schedule = this.getScheduleByWeek(y, w);
+            }
+        }
         if (!schedule || !schedule.items) return null;
 
-        const oldItem = schedule.items.find(i => i.id === itemId);
-        schedule.items = schedule.items.filter(i => i.id !== itemId);
+        const oldItem = schedule.items.find(i => i && i.id === itemId);
+        schedule.items = schedule.items.filter(i => i && i.id !== itemId);
+        schedule.lastUpdated = new Date().toISOString().replace('T', ' ').substring(0, 16);
+        const currentUser = this.getCurrentUser();
+        if (currentUser && currentUser.fullName) {
+            schedule.updatedBy = currentUser.fullName;
+        }
         this.saveSchedule(schedule);
         this.deleteItemFromServer(schedule.id, itemId);
 
@@ -783,6 +821,7 @@ const StorageService = {
 
         logs.unshift(newLog);
         localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(logs));
+        this.persistAuditLogToServer(newLog);
         return newLog;
     },
 

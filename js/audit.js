@@ -14,7 +14,7 @@ const AuditService = {
         location: "Địa điểm",
         leader: "Lãnh đạo dự / Chủ trì",
         participants: "Thành phần tham dự",
-        vehicle: "Phương tiện bố trí",
+        vehicle: "Phương tiện bố trí / Lái xe",
         attachment: "Giấy mời / Tệp đính kèm"
     },
 
@@ -23,11 +23,11 @@ const AuditService = {
         if (!oldItem) return [{ field: "Toàn bộ mục", oldValue: "(Chưa có)", newValue: "Thêm mới mục công tác" }];
 
         const changes = [];
-        const keys = ["time", "bloc", "content", "location", "leader", "participants", "vehicle"];
+        const keys = ["dayOfWeek", "time", "bloc", "content", "location", "leader", "participants", "vehicle"];
 
         keys.forEach(key => {
-            const oldVal = (oldItem[key] || "").trim();
-            const newVal = (newItem[key] || "").trim();
+            const oldVal = (oldItem && oldItem[key] != null ? String(oldItem[key]) : "").trim();
+            const newVal = (newItem && newItem[key] != null ? String(newItem[key]) : "").trim();
 
             if (oldVal !== newVal) {
                 changes.push({
@@ -39,12 +39,19 @@ const AuditService = {
             }
         });
 
-        // So sánh giấy mời / tệp đính kèm
-        const oldAtt = oldItem.attachment ? (oldItem.attachment.name || oldItem.attachment.badge || "Có tệp") : "";
-        const newAtt = newItem.attachment ? (newItem.attachment.name || newItem.attachment.badge || "Có tệp") : "";
+        // So sánh giấy mời / tệp đính kèm an toàn
+        const getAttachmentLabel = (att) => {
+            if (!att) return "";
+            if (typeof att === 'string') return att;
+            if (typeof att === 'object') return att.name || att.badge || att.fileName || "Có tệp đính kèm";
+            return String(att);
+        };
+
+        const oldAtt = getAttachmentLabel(oldItem ? oldItem.attachment : null);
+        const newAtt = getAttachmentLabel(newItem ? newItem.attachment : null);
         if (oldAtt !== newAtt) {
             changes.push({
-                field: this.fieldLabels.attachment,
+                field: this.fieldLabels.attachment || "Giấy mời / Tệp đính kèm",
                 key: "attachment",
                 oldValue: oldAtt || "(Chưa có tệp)",
                 newValue: newAtt || "(Đã gỡ tệp)"
@@ -56,48 +63,59 @@ const AuditService = {
 
     // Ghi lại log chung cho hệ thống
     logChange(action, description, actor = "") {
-        const logEntry = {
-            action: action,
-            actionTitle: description,
-            timestamp: new Date().toLocaleString("vi-VN"),
-            actor: actor || "Super Admin",
-            changes: []
-        };
-        if (typeof StorageService !== "undefined" && StorageService.addAuditLog) {
-            return StorageService.addAuditLog(logEntry);
+        try {
+            const logEntry = {
+                action: action,
+                actionTitle: description,
+                timestamp: new Date().toLocaleString("vi-VN"),
+                actor: actor || "Super Admin",
+                changes: []
+            };
+            if (typeof StorageService !== "undefined" && StorageService.addAuditLog) {
+                return StorageService.addAuditLog(logEntry);
+            }
+        } catch (e) {
+            console.warn("Lỗi logChange:", e);
         }
         return null;
     },
 
     // Ghi lại log khi thêm/sửa/xóa một mục
     logItemChange(weekSchedule, action, oldItem, newItem, reason = "") {
-        const changes = this.computeItemDiff(oldItem, newItem);
-        if (action === "UPDATE" && changes.length === 0) return null; // Không có thay đổi gì thực sự
+        try {
+            const changes = this.computeItemDiff(oldItem, newItem);
+            if (action === "UPDATE" && (!changes || changes.length === 0)) return null; // Không có thay đổi gì thực sự
 
-        let actionTitle = "Cập nhật mục công tác";
-        if (action === "CREATE") actionTitle = "Thêm mới mục công tác";
-        if (action === "DELETE") actionTitle = "Xóa mục công tác";
+            let actionTitle = "Cập nhật mục công tác";
+            if (action === "CREATE") actionTitle = "Thêm mới mục công tác";
+            if (action === "DELETE") actionTitle = "Xóa mục công tác";
 
-        const logEntry = {
-            weekId: weekSchedule.id,
-            weekNumber: weekSchedule.weekNumber,
-            year: weekSchedule.year,
-            itemId: newItem ? newItem.id : (oldItem ? oldItem.id : null),
-            itemDay: newItem ? newItem.dayOfWeek : (oldItem ? oldItem.dayOfWeek : ""),
-            itemTime: newItem ? newItem.time : (oldItem ? oldItem.time : ""),
-            action: action,
-            actionTitle: actionTitle,
-            changes: action === "DELETE" ? [
-                {
-                    field: "Mục bị xóa",
-                    oldValue: `${oldItem.time} - ${oldItem.content} (${oldItem.leader})`,
-                    newValue: "[Đã xóa khỏi lịch tuần]"
-                }
-            ] : changes,
-            reason: reason || "Cập nhật theo chỉ đạo công tác thường xuyên."
-        };
+            const logEntry = {
+                weekId: weekSchedule ? weekSchedule.id : "",
+                weekNumber: weekSchedule ? weekSchedule.weekNumber : "",
+                year: weekSchedule ? weekSchedule.year : "",
+                itemId: newItem ? newItem.id : (oldItem ? oldItem.id : null),
+                itemDay: newItem ? newItem.dayOfWeek : (oldItem ? oldItem.dayOfWeek : ""),
+                itemTime: newItem ? newItem.time : (oldItem ? oldItem.time : ""),
+                action: action,
+                actionTitle: actionTitle,
+                changes: action === "DELETE" ? [
+                    {
+                        field: "Mục bị xóa",
+                        oldValue: `${oldItem ? oldItem.time : ''} - ${oldItem ? oldItem.content : ''} (${oldItem ? oldItem.leader : ''})`,
+                        newValue: "[Đã xóa khỏi lịch tuần]"
+                    }
+                ] : (changes || []),
+                reason: reason || "Cập nhật theo chỉ đạo công tác thường xuyên."
+            };
 
-        return StorageService.addAuditLog(logEntry);
+            if (typeof StorageService !== "undefined" && StorageService.addAuditLog) {
+                return StorageService.addAuditLog(logEntry);
+            }
+        } catch (e) {
+            console.warn("Lỗi logItemChange:", e);
+        }
+        return null;
     },
 
     // Tạo HTML so sánh trực quan Diff (Gạch đỏ dữ liệu cũ, Tô xanh lá dữ liệu mới)
@@ -145,6 +163,7 @@ const AuditService = {
 
     // Lọc lịch sử theo tuần
     getLogsForWeek(weekId) {
+        if (typeof StorageService === "undefined" || !StorageService.getAuditLogs) return [];
         const logs = StorageService.getAuditLogs();
         if (!weekId) return logs;
         return logs.filter(l => l.weekId === weekId);
