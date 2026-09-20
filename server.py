@@ -306,8 +306,82 @@ def get_week_range(year: int, week_no: int):
         sunday = monday + timedelta(days=6)
         return monday.strftime("%Y-%m-%d"), sunday.strftime("%Y-%m-%d")
 
+def save_schedule_dict_to_db(s_dict: dict, session) -> WeeklySchedule:
+    """Lưu hoặc cập nhật WeeklySchedule kèm danh sách ScheduleItem vào CSDL SQLAlchemy"""
+    if not isinstance(s_dict, dict):
+        return None
+    week_id = s_dict.get("id")
+    year = s_dict.get("year")
+    week_no = s_dict.get("weekNumber")
+    if not year or not week_no:
+        now = datetime.now()
+        iso_y, iso_w, _ = now.isocalendar()
+        year = year or iso_y
+        week_no = week_no or iso_w
+    if not week_id:
+        week_id = f"sched_{year}_w{week_no}"
+
+    start_d, end_d = get_week_range(int(year), int(week_no))
+    start_date = s_dict.get("startDate") or start_d
+    end_date = s_dict.get("endDate") or end_d
+    title = s_dict.get("title") or f"Lịch công tác tuần thứ {week_no} năm {year}"
+    status = s_dict.get("statusLabel") or s_dict.get("status") or "Đã ban hành"
+    notes = s_dict.get("note") or s_dict.get("notes") or ""
+
+    sched = session.query(WeeklySchedule).filter_by(id=week_id).first()
+    if not sched:
+        sched = WeeklySchedule(
+            id=week_id,
+            week_number=int(week_no),
+            year=int(year),
+            start_date=start_date,
+            end_date=end_date,
+            title=title,
+            status=status,
+            notes=notes
+        )
+        session.add(sched)
+        session.flush()
+    else:
+        sched.title = title
+        sched.status = status
+        sched.notes = notes
+        sched.start_date = start_date
+        sched.end_date = end_date
+        sched.updated_at = datetime.utcnow()
+
+    items_list = s_dict.get("items", [])
+    if isinstance(items_list, list):
+        for idx, it in enumerate(items_list):
+            if not isinstance(it, dict):
+                continue
+            item_id = it.get("id") or f"item_{week_id}_{idx+1:02d}"
+            item_obj = session.query(ScheduleItem).filter_by(id=item_id).first()
+            if not item_obj:
+                item_obj = ScheduleItem(id=item_id, schedule_id=sched.id)
+                session.add(item_obj)
+
+            item_obj.day_of_week = it.get("dayOfWeek", "Thứ Hai")
+            item_obj.date = it.get("date", sched.start_date)
+            item_obj.session = it.get("session", "Sáng")
+            item_obj.time = it.get("time", "07h30")
+            item_obj.content = it.get("content", "")
+            item_obj.chair = it.get("chair") or it.get("leader", "")
+            item_obj.attendees = it.get("attendees") or it.get("participants", "")
+            item_obj.location = it.get("location", "")
+            item_obj.unit = it.get("unit") or it.get("bloc", "UBND")
+            item_obj.notes = it.get("note") or it.get("notes", "")
+            item_obj.vehicle = it.get("vehicle", "Tự túc")
+
+            att = it.get("attachment")
+            if att and isinstance(att, dict):
+                item_obj.attachment_url = att.get("url")
+                item_obj.attachment_name = att.get("name")
+
+    return sched
+
 def seed_default_data():
-    """Khởi tạo tài khoản quản trị và 1 lịch công tác tuần hoàn chỉnh cho khối Đảng, MTTQ và UBND xã Ea Súp"""
+    """Khởi tạo tài khoản quản trị và bảo lưu/nhập dữ liệu lịch cũ hoặc dữ liệu mẫu"""
     if not USE_SQLALCHEMY:
         return
 
@@ -355,9 +429,35 @@ def seed_default_data():
                 session.commit()
                 print(f"🔑 Đã tạo tài khoản quản trị mặc định: {ADMIN_USERNAME}")
 
-        # 2. Khởi tạo lịch tuần mẫu nếu chưa có lịch nào
+        # 2. TỰ ĐỘNG CHUYỂN ĐỔI DỮ LIỆU CŨ TRÊN VPS (Nếu có schedules.json hoặc backups)
+        legacy_files = [os.path.join(DATA_DIR, "schedules.json")]
+        legacy_files.extend(sorted(glob.glob(os.path.join(BACKUPS_DIR, "*.json")), reverse=True))
+
+        has_legacy_data = False
+        for lpath in legacy_files:
+            if os.path.exists(lpath):
+                try:
+                    with open(lpath, "r", encoding="utf-8") as f:
+                        ldata = json.load(f)
+                    if isinstance(ldata, dict):
+                        ldata = [ldata]
+                    if isinstance(ldata, list) and len(ldata) > 0:
+                        imported = 0
+                        for s_dict in ldata:
+                            if isinstance(s_dict, dict) and (s_dict.get("id") or s_dict.get("items")):
+                                save_schedule_dict_to_db(s_dict, session)
+                                imported += 1
+                        if imported > 0:
+                            session.commit()
+                            print(f"📦 BẢO VỆ DỮ LIỆU CŨ: Đã tự động nhập {imported} lịch công tác từ {os.path.basename(lpath)} vào CSDL!")
+                            has_legacy_data = True
+                            break
+                except Exception as ex_mig:
+                    print(f"⚠️ Lỗi đọc tệp lịch cũ {lpath}: {ex_mig}")
+
+        # 3. Khởi tạo lịch tuần mẫu CHỈ KHI chưa có bất kỳ lịch nào (cả trong DB lẫn tệp cũ)
         sched_count = session.query(WeeklySchedule).count()
-        if sched_count == 0:
+        if sched_count == 0 and not has_legacy_data:
             now = datetime.now()
             iso_year, iso_week, _ = now.isocalendar()
             start_date, end_date = get_week_range(iso_year, iso_week)
@@ -1281,8 +1381,30 @@ class ProductionScheduleHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json({"error": f"Lỗi lưu tệp: {str(e)}"}, status=500)
                 return
 
-        # 5. Cập nhật toàn bộ Schedules (Tương thích client cũ)
+        # 5. Cập nhật toàn bộ Schedules (Tương thích client cũ và bảo vệ đồng bộ từ client)
         if path == "/api/schedules":
+            if USE_SQLALCHEMY:
+                session = SessionLocal()
+                try:
+                    payload = body
+                    if isinstance(payload, dict):
+                        payload = [payload]
+                    if isinstance(payload, list):
+                        saved_count = 0
+                        for s_dict in payload:
+                            if isinstance(s_dict, dict) and (s_dict.get("id") or s_dict.get("items")):
+                                save_schedule_dict_to_db(s_dict, session)
+                                saved_count += 1
+                        session.commit()
+                        self.send_json({"success": True, "message": f"Đã lưu/đồng bộ {saved_count} lịch vào CSDL"})
+                        return
+                except Exception as e:
+                    session.rollback()
+                    self.send_json({"error": f"Lỗi đồng bộ lịch: {str(e)}"}, status=500)
+                    return
+                finally:
+                    session.close()
+
             self.send_json({"success": True})
             return
 
