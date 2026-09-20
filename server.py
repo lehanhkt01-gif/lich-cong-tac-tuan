@@ -46,12 +46,33 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 os.makedirs(BACKUPS_DIR, exist_ok=True)
 
+# Tự động nạp tệp biến môi trường bí mật .env (nếu có)
+def load_dotenv(filepath):
+    if not os.path.exists(filepath):
+        return
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                k = k.strip()
+                v = v.strip().strip('"').strip("'")
+                if k not in os.environ:
+                    os.environ[k] = v
+    except Exception as e:
+        print(f"⚠️ Lỗi đọc .env: {e}")
+
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
 # Bảo mật JWT & Quản trị
 JWT_SECRET = os.environ.get("JWT_SECRET", "EasupSecretTokenKey_DakLak_2026#SecureSuperSecretKey")
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 ADMIN_FULLNAME = os.environ.get("ADMIN_FULLNAME", "Văn phòng Đảng ủy - HĐND - UBND - UBMTTQ xã Ea Súp")
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+ADMIN_USERS_CONFIG = os.environ.get("ADMIN_USERS_CONFIG", "").strip()
 
 # =============================================================================
 # 2. BẢO MẬT: BCRYPT & JWT HELPERS (KÈM FALLBACK AN TOÀN)
@@ -292,18 +313,47 @@ def seed_default_data():
 
     session = SessionLocal()
     try:
-        # 1. Tạo tài khoản Admin mặc định
-        admin_user = session.query(AdminUser).filter_by(username=ADMIN_USERNAME).first()
-        if not admin_user:
-            pwd_hash = hash_password(ADMIN_PASSWORD)
-            new_admin = AdminUser(
-                username=ADMIN_USERNAME,
-                password_hash=pwd_hash,
-                full_name=ADMIN_FULLNAME,
-                role="super_admin"
-            )
-            session.add(new_admin)
-            print(f"🔑 Đã tạo tài khoản quản trị mặc định: {ADMIN_USERNAME} / (mật khẩu đã mã hóa)")
+        # 1. Nạp danh sách cán bộ Quản trị viên toàn quyền từ ADMIN_USERS_CONFIG (.env)
+        if ADMIN_USERS_CONFIG:
+            try:
+                users_list = json.loads(ADMIN_USERS_CONFIG)
+                for u in users_list:
+                    uname = (u.get("username") or "").strip()
+                    pword = (u.get("password") or "").strip()
+                    fname = (u.get("full_name") or uname).strip()
+                    role = (u.get("role") or "super_admin").strip()
+                    if uname and pword:
+                        existing_u = session.query(AdminUser).filter_by(username=uname).first()
+                        pwd_hash = hash_password(pword)
+                        if existing_u:
+                            existing_u.password_hash = pwd_hash
+                            existing_u.full_name = fname
+                            existing_u.role = role
+                        else:
+                            new_u = AdminUser(
+                                username=uname,
+                                password_hash=pwd_hash,
+                                full_name=fname,
+                                role=role
+                            )
+                            session.add(new_u)
+                session.commit()
+                print(f"🔑 Đã nạp và đồng bộ {len(users_list)} tài khoản Cán bộ Quản trị toàn quyền từ file .env")
+            except Exception as e:
+                print(f"⚠️ Lỗi nạp ADMIN_USERS_CONFIG: {e}")
+        elif ADMIN_PASSWORD:
+            admin_user = session.query(AdminUser).filter_by(username=ADMIN_USERNAME).first()
+            if not admin_user:
+                pwd_hash = hash_password(ADMIN_PASSWORD)
+                new_admin = AdminUser(
+                    username=ADMIN_USERNAME,
+                    password_hash=pwd_hash,
+                    full_name=ADMIN_FULLNAME,
+                    role="super_admin"
+                )
+                session.add(new_admin)
+                session.commit()
+                print(f"🔑 Đã tạo tài khoản quản trị mặc định: {ADMIN_USERNAME}")
 
         # 2. Khởi tạo lịch tuần mẫu nếu chưa có lịch nào
         sched_count = session.query(WeeklySchedule).count()
@@ -1048,7 +1098,19 @@ class ProductionScheduleHandler(http.server.SimpleHTTPRequestHandler):
             if USE_SQLALCHEMY:
                 session = SessionLocal()
                 try:
-                    user_obj = session.query(AdminUser).filter_by(username=username).first()
+                    # Tìm theo username chính xác hoặc không phân biệt hoa thường
+                    user_obj = session.query(AdminUser).filter(AdminUser.username.ilike(username)).first()
+                    # Nếu chưa thấy, kiểm tra alias từ ADMIN_USERS_CONFIG (.env)
+                    if not user_obj and ADMIN_USERS_CONFIG:
+                        try:
+                            cfgs = json.loads(ADMIN_USERS_CONFIG)
+                            for c in cfgs:
+                                if c.get("username", "").lower() == username.lower() or any(a.lower() == username.lower() for a in c.get("aliases", [])):
+                                    user_obj = session.query(AdminUser).filter_by(username=c.get("username")).first()
+                                    break
+                        except Exception:
+                            pass
+
                     if user_obj and verify_password(password, user_obj.password_hash):
                         found_user = user_obj.to_dict()
                 finally:
