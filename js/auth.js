@@ -96,40 +96,10 @@ const AuthService = {
                 return { success: false, message: data.message || "Tên đăng nhập hoặc mật khẩu không chính xác!" };
             }
         } catch (e) {
-            console.warn("Máy chủ chưa phản hồi, sử dụng kiểm tra tài khoản cục bộ:", e);
+            console.warn("Máy chủ chưa phản hồi, kiểm tra tài khoản:", e);
         }
 
-        // 2. Tài khoản quản trị mặc định dự phòng khi offline
-        if (cleanInput.toLowerCase() === "admin" && (cleanPassword === "Easup@2026" || cleanPassword === "12345678@")) {
-            const adminUser = {
-                id: "admin",
-                username: "admin",
-                fullName: "Văn phòng Đảng ủy - HĐND - UBND - UBMTTQ xã Ea Súp",
-                role: "super_admin",
-                roleName: "Lãnh đạo đơn vị (Toàn quyền)",
-                avatar: "👑"
-            };
-            this.setCurrentUser(adminUser);
-            return { success: true, user: adminUser };
-        }
-
-        // 3. Fallback danh sách cán bộ cục bộ
-        const users = StorageService.getUsers();
-        const found = users.find(u => 
-            (u.username && u.username.toLowerCase() === cleanInput.toLowerCase()) ||
-            (u.email && u.email.toLowerCase() === cleanInput.toLowerCase()) ||
-            (u.fullName && u.fullName.toLowerCase() === cleanInput.toLowerCase())
-        );
-
-        if (found) {
-            const validPassword = (found.password || "12345678@").trim();
-            if (cleanPassword === validPassword || cleanPassword === "12345678@" || cleanPassword === "123456" || cleanPassword === "password123" || cleanPassword === "Easup@2026") {
-                this.setCurrentUser(found);
-                return { success: true, user: found };
-            }
-        }
-
-        return { success: false, message: "Tên đăng nhập hoặc mật khẩu không chính xác!" };
+        return { success: false, message: "Tên đăng nhập hoặc mật khẩu không chính xác hoặc máy chủ đang ngoại tuyến!" };
     },
 
     // Đăng xuất và dọn sạch Token JWT

@@ -809,26 +809,25 @@ const MobileApp = {
             return;
         }
 
-        const cleanInput = username.toLowerCase();
+        const cleanInput = username.trim();
         const cleanPassword = password.trim();
-        const users = StorageService.getUsers();
-        const found = users.find(u => 
-            (u.username && u.username.toLowerCase() === cleanInput) ||
-            (u.email && u.email.toLowerCase() === cleanInput) ||
-            (u.aliases && Array.isArray(u.aliases) && u.aliases.some(a => a.toLowerCase() === cleanInput)) ||
-            (u.fullName && u.fullName.toLowerCase() === cleanInput)
-        );
 
-        const validPassword = (found?.password || '').trim();
-        if (found && (cleanPassword === validPassword || cleanPassword === "12345678@")) {
-            StorageService.setCurrentUser(found);
-            this.currentUser = found;
-            this.renderAccountView();
-            this.closeModals();
-            this.showToast(`Xin chào ${found.fullName}!`);
-        } else {
+        try {
+            const res = await AuthService.login(cleanInput, cleanPassword);
+            if (res.success) {
+                this.currentUser = res.user;
+                this.renderAccountView();
+                this.closeModals();
+                this.showToast(`Xin chào ${res.user.fullName}!`);
+            } else {
+                if (errDiv) {
+                    errDiv.textContent = `❌ ${res.message || 'Tên đăng nhập hoặc mật khẩu không chính xác!'}`;
+                    errDiv.style.display = 'block';
+                }
+            }
+        } catch (e) {
             if (errDiv) {
-                errDiv.textContent = '❌ Tên đăng nhập hoặc mật khẩu không chính xác!';
+                errDiv.textContent = '❌ Lỗi kết nối đăng nhập!';
                 errDiv.style.display = 'block';
             }
         }

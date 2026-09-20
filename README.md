@@ -25,15 +25,9 @@ Hệ thống cung cấp 02 chế độ truy cập:
    - Tự động ẩn toàn bộ các quyền điều hành: Lập lịch mới, Cài đặt hệ thống, Gửi email thông báo, Cập nhật & Xuất bản hay các nút sửa/xóa.
 
 2. 🔐 **Chế độ Quản trị & Điều hành (Đã đăng nhập):**
-   - Giới hạn bảo mật chỉ **06 tài khoản được ủy quyền** của Thường trực HĐND - UBND, Đảng ủy và MTTQ:
-     1. **Hà Tường Vi** (Chánh VP HĐND & UBND) – Tên đăng nhập: `vyhatuong` | Mật khẩu: `12345678@` (Super Admin)
-     2. **Trần Minh Hải** (Phó CVP HĐND & UBND) – Tên đăng nhập: `haitranminh` | Mật khẩu: `12345678@` (Super Admin)
-     3. **Trần Văn Linh** (Chánh VP Đảng ủy) – Tên đăng nhập: `linhtranvan` | Mật khẩu: `12345678@` (Super Admin)
-     4. **Nguyễn Thị Lan** (Phó VP Đảng ủy) – Tên đăng nhập: `lannguyenthi` | Mật khẩu: `12345678@` (Editor)
-     5. **Lê Hồng Hạnh** (Chủ tịch UB MTTQ) – Tên đăng nhập: `hanhlehong` | Mật khẩu: `12345678@` (Super Admin)
-     6. **Hà Văn Chiến** (Văn phòng MTTQ) – Tên đăng nhập: `chienhavan` | Mật khẩu: `12345678@` (Editor)
-   - Đầy đủ tính năng: Lập lịch tuần mới, sửa/xóa mục công tác, tải lên giấy mời, duyệt xuất bản, gửi email thông báo, kiểm tra vết sửa Diff đỏ/xanh, quản lý danh bạ và sao lưu dữ liệu.
-   - Tích hợp tính năng **Đăng nhập nhanh 1-chạm (Quick Login)** cho 6 tài khoản trên tại cửa sổ Đăng Nhập.
+   - Giới hạn bảo mật chỉ các tài khoản được cấp thẩm quyền của Thường trực HĐND - UBND, Đảng ủy và UBMTTQ Việt Nam xã Ea Súp.
+   - Tài khoản và mật khẩu được phân quyền bảo mật nội bộ qua Quản trị viên hệ thống (mã hóa mật khẩu bằng BCrypt và cấp token xác thực JWT).
+   - Đầy đủ tính năng: Lập lịch tuần mới, sửa/xóa mục công tác, tải lên giấy mời, duyệt xuất bản, gửi email thông báo, kiểm tra vết sửa Diff đỏ/xanh, quản lý danh bạ và sao lưu dữ liệu an toàn.
 
 ---
 

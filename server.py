@@ -49,7 +49,7 @@ os.makedirs(BACKUPS_DIR, exist_ok=True)
 # Bảo mật JWT & Quản trị
 JWT_SECRET = os.environ.get("JWT_SECRET", "EasupSecretTokenKey_DakLak_2026#SecureSuperSecretKey")
 ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Easup@2026")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 ADMIN_FULLNAME = os.environ.get("ADMIN_FULLNAME", "Văn phòng Đảng ủy - HĐND - UBND - UBMTTQ xã Ea Súp")
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 
@@ -81,7 +81,7 @@ except ImportError:
             return False
         salt = "easup_salt_2026"
         expected = "sha256$" + hashlib.sha256((salt + plain_password).encode('utf-8')).hexdigest()
-        return hashed_password == expected or plain_password in [ADMIN_PASSWORD, "12345678@", "123456", "password123"]
+        return hashed_password == expected or (ADMIN_PASSWORD and plain_password == ADMIN_PASSWORD)
 
 try:
     import jwt
@@ -1055,7 +1055,7 @@ class ProductionScheduleHandler(http.server.SimpleHTTPRequestHandler):
                     session.close()
 
             # Kiểm tra tài khoản admin mặc định nếu chưa lưu trong DB
-            if not found_user and username.lower() == ADMIN_USERNAME.lower() and (password == ADMIN_PASSWORD or password in ["12345678@", "123456", "password123"]):
+            if not found_user and username.lower() == ADMIN_USERNAME.lower() and ADMIN_PASSWORD and password == ADMIN_PASSWORD:
                 found_user = {
                     "id": 1,
                     "username": ADMIN_USERNAME,
