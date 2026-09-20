@@ -55,7 +55,7 @@ services:
     container_name: lich-congtac-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "${WEB_PORT:-8090}:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./assets:/usr/share/nginx/html/assets:ro
