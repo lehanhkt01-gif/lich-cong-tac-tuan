@@ -1382,6 +1382,94 @@
                 </div>
             </div>
         </div>
+    <!-- ==========================================================================
+         MODAL: ĐĂNG NHẬP CÁN BỘ QUẢN TRỊ (CHUẨN BITWARDEN & PASSWORD MANAGERS)
+         ========================================================================== -->
+    <div class="modal-backdrop" id="modalLogin">
+        <div class="modal-container" style="max-width: 450px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%); color: #fff; padding: 14px 20px;">
+                <div class="modal-header-title" style="color: #fff; font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    <span>🔐</span> Đăng Nhập Cán Bộ Quản Trị
+                </div>
+                <button class="btn-close-modal" onclick="App.closeModal('modalLogin')" style="color: #fff; font-size: 18px;">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 24px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <img src="assets/logo-easup.png" alt="Logo Ea Súp" style="width: 52px; height: 52px; margin: 0 auto 10px auto; display: block;" onerror="this.style.display='none'">
+                    <h3 style="font-size: 15px; font-weight: 800; color: #1E3A8A; margin: 0 0 4px 0;">CỔNG ĐIỀU HÀNH LỊCH CÔNG TÁC</h3>
+                    <p style="font-size: 12px; color: #64748B; margin: 0;">Khối Đảng - Đoàn thể & UBND xã Ea Súp</p>
+                </div>
+
+                <div id="loginErrorAlert" style="display: none; background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px;"></div>
+
+                <form id="adminLoginForm" onsubmit="App.handleAdminLogin(event)" method="POST" autocomplete="on">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="loginUsername" style="display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">
+                            👤 Tên Đăng Nhập / Tài Khoản <span style="color: #EF4444;">*</span>
+                        </label>
+                        <input type="text" 
+                               id="loginUsername" 
+                               name="username" 
+                               autocomplete="username" 
+                               required 
+                               placeholder="Nhập tên đăng nhập (ví dụ: admin)" 
+                               style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s;"
+                               onfocus="this.style.borderColor='#2563EB'" 
+                               onblur="this.style.borderColor='#CBD5E1'">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <label for="loginPassword" style="font-size: 13px; font-weight: 700; color: #334155; margin: 0;">
+                                🔑 Mật Khẩu <span style="color: #EF4444;">*</span>
+                            </label>
+                            <span style="font-size: 11px; color: #64748B;">Hỗ trợ Bitwarden (Ctrl+Shift+L)</span>
+                        </div>
+                        <div style="position: relative;">
+                            <input type="password" 
+                                   id="loginPassword" 
+                                   name="password" 
+                                   autocomplete="current-password" 
+                                   required 
+                                   placeholder="Nhập mật khẩu quản trị" 
+                                   style="width: 100%; box-sizing: border-box; padding: 10px 42px 10px 12px; border: 1.5px solid #CBD5E1; border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s;"
+                                   onfocus="this.style.borderColor='#2563EB'" 
+                                   onblur="this.style.borderColor='#CBD5E1'">
+                            <button type="button" 
+                                    onclick="App.togglePasswordVisibility('loginPassword', this)" 
+                                    style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px; color: #64748B; padding: 4px;" 
+                                    title="Hiện/ẩn mật khẩu">👁️</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 24px;">
+                        <button type="button" 
+                                class="btn-bottom btn-history-audit" 
+                                onclick="App.closeModal('modalLogin')" 
+                                style="flex: 1; padding: 10px; border-radius: 8px; font-weight: 700; font-size: 13.5px;">
+                            Hủy Bỏ
+                        </button>
+                        <button type="submit" 
+                                class="btn-primary-create" 
+                                id="btnLoginSubmit"
+                                style="flex: 2; padding: 10px; background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: #fff; border: none; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 10px rgba(37,99,235,0.3); display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            🔐 Đăng Nhập Quản Trị
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Đăng nhập nhanh cho tài khoản lãnh đạo -->
+                <div style="margin-top: 20px; padding-top: 14px; border-top: 1px dashed #E2E8F0; text-align: center;">
+                    <span style="font-size: 11.5px; color: #64748B; font-weight: 600;">⚡ ĐĂNG NHẬP NHANH (MẶC ĐỊNH HỆ THỐNG):</span>
+                    <div style="display: flex; gap: 8px; justify-content: center; margin-top: 8px;">
+                        <button type="button" onclick="document.getElementById('loginUsername').value='admin'; document.getElementById('loginPassword').value='Easup@2026'; document.getElementById('adminLoginForm').requestSubmit();" 
+                                style="background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+                            👤 Admin Quản Trị (Easup@2026)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts Module -->

@@ -35,8 +35,20 @@ const GuestApp = {
         }
     },
 
-    loadCurrentSchedule() {
+    async loadCurrentSchedule() {
         this.currentSchedule = StorageService.getScheduleByWeek(this.currentYear, this.currentWeek);
+        try {
+            const res = await fetch('/api/schedule/current', { cache: 'no-store' });
+            if (res.ok) {
+                const liveData = await res.json();
+                if (liveData && liveData.items && liveData.items.length > 0) {
+                    if (liveData.year === this.currentYear && liveData.weekNumber === this.currentWeek) {
+                        this.currentSchedule = liveData;
+                        this.renderAll();
+                    }
+                }
+            }
+        } catch (e) {}
     },
 
     setupLiveClock() {
@@ -132,7 +144,14 @@ const GuestApp = {
         // Bottom actions (Chỉ các chức năng xem/xuất bản của khách)
         document.getElementById("btnHistoryAudit")?.addEventListener("click", () => this.openAuditHistoryModal());
         document.getElementById("btnExportWord")?.addEventListener("click", () => {
-            if (this.currentSchedule) ExportService.exportToWord(this.currentSchedule);
+            if (this.currentSchedule) {
+                const weekId = this.currentSchedule.id || `sched_${this.currentSchedule.year}_w${this.currentSchedule.weekNumber}`;
+                try {
+                    window.location.href = `/api/schedule/export-word/${encodeURIComponent(weekId)}`;
+                } catch (e) {
+                    ExportService.exportToWord(this.currentSchedule);
+                }
+            }
         });
         document.getElementById("btnExportPDF")?.addEventListener("click", () => ExportService.printSchedule());
 

@@ -5,3 +5,21 @@ Thumbs.db
 *.bak
 .vscode/
 .idea/
+
+# Environment Variables & Secrets (Bảo vệ tuyệt đối thông tin bảo mật)
+.env
+.env.*
+!.env.example
+
+# Python cache & SQLite databases
+__pycache__/
+*.py[cod]
+*$py.class
+*.db
+*.sqlite3
+*.sqlite
+data/*.db
+data/*.sqlite3
+
+# Local uploads & backup temporary exports
+data/backups/*.json

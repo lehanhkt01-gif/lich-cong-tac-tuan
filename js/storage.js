@@ -541,11 +541,20 @@ const StorageService = {
         }
     },
 
+    getAuthHeaders() {
+        const token = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        return headers;
+    },
+
     async persistScheduleToServer(schedule) {
         try {
             await fetch(`${API_BASE_URL}/api/schedules`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(schedule)
             });
         } catch (e) {
@@ -555,13 +564,20 @@ const StorageService = {
 
     async persistItemToServer(weekId, item) {
         try {
-            await fetch(`${API_BASE_URL}/api/schedules/item`, {
+            await fetch(`${API_BASE_URL}/api/schedule/item`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ weekId, item })
             });
         } catch (e) {
-            // Offline fallback
+            // Thử endpoint cũ
+            try {
+                await fetch(`${API_BASE_URL}/api/schedules/item`, {
+                    method: 'POST',
+                    headers: this.getAuthHeaders(),
+                    body: JSON.stringify({ weekId, item })
+                });
+            } catch (err) {}
         }
     },
 
@@ -569,7 +585,7 @@ const StorageService = {
         try {
             await fetch(`${API_BASE_URL}/api/audit-logs`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify(logEntry)
             });
         } catch (e) {
@@ -579,13 +595,27 @@ const StorageService = {
 
     async deleteItemFromServer(weekId, itemId) {
         try {
-            await fetch(`${API_BASE_URL}/api/schedules/delete-item`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ weekId, itemId })
+            // Gọi endpoint RESTful DELETE mới
+            const res = await fetch(`${API_BASE_URL}/api/schedule/item/${encodeURIComponent(itemId)}`, {
+                method: 'DELETE',
+                headers: this.getAuthHeaders()
             });
+            if (!res.ok) {
+                // Thử endpoint POST xóa cũ
+                await fetch(`${API_BASE_URL}/api/schedules/delete-item`, {
+                    method: 'POST',
+                    headers: this.getAuthHeaders(),
+                    body: JSON.stringify({ weekId, itemId })
+                });
+            }
         } catch (e) {
-            // Offline fallback
+            try {
+                await fetch(`${API_BASE_URL}/api/schedules/delete-item`, {
+                    method: 'POST',
+                    headers: this.getAuthHeaders(),
+                    body: JSON.stringify({ weekId, itemId })
+                });
+            } catch (err) {}
         }
     },
 

@@ -249,7 +249,7 @@ const App = {
 
         // Bottom Actions
         document.getElementById("btnHistoryAudit")?.addEventListener("click", () => this.openAuditHistoryModal());
-        document.getElementById("btnExportWord")?.addEventListener("click", () => ExportService.exportToWord(this.currentSchedule));
+        document.getElementById("btnExportWord")?.addEventListener("click", () => this.exportScheduleWord());
         document.getElementById("btnExportPDF")?.addEventListener("click", () => ExportService.printSchedule());
         document.getElementById("btnNotifyEmail")?.addEventListener("click", () => this.openEmailModal());
         document.getElementById("btnSavePublish")?.addEventListener("click", () => this.handleSaveAndPublish());
@@ -1491,10 +1491,16 @@ const App = {
         }
     },
 
-    handleLoginSubmit() {
+    async handleAdminLogin(event) {
+        if (event) event.preventDefault();
+        await this.handleLoginSubmit();
+    },
+
+    async handleLoginSubmit() {
         const usernameInput = document.getElementById("loginUsername");
         const passwordInput = document.getElementById("loginPassword");
         const errAlert = document.getElementById("loginErrorAlert");
+        const btnSubmit = document.getElementById("btnLoginSubmit");
         if (errAlert) errAlert.style.display = "none";
 
         if (!usernameInput || !passwordInput) return;
@@ -1510,18 +1516,50 @@ const App = {
             return;
         }
 
-        const res = AuthService.login(username, password);
-        if (res.success) {
-            if (errAlert) errAlert.style.display = "none";
-            this.closeModal("modalLogin");
-            passwordInput.value = "";
-            this.showToast(`Đăng nhập thành công! Chào mừng đồng chí ${res.user.fullName}.`, "success");
-        } else {
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<span>⏳</span> Đang xác thực...`;
+        }
+
+        try {
+            const res = await AuthService.login(username, password);
+            if (res.success) {
+                if (errAlert) errAlert.style.display = "none";
+                this.closeModal("modalLogin");
+                passwordInput.value = "";
+                this.showToast(`Đăng nhập thành công! Chào mừng đồng chí ${res.user.fullName}.`, "success");
+            } else {
+                if (errAlert) {
+                    errAlert.innerHTML = `⚠️ ${res.message}`;
+                    errAlert.style.display = "block";
+                }
+                this.showToast(res.message, "error");
+            }
+        } catch (e) {
             if (errAlert) {
-                errAlert.innerHTML = `⚠️ ${res.message}`;
+                errAlert.innerHTML = `⚠️ Lỗi đăng nhập: ${e.message || e}`;
                 errAlert.style.display = "block";
             }
-            this.showToast(res.message, "error");
+        } finally {
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `🔐 Đăng Nhập Quản Trị`;
+            }
+        }
+    },
+
+    async exportScheduleWord() {
+        if (!this.currentSchedule) {
+            this.showToast("Chưa có dữ liệu lịch tuần để xuất Word!", "warning");
+            return;
+        }
+        const weekId = this.currentSchedule.id || `sched_${this.currentSchedule.year}_w${this.currentSchedule.weekNumber}`;
+        this.showToast(`Đang kết xuất văn bản Word chuẩn Nghị định 30/2020/NĐ-CP...`, "info");
+        try {
+            // Thử gọi endpoint backend python-docx
+            window.location.href = `/api/schedule/export-word/${encodeURIComponent(weekId)}`;
+        } catch (e) {
+            ExportService.exportToWord(this.currentSchedule);
         }
     },
 

@@ -67,10 +67,22 @@ const MobileApp = {
         }
     },
 
-    loadCurrentWeekData() {
+    async loadCurrentWeekData() {
         if (typeof StorageService !== 'undefined') {
             this.currentSchedule = StorageService.getScheduleByWeek(this.currentYear, this.currentWeek);
         }
+        try {
+            const res = await fetch('/api/schedule/current', { cache: 'no-store' });
+            if (res.ok) {
+                const liveData = await res.json();
+                if (liveData && liveData.items && liveData.items.length > 0) {
+                    if (liveData.year === this.currentYear && liveData.weekNumber === this.currentWeek) {
+                        this.currentSchedule = liveData;
+                        this.renderAll();
+                    }
+                }
+            }
+        } catch (e) {}
     },
 
     bindEvents() {
