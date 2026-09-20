@@ -1121,8 +1121,8 @@ body {
 
 /* Content Cell */
 .content-title {
-    font-weight: 600;
-    color: var(--text-main);
+    font-weight: 700;
+    color: #dc2626;
     line-height: 1.45;
     margin-bottom: 4px;
 }

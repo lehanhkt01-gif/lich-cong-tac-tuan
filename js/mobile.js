@@ -394,7 +394,7 @@ const MobileApp = {
                 `;
             } else {
                 dayItems.forEach(item => {
-                    const sessionPrefix = this.formatSessionAndTime(item.time);
+                    const sessionPrefix = this.formatSessionAndTime(item.time, item.dayOfWeek || dayName);
                     const leaderClean = this.formatLeaderName(item.leader);
                     const blocClass = this.getBlocBadgeClass(item.bloc);
 
@@ -446,7 +446,7 @@ const MobileApp = {
         container.innerHTML = html;
     },
 
-    formatSessionAndTime(timeStr) {
+    formatSessionAndTime(timeStr, dayOfWeek) {
         if (!timeStr) return "Cả ngày";
         const t = timeStr.trim();
         // Phân biệt Sáng / Chiều / Tối
@@ -456,7 +456,17 @@ const MobileApp = {
         } else if (t.startsWith("18") || t.startsWith("19") || t.startsWith("20") || t.toLowerCase().includes("tối")) {
             session = "Tối";
         }
-        return `${session}: ${t}`;
+
+        // Bỏ tiền tố Sáng/Chiều/Tối nếu đã có trong chuỗi giờ để tránh trùng lặp
+        const cleanTime = t.replace(/^(sáng|chiều|tối)\s*:?\s*/i, '').trim();
+
+        // Định dạng thứ: "Thứ Hai" -> "thứ hai"
+        let dayText = "";
+        if (dayOfWeek) {
+            dayText = " " + dayOfWeek.trim().toLowerCase();
+        }
+
+        return `${session}${dayText}: ${cleanTime || t}`;
     },
 
     formatLeaderName(leaderStr) {
@@ -684,10 +694,11 @@ const MobileApp = {
                 h = `<div class="empty-day-state">Chưa có lịch công tác sắp diễn ra</div>`;
             } else {
                 displayList.forEach(item => {
+                    const sessionPrefix = this.formatSessionAndTime(item.time, item.dayOfWeek);
                     h += `
                         <div class="schedule-card-item" onclick="MobileApp.openDetailModal('${item.id}')" style="background:#fff; border-radius:10px; margin-bottom:8px; border:1px solid #e2e8f0;">
                             <div class="item-meta-row">
-                                <span class="meta-time-wrap">🕒 ${item.dayOfWeek} • ${item.time}</span>
+                                <span class="meta-time-wrap">🕒 ${sessionPrefix}</span>
                                 <span class="meta-divider">|</span>
                                 <span>Chủ trì: <strong>${this.formatLeaderName(item.leader)}</strong></span>
                             </div>
