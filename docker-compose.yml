@@ -73,7 +73,7 @@ services:
     container_name: lich-congtac-dozzle
     restart: unless-stopped
     ports:
-      - "8888:8080"
+      - "${DOZZLE_PORT:-8899}:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
