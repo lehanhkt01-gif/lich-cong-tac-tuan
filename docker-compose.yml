@@ -37,6 +37,7 @@ services:
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ADMIN_FULLNAME=${ADMIN_FULLNAME:-Văn phòng Đảng ủy - HĐND - UBND - UBMTTQ xã Ea Súp}
+      - ADMIN_USERS_CONFIG=${ADMIN_USERS_CONFIG}
     volumes:
       - ./:/app
       - ./data/uploads:/app/data/uploads
