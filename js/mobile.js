@@ -792,7 +792,7 @@ const MobileApp = {
         }
     },
 
-    handleMobileLoginSubmit() {
+    async handleMobileLoginSubmit() {
         const userInput = document.getElementById('mobileLoginUsername');
         const passInput = document.getElementById('mobileLoginPassword');
         const errDiv = document.getElementById('mobileLoginError');
@@ -813,15 +813,30 @@ const MobileApp = {
         const cleanPassword = password.trim();
 
         try {
-            const res = await AuthService.login(cleanInput, cleanPassword);
-            if (res.success) {
+            let res;
+            if (typeof AuthService !== 'undefined' && typeof AuthService.login === 'function') {
+                res = await AuthService.login(cleanInput, cleanPassword);
+            } else {
+                const apiRes = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: cleanInput, password: cleanPassword })
+                });
+                res = await apiRes.json();
+                if (res.success && res.token) {
+                    localStorage.setItem('authToken', res.token);
+                    localStorage.setItem('easup_portal_current_user', JSON.stringify(res.user));
+                }
+            }
+
+            if (res && res.success) {
                 this.currentUser = res.user;
                 this.renderAccountView();
                 this.closeModals();
-                this.showToast(`Xin chào ${res.user.fullName}!`);
+                this.showToast(`Xin chào ${res.user.fullName || res.user.username}!`);
             } else {
                 if (errDiv) {
-                    errDiv.textContent = `❌ ${res.message || 'Tên đăng nhập hoặc mật khẩu không chính xác!'}`;
+                    errDiv.textContent = `❌ ${(res && res.message) || 'Tên đăng nhập hoặc mật khẩu không chính xác!'}`;
                     errDiv.style.display = 'block';
                 }
             }
