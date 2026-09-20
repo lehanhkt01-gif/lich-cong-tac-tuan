@@ -35,7 +35,7 @@ services:
       - DATABASE_URL=postgresql://${DB_USER:-easup_admin}:${DB_PASSWORD}@db:5432/${DB_NAME:-lich_congtac_easup}
       - JWT_SECRET=${JWT_SECRET}
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - ADMIN_FULLNAME=${ADMIN_FULLNAME:-Văn phòng Đảng ủy - HĐND - UBND - UBMTTQ xã Ea Súp}
       - ADMIN_USERS_CONFIG=${ADMIN_USERS_CONFIG}
     volumes:
@@ -64,18 +64,6 @@ services:
       - ./data/uploads:/usr/share/nginx/html/data/uploads:ro
     depends_on:
       - web
-    networks:
-      - internal_net
-
-  # 4. Dozzle - Trình xem log thời gian thực trực quan
-  dozzle:
-    image: amir20/dozzle:latest
-    container_name: lich-congtac-dozzle
-    restart: unless-stopped
-    ports:
-      - "${DOZZLE_PORT:-8899}:8080"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - internal_net
 
