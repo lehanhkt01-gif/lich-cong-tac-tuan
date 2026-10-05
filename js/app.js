@@ -1977,6 +1977,38 @@ const App = {
         }, 200);
     },
 
+    toggleQuickApiKey() {
+        const box = document.getElementById("aiQuickKeyInputContainer");
+        if (box) {
+            const isHidden = box.style.display === "none" || !box.style.display;
+            box.style.display = isHidden ? "block" : "none";
+            if (isHidden) {
+                const inp = document.getElementById("aiQuickKeyInput");
+                if (inp) {
+                    inp.value = (typeof GeminiExtractorService !== "undefined") ? GeminiExtractorService.getApiKey() : "";
+                    inp.focus();
+                }
+            }
+        }
+    },
+
+    saveQuickApiKey() {
+        const inp = document.getElementById("aiQuickKeyInput");
+        const newKey = inp ? inp.value.trim().replace(/^["']|["']$/g, "").trim() : "";
+        if (!newKey) {
+            alert("Vui lòng dán Google Gemini API Key mới (chuẩn AQ.Ab8... hoặc AIzaSy...)!");
+            return;
+        }
+        if (typeof GeminiExtractorService !== "undefined") {
+            GeminiExtractorService.setApiKey(newKey);
+        }
+        const badgeText = document.getElementById("aiModalApiKeyStatusText");
+        if (badgeText) badgeText.textContent = "Đã lưu khóa API mới thành công";
+        const box = document.getElementById("aiQuickKeyInputContainer");
+        if (box) box.style.display = "none";
+        this.showToast("Đã lưu khóa Google Gemini API mới! Bạn có thể bấm bóc tách ngay.", "success");
+    },
+
     setupAiDropzone() {
         const dropzone = document.getElementById("aiDropzone");
         if (!dropzone || dropzone.dataset.initialized) return;
@@ -2237,8 +2269,15 @@ const App = {
 
         } catch (err) {
             console.error("AI Extraction Error:", err);
-            alert("Lỗi khi bóc tách lịch bằng AI:\n" + err.message);
             this.backToAiInputStep();
+            // Nếu lỗi do khóa API không hợp lệ, tự động mở khung nhập nhanh API Key để người dùng dán khóa mới
+            if (err.message && (err.message.includes("API Key") || err.message.includes("API key") || err.message.includes("API_KEY_INVALID"))) {
+                const box = document.getElementById("aiQuickKeyInputContainer");
+                if (box) box.style.display = "block";
+                const inp = document.getElementById("aiQuickKeyInput");
+                if (inp) inp.focus();
+            }
+            alert("Lỗi khi bóc tách lịch bằng AI:\n" + err.message);
         }
     },
 
