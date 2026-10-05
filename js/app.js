@@ -125,7 +125,12 @@ const App = {
             if (dropRole) dropRole.textContent = `● ${user.roleName}`;
         }
 
-        // Chỉ ẩn các mục cấu hình quản trị đặc thù, giữ nguyên các nút thao tác để tránh khuyết giao diện
+        // Ẩn hoàn toàn các nút Lập lịch mới, Thêm công tác khi ở Chế độ Khách (canEdit = false)
+        document.querySelectorAll(".auth-require-edit").forEach(el => {
+            el.style.display = canEdit ? "" : "none";
+        });
+
+        // Chỉ ẩn các mục cấu hình quản trị đặc thù
         document.querySelectorAll(".auth-require-admin").forEach(el => {
             el.style.display = isAdmin ? "" : "none";
         });
@@ -1488,16 +1493,13 @@ const App = {
     // XÁC THỰC & ĐĂNG NHẬP (AUTH HANDLERS)
     // =========================================================================
     openLoginModal(noticeMessage = null) {
-        const modal = document.getElementById("modalLogin");
+        this.openModal("modalLogin");
         const errAlert = document.getElementById("loginErrorAlert");
         if (errAlert) errAlert.style.display = "none";
 
-        if (modal) {
-            modal.classList.add("show");
-            const inputUser = document.getElementById("loginUsername");
-            if (inputUser) {
-                setTimeout(() => inputUser.focus(), 100);
-            }
+        const inputUser = document.getElementById("loginUsername");
+        if (inputUser) {
+            setTimeout(() => inputUser.focus(), 150);
         }
         if (noticeMessage) {
             this.showToast(noticeMessage, "warning");

@@ -6,6 +6,23 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-05
 
+### 🔹 Phiên 05 (23:45 - 23:55) | Ẩn Hoàn Toàn 2 Nút Khi Là Khách & Khắc Phục Lỗi Nút Đăng Nhập Bị Đơ
+- **Mục tiêu:** 
+  1. Ẩn hoàn toàn 2 nút "Lập Lịch Tuần Mới" và "+ THÊM MỤC CÔNG TÁC" khi người dùng ở Chế độ Khách (chưa đăng nhập).
+  2. Sửa lỗi nút Đăng nhập ở góc trên bên phải bị đơ không mở được modal.
+- **Nguyên nhân kỹ thuật:**
+  - Nút Đăng nhập bị đơ do thẻ `modalAIExtractor` ở dòng 1094 bị thiếu thẻ đóng `</div>` bao bọc, khiến thẻ `<div class="modal-backdrop" id="modalLogin">` bị nhét nhầm vào bên trong `modalAIExtractor`. Vì `modalAIExtractor` có `display: none` nên toàn bộ modalLogin bên trong nó không thể hiển thị lên màn hình dù đã được thêm class `.show`.
+  - Hàm `openLoginModal` trước đó chưa gọi `openModal("modalLogin")` chuẩn mực (thiếu `modal.style.display = "flex"` để ghi đè `display: none` khi đã từng bị `closeModal`).
+- **Giải pháp đã thực hiện:**
+  - `index.html`: Bổ sung thẻ đóng `</div>` chuẩn xác cho `modalAIExtractor`, đưa `modalLogin` ra cấp body độc lập.
+  - `index.html`: Thêm class `auth-require-edit` và inline style `display: none;` cho cả 2 nút `Lập Lịch Tuần Mới` và `THÊM MỤC CÔNG TÁC` để ẩn ngay lập tức khi tải trang ở Chế độ Khách.
+  - `js/app.js`: Cập nhật `updateUIPermissions()` để ẩn 2 nút này khi `canEdit = false`, và hiển thị khi đã đăng nhập (`canEdit = true`).
+  - `js/app.js`: Chuẩn hóa hàm `openLoginModal()` gọi trực tiếp `this.openModal("modalLogin")`.
+- **Tệp thay đổi:** `index.html`, `js/app.js`.
+- **Kết quả:** Nút Đăng nhập mở popup tức thì, 2 nút Thêm/Lập lịch ẩn hoàn toàn khi chưa đăng nhập.
+
+---
+
 ### 🔹 Phiên 04 (23:25 - 23:45) | Khắc Phục Lỗi Giao Diện Khuyết Phần Chỉnh Sửa Phía Bên Phải
 - **Mục tiêu:** Xử lý triệt để hiện tượng cột Thao tác và các nút chỉnh sửa phía bên phải màn hình bị khuyết hoặc biến mất khi xem ở Chế độ Khách (chưa đăng nhập).
 - **Nguyên nhân kỹ thuật:**

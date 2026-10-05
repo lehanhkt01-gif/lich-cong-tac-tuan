@@ -41,11 +41,12 @@
 4. [x] **Thiết lập hệ thống lưu trữ & theo dõi phiên tác nghiệp:**
    - Tạo bộ quy tắc `AGENTS.md` nạp tự động mỗi khi khởi động lại phiên.
    - Tạo `SESSION_STATE.md`, `WORK_LOG.md`, `SYSTEM_ARCHITECTURE.md`, `SECURITY_GUIDELINES.md`.
-5. [x] **Khắc phục triệt để lỗi giao diện khuyết các phần chỉnh sửa phía bên phải:**
+5. [x] **Khắc phục giao diện cột Thao tác bên phải:**
    - Cột Thao tác bên phải bảng: Hiển thị đầy đủ 4 nút Xem (👁️), Sửa (✏️), Nhân bản (📋), Xóa (🗑️).
-   - Tối ưu luồng phân quyền: Khi chưa đăng nhập (Chế độ Khách), click vào các nút chỉnh sửa sẽ mở Modal Đăng Nhập kèm ghi nhớ hành động (`pendingAction`) để tự động mở form sửa sau khi đăng nhập thành công.
-   - Khôi phục hiển thị cho các nút hành động phía bên phải: `+ THÊM MỤC CÔNG TÁC`, `➕ Lập Lịch Tuần Mới`, `✉️ GỬI EMAIL THÔNG BÁO`, `💾 CẬP NHẬT & XUẤT BẢN`.
-   - Mở rộng chiều rộng cột Thao tác lên `140px` chống co ép/gãy dòng, dọn dẹp modalLogin trùng lặp trong `index.html`.
+   - Mở rộng chiều rộng cột Thao tác lên `140px` chống co ép/gãy dòng.
+6. [x] **Ẩn hoàn toàn 2 nút khi ở Chế độ Khách & Sửa lỗi nút Đăng nhập bị đơ:**
+   - Ẩn hoàn toàn 2 nút "Lập Lịch Tuần Mới" và "+ THÊM MỤC CÔNG TÁC" khi chưa đăng nhập (`display: none`).
+   - Sửa lỗi nút Đăng nhập bị đơ: Đóng đủ thẻ `</div>` cho `modalAIExtractor`, tách `modalLogin` ra ngoài và chuẩn hóa hàm gọi `openModal("modalLogin")`.
 
 ---
 

@@ -216,7 +216,7 @@
                     title="Mở giao diện Điện thoại di động dạng thẻ">
                     <span>📱</span> Bản Mobile
                 </a>
-                <button class="btn-primary-create" id="btnCreateNewWeek" onclick="App.handleCreateNewWeekClick()" title="Lập lịch công tác tuần mới">
+                <button class="btn-primary-create auth-require-edit" id="btnCreateNewWeek" onclick="App.handleCreateNewWeekClick()" title="Lập lịch công tác tuần mới" style="display: none;">
                     <span>➕</span> Lập Lịch Tuần Mới
                 </button>
             </div>
@@ -267,7 +267,7 @@
                     </div>
 
                     <!-- Nút thêm công tác mới -->
-                    <button class="btn-primary-create" onclick="App.handleCreateItemClick()" title="Thêm mục công tác vào lịch tuần">
+                    <button class="btn-primary-create auth-require-edit" id="btnCreateItemTop" onclick="App.handleCreateItemClick()" title="Thêm mục công tác vào lịch tuần" style="display: none;">
                         <span>+</span> THÊM MỤC CÔNG TÁC
                     </button>
                 </div>
@@ -1334,6 +1334,8 @@
                 </div>
             </div>
         </div>
+    </div>
+
     <!-- ==========================================================================
          MODAL: ĐĂNG NHẬP CÁN BỘ QUẢN TRỊ (CHUẨN BITWARDEN & PASSWORD MANAGERS)
          ========================================================================== -->
