@@ -74,7 +74,8 @@ ADMIN_FULLNAME = os.environ.get("ADMIN_FULLNAME", "Văn phòng Đảng ủy - H�
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 ADMIN_USERS_CONFIG = os.environ.get("ADMIN_USERS_CONFIG", "").strip()
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash").strip()
+
 
 # =============================================================================
 # 2. BẢO MẬT: BCRYPT & JWT HELPERS (KÈM FALLBACK AN TOÀN)

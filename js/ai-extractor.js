@@ -7,15 +7,15 @@
 const GEMINI_CONFIG_KEYS = {
     API_KEY: "easup_gemini_api_key",
     MODEL: "easup_gemini_model",
-    DEFAULT_MODEL: "gemini-2.0-flash"
+    DEFAULT_MODEL: "gemini-3.8-flash"
 };
 
 const AVAILABLE_GEMINI_MODELS = [
-    { id: "gemini-2.0-flash", name: "Gemini 2.0 Flash (Khuyên dùng - Siêu Nhanh, Thông Minh & Ổn Định Nhất)", default: true },
-    { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash (Bản Chuẩn Quốc Tế - Tốc Độ Cao & Ổn Định)" },
-    { id: "gemini-1.5-flash-8b", name: "Gemini 1.5 Flash 8B (Bản Siêu Tiết Kiệm & Nhanh)" },
-    { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro (Bản Chuyên Sâu - Đọc Văn Bản Dài & Phức Tạp)" },
-    { id: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash Lite (Tiết Kiệm Quota)" }
+    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Khuyên dùng - Siêu Nhanh, Thông Minh & Ổn Định Nhất)", default: true },
+    { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (Bản Chuẩn Quốc Tế - Tốc Độ Cao & Ổn Định)" },
+    { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (Bản Tiêu Chuẩn Nhanh)" },
+    { id: "gemini-flash-latest", name: "Gemini Flash Latest (Bản Flash Tự Động Cập Nhật Mới Nhất)" },
+    { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (Bản Chuyên Sâu - Đọc Văn Bản Dài & Phức Tạp)" }
 ];
 
 const GeminiExtractorService = {
@@ -26,13 +26,6 @@ const GeminiExtractorService = {
             try {
                 const org = JSON.parse(localStorage.getItem("easup_org_settings") || "{}");
                 if (org && org.geminiApiKey) key = org.geminiApiKey;
-            } catch (e) {}
-        }
-        if (!key) {
-            key = "AIzaSyC6fGZjiJ4uguGtIKES1ofrL95TvDgaueg";
-            try {
-                localStorage.setItem(GEMINI_CONFIG_KEYS.API_KEY, key);
-                localStorage.setItem("gemini_api_key_permanent", key);
             } catch (e) {}
         }
         return key ? key.trim() : "";
@@ -100,33 +93,31 @@ const GeminiExtractorService = {
         this.setModel(modelId);
     },
 
-    // Chuẩn hóa Model ID (chuyển đổi bất kỳ model ảo hoặc cũ sang model chính thức có sẵn của Google)
+    // Chuẩn hóa Model ID sang các mô hình chính thức mới nhất của Google AI Studio (2026)
     normalizeModelId(modelId, availableModels = []) {
-        if (!modelId) return "gemini-2.0-flash";
+        if (!modelId) return "gemini-3.8-flash";
         let m = modelId.trim().toLowerCase();
         
         // Nếu có danh sách live models từ Google API
         if (Array.isArray(availableModels) && availableModels.length > 0) {
-            if (availableModels.includes(m)) return m;
-            const matchFlash = availableModels.find(x => x.includes("2.0-flash") || x.includes("1.5-flash") || x.includes("flash"));
+            // Lọc bỏ các model cũ đã bị Google khai tử
+            const activeModels = availableModels.filter(x => !x.includes("2.0") && !x.includes("1.5") && x !== "gemini-2.5-flash" && !x.includes("tts") && !x.includes("robotics"));
+            if (activeModels.includes(m)) return m;
+            for (const pref of ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest"]) {
+                if (activeModels.includes(pref)) return pref;
+            }
+            const matchFlash = activeModels.find(x => x.includes("flash"));
             if (matchFlash) return matchFlash;
-            return availableModels[0];
+            return activeModels[0] || "gemini-3.8-flash";
         }
 
-        // Mapping model ảo / cũ sang model thật chính thức của Google
-        if (m.includes("3.8") || m.includes("2.5") || m.includes("2.0")) {
-            return "gemini-2.0-flash";
-        }
-        if (m.includes("3.1") || (m.includes("pro") && !m.includes("flash"))) {
-            return "gemini-1.5-pro";
-        }
-        if (m.includes("8b")) {
-            return "gemini-1.5-flash-8b";
-        }
-        if (m.includes("flash")) {
-            return "gemini-1.5-flash";
-        }
-        return "gemini-2.0-flash";
+        // Mapping model ID mới
+        if (m.includes("3.8")) return "gemini-3.8-flash";
+        if (m.includes("3.7")) return "gemini-3.7-flash";
+        if (m.includes("3.5")) return "gemini-3.5-flash";
+        if (m.includes("latest")) return "gemini-flash-latest";
+        if (m.includes("3.1") || m.includes("pro")) return "gemini-2.5-pro";
+        return "gemini-3.8-flash";
     },
 
     // Lấy danh sách các mô hình thực tế mà Google API Key này có quyền gọi (ModelService.ListModels)
@@ -197,24 +188,21 @@ const GeminiExtractorService = {
         const userModel = this.normalizeModelId(model || this.getModel(), liveModels);
 
         let candidateModels = [];
+        const preferredFlashList = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-2.5-pro"];
         if (liveModels.length > 0) {
+            const activeLive = liveModels.filter(m => !m.includes("2.0") && !m.includes("1.5") && m !== "gemini-2.5-flash" && m !== "gemini-2.5-flash-lite" && !m.includes("tts") && !m.includes("robotics"));
             candidateModels = [
                 userModel,
-                ...liveModels.filter(m => m.includes("flash")),
-                ...liveModels.filter(m => m.includes("pro")),
-                ...liveModels
+                ...preferredFlashList.filter(p => activeLive.includes(p)),
+                ...activeLive
             ];
         } else {
             candidateModels = [
                 userModel,
-                "gemini-2.0-flash",
-                "gemini-1.5-flash",
-                "gemini-1.5-flash-latest",
-                "gemini-1.5-flash-001",
-                "gemini-1.5-flash-002",
-                "gemini-1.5-flash-8b",
-                "gemini-1.5-pro",
-                "gemini-1.5-pro-latest"
+                "gemini-3.8-flash",
+                "gemini-3.7-flash",
+                "gemini-3.5-flash",
+                "gemini-flash-latest"
             ];
         }
         const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
@@ -503,24 +491,21 @@ Trả về duy nhất 1 JSON object có định dạng:
         const userModel = this.normalizeModelId(rawModelId, liveModels);
 
         let candidateModels = [];
+        const preferredFlashList = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-2.5-pro"];
         if (liveModels.length > 0) {
+            const activeLive = liveModels.filter(m => !m.includes("2.0") && !m.includes("1.5") && m !== "gemini-2.5-flash" && m !== "gemini-2.5-flash-lite" && !m.includes("tts") && !m.includes("robotics"));
             candidateModels = [
                 userModel,
-                ...liveModels.filter(m => m.includes("flash")),
-                ...liveModels.filter(m => m.includes("pro")),
-                ...liveModels
+                ...preferredFlashList.filter(p => activeLive.includes(p)),
+                ...activeLive
             ];
         } else {
             candidateModels = [
                 userModel,
-                "gemini-2.0-flash",
-                "gemini-1.5-flash",
-                "gemini-1.5-flash-latest",
-                "gemini-1.5-flash-001",
-                "gemini-1.5-flash-002",
-                "gemini-1.5-flash-8b",
-                "gemini-1.5-pro",
-                "gemini-1.5-pro-latest"
+                "gemini-3.8-flash",
+                "gemini-3.7-flash",
+                "gemini-3.5-flash",
+                "gemini-flash-latest"
             ];
         }
         const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
