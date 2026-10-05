@@ -631,7 +631,7 @@ Trả về duy nhất 1 JSON object có định dạng:
 
                     // Nếu lỗi do API Key không hợp lệ, dừng ngay vì các model khác cũng sẽ lỗi API Key
                     if (res.status === 403 || (res.status === 400 && errMsg.includes("API key")) || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
-                        throw new Error("Khóa Google Gemini API Key không chính xác hoặc chưa được cấp quyền. Vui lòng kiểm tra lại khóa (chuẩn mới AQ.Ab8... hoặc AIzaSy...)!");
+                        throw new Error(`Máy chủ Google AI phản hồi: "${errMsg}". Khóa API Key hiện tại trong .env không chính xác, đã hết hạn hoặc chưa được kích hoạt trên Google AI Studio. Vui lòng tạo khóa mới tại aistudio.google.com!`);
                     }
 
                     // Nếu 404 (model không tìm thấy hoặc không hỗ trợ trong project), bỏ qua ngay sang model kế tiếp
