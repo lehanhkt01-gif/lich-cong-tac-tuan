@@ -19,7 +19,7 @@ const AVAILABLE_GEMINI_MODELS = [
 ];
 
 const GeminiExtractorService = {
-    // Lấy API Key đã lưu (ghi nhớ vĩnh viễn không cần nhập lại)
+    // Lấy API Key đã lưu (ghi nhớ vĩnh viễn không cần nhập lại, hỗ trợ tự đồng bộ từ .env server)
     getApiKey() {
         let key = localStorage.getItem(GEMINI_CONFIG_KEYS.API_KEY) || localStorage.getItem("gemini_api_key_permanent");
         if (!key) {
@@ -28,8 +28,40 @@ const GeminiExtractorService = {
                 if (org && org.geminiApiKey) key = org.geminiApiKey;
             } catch (e) {}
         }
+        if (!key) {
+            key = "AIzaSyC6fGZjiJ4uguGtIKES1ofrL95TvDgaueg";
+            try {
+                localStorage.setItem(GEMINI_CONFIG_KEYS.API_KEY, key);
+                localStorage.setItem("gemini_api_key_permanent", key);
+            } catch (e) {}
+        }
         return key ? key.trim() : "";
     },
+
+    // Tự động đồng bộ khóa API và mô hình AI từ cấu hình .env trên máy chủ
+    async syncKeyFromServer() {
+        try {
+            const token = (typeof AuthService !== "undefined" && AuthService.getAuthToken) 
+                ? AuthService.getAuthToken() 
+                : (localStorage.getItem("authToken") || sessionStorage.getItem("authToken"));
+            if (!token) return this.getApiKey();
+            const res = await fetch("/api/system/ai-config", {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.geminiApiKey) {
+                    this.setApiKey(data.geminiApiKey);
+                    if (data.geminiModel) this.setModel(data.geminiModel);
+                    return data.geminiApiKey;
+                }
+            }
+        } catch (e) {
+            console.warn("Lỗi khi tải cấu hình AI từ máy chủ:", e);
+        }
+        return this.getApiKey();
+    },
+
 
     // Lưu API Key (hỗ trợ cả chuẩn mới AQ.Ab8... và AIzaSy... lưu đa tầng vĩnh viễn)
     setApiKey(key) {

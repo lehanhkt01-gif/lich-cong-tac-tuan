@@ -38,6 +38,8 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - ADMIN_FULLNAME=${ADMIN_FULLNAME:-Văn phòng Đảng ủy - HĐND - UBND - UBMTTQ xã Ea Súp}
       - ADMIN_USERS_CONFIG=${ADMIN_USERS_CONFIG}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash}
     volumes:
       - ./:/app
       - ./data/uploads:/app/data/uploads

@@ -82,6 +82,10 @@ const AuthService = {
                     localStorage.setItem("authToken", data.token);
                     sessionStorage.setItem("authToken", data.token);
                 }
+                if (data.geminiApiKey && typeof GeminiExtractorService !== "undefined") {
+                    GeminiExtractorService.setApiKey(data.geminiApiKey);
+                    if (data.geminiModel) GeminiExtractorService.setModel(data.geminiModel);
+                }
                 const userObj = {
                     id: data.user.id || "admin",
                     username: data.user.username,

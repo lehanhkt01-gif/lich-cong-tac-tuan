@@ -73,6 +73,8 @@ ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 ADMIN_FULLNAME = os.environ.get("ADMIN_FULLNAME", "Văn phòng Đảng ủy - HĐND - UBND - UBMTTQ xã Ea Súp")
 DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
 ADMIN_USERS_CONFIG = os.environ.get("ADMIN_USERS_CONFIG", "").strip()
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash").strip()
 
 # =============================================================================
 # 2. BẢO MẬT: BCRYPT & JWT HELPERS (KÈM FALLBACK AN TOÀN)
@@ -996,6 +998,19 @@ class ProductionScheduleHandler(http.server.SimpleHTTPRequestHandler):
             })
             return
 
+        # 2b. API Cấu hình AI Gemini an toàn cho Cán bộ Quản trị
+        if path == "/api/system/ai-config":
+            user = self.get_authenticated_user()
+            if not user:
+                self.send_json({"error": "Yêu cầu đăng nhập quản trị!"}, status=401)
+                return
+            self.send_json({
+                "success": True,
+                "geminiApiKey": GEMINI_API_KEY,
+                "geminiModel": GEMINI_MODEL
+            })
+            return
+
         # 3. PUBLIC API: Lấy Lịch Công Tác Tuần Hiện Tại Đang Áp Dụng
         # GET /api/schedule/current
         if path == "/api/schedule/current":
@@ -1238,7 +1253,9 @@ class ProductionScheduleHandler(http.server.SimpleHTTPRequestHandler):
                     "success": True,
                     "message": f"Đăng nhập thành công! Chào mừng {found_user['fullName']}.",
                     "token": token,
-                    "user": found_user
+                    "user": found_user,
+                    "geminiApiKey": GEMINI_API_KEY,
+                    "geminiModel": GEMINI_MODEL
                 })
                 return
             else:

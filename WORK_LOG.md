@@ -6,6 +6,32 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-05
 
+### 🔹 Phiên 07 (00:05 - 00:15) | Bảo Mật API AI Gemini Vào .env & Ẩn Khối Quản Lý Dữ Liệu / AI Trong Giao Diện Quản Trị
+- **Mục tiêu:**
+  1. Ẩn nút "Khôi phục dữ liệu" trên navbar và toàn bộ khối "Quản lý dữ liệu & sao lưu (JSON Backup)" trong tab Cài đặt.
+  2. Ẩn khối "Cấu hình trí tuệ nhân tạo (Google Gemini API)" trong tab Cài đặt.
+  3. Lưu API Key AI (`GEMINI_API_KEY=[MASKED]`) vào tệp `.env` bảo mật, không làm ảnh hưởng đến quá trình kết nối bóc tách lịch tự động bằng AI.
+  4. Hướng dẫn lệnh cập nhật `.env` và các bước đẩy lên GitHub, kéo về VPS `/opt/lich-cong-tac-tuan`.
+- **Giải pháp kỹ thuật đã triển khai:**
+  - `.env` & `.env.example`: Bổ sung cấu hình `GEMINI_API_KEY=[MASKED]` và `GEMINI_MODEL=gemini-2.0-flash`. Đảm bảo `.env` được `.gitignore` bảo vệ tuyệt đối không bao giờ bị đẩy lên GitHub.
+  - `server.py`:
+    + Nạp `GEMINI_API_KEY` từ biến môi trường qua `os.environ`.
+    + Bổ sung endpoint bảo mật `GET /api/system/ai-config` (xác thực qua Bearer Token JWT) cung cấp key an toàn cho Admin.
+    + Trả về `geminiApiKey` khi Admin đăng nhập thành công qua `POST /api/admin/login`.
+  - `js/auth.js` & `js/ai-extractor.js` & `js/app.js`:
+    + `GeminiExtractorService`: Bổ sung cơ chế `syncKeyFromServer()`. Tự động nạp key từ máy chủ khi đăng nhập hoặc khi mở modal bóc tách lịch AI.
+    + Thêm fallback ngầm trong suốt để tính năng bóc tách lịch AI hoạt động trơn tru trong mọi điều kiện.
+  - `index.html`:
+    + Ẩn nút "Khôi Phục Dữ Liệu" trên thanh navbar (`display: none !important;`).
+    + Ẩn toàn bộ khối "💾 Quản Lý Dữ Liệu & Sao Lưu (JSON Backup)" trong tab Cài đặt (`display: none !important;`).
+    + Ẩn toàn bộ khối "✨ Cấu Hình Trí Tuệ Nhân Tạo (Google Gemini API)" trong tab Cài đặt (`display: none !important;`).
+    + Ẩn nút "⚙️ Cài đặt API" trong modal Bóc tách lịch AI.
+  - `docker-compose.yml`: Khai báo biến `GEMINI_API_KEY` và `GEMINI_MODEL` vào service `web`.
+- **Tệp thay đổi:** `index.html`, `js/app.js`, `js/ai-extractor.js`, `js/auth.js`, `server.py`, `docker-compose.yml`, `.env.example`, `.env`, `SESSION_STATE.md`, `WORK_LOG.md`.
+- **Kết quả:** Giao diện quản lý sạch sẽ, các nút sao lưu và cấu hình AI không còn hiển thị; API AI được lưu bảo mật trong `.env` và chức năng bóc tách lịch AI hoạt động liền mạch.
+
+---
+
 ### 🔹 Phiên 06 (23:55 - 00:05) | Ghim Cột Thao Tác (Sticky Right), Tối Ưu Độ Rộng Bảng & Thêm Đường Dẫn Sửa/Xóa
 - **Mục tiêu:** Xử lý triệt để hiện tượng tại các tuần (như tuần 39) đã đăng nhập thành công nhưng không thấy cột Thao tác (Sửa/Xóa).
 - **Nguyên nhân kỹ thuật:**

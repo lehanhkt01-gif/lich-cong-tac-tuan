@@ -38,6 +38,10 @@ const App = {
         this.setupEventListeners();
         this.setupAuthUI();
         this.renderAll();
+        // Tự động đồng bộ cấu hình AI bí mật từ máy chủ nếu đã đăng nhập
+        if (typeof AuthService !== "undefined" && !AuthService.isGuest() && typeof GeminiExtractorService !== "undefined") {
+            GeminiExtractorService.syncKeyFromServer();
+        }
         // Kiểm tra tham số URL mở modal sửa hoặc chuyển tuần
         const urlParams = new URLSearchParams(window.location.search);
         const editItemId = urlParams.get("editItem");
@@ -1915,22 +1919,24 @@ const App = {
                 StorageService.populateWeekSelect(selectEl, this.currentWeek, this.currentYear);
             }
 
-            // Kiểm tra trạng thái API Key cố định
+            // Kiểm tra trạng thái API Key từ Server .env
+            if (typeof GeminiExtractorService !== "undefined") {
+                GeminiExtractorService.syncKeyFromServer();
+            }
             const currentApiKey = (typeof GeminiExtractorService !== "undefined") ? GeminiExtractorService.getApiKey() : "";
             const statusBadge = document.getElementById("aiModalApiKeyStatusBadge");
             const statusText = document.getElementById("aiModalApiKeyStatusText");
             if (statusBadge && statusText) {
                 if (currentApiKey) {
-                    const isAQ = currentApiKey.startsWith("AQ.");
                     statusBadge.style.background = "#ECFDF5";
                     statusBadge.style.color = "#065F46";
                     statusBadge.style.borderColor = "#A7F3D0";
-                    statusText.textContent = `Đã kích hoạt API Key (${isAQ ? 'Chuẩn AQ.Ab8...' : 'Chuẩn AIzaSy...'})`;
+                    statusText.textContent = `Đã kết nối Google Gemini API (Bảo mật máy chủ)`;
                 } else {
                     statusBadge.style.background = "#FEF2F2";
                     statusBadge.style.color = "#991B1B";
                     statusBadge.style.borderColor = "#FECACA";
-                    statusText.textContent = `Chưa có API Key! Bấm Cài đặt để thêm`;
+                    statusText.textContent = `Chưa cấu hình API Key trên máy chủ (.env)`;
                 }
             }
 
@@ -2128,11 +2134,13 @@ const App = {
     },
 
     async executeAiExtraction() {
-        // Kiểm tra API Key từ Cài Đặt Hệ Thống
+        // Kiểm tra API Key từ Server .env hoặc cache
         let apiKey = (typeof GeminiExtractorService !== "undefined") ? GeminiExtractorService.getApiKey() : "";
+        if (!apiKey && typeof GeminiExtractorService !== "undefined") {
+            apiKey = await GeminiExtractorService.syncKeyFromServer();
+        }
         if (!apiKey) {
-            alert("Hệ thống chưa tìm thấy Google Gemini API Key trong Cài Đặt Hệ Thống!\n\nVui lòng vào mục '⚙️ Cài đặt hệ thống' -> 'Cấu hình Trí tuệ nhân tạo (Gemini AI)' để lưu API Key một lần duy nhất, hệ thống sẽ ghi nhớ vĩnh viễn không cần nhập lại.");
-            this.openSettingsViewFromModal();
+            alert("Hệ thống chưa tìm thấy Google Gemini API Key trong cấu hình máy chủ!\n\nVui lòng kiểm tra lại biến môi trường GEMINI_API_KEY trong tệp .env của hệ thống.");
             return;
         }
 

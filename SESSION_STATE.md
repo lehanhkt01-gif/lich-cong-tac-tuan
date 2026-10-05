@@ -51,15 +51,21 @@
    - Ghim cố định cột Thao tác mép phải (`position: sticky; right: 0;`), đảm bảo luôn hiển thị trước mắt người dùng trên mọi kích thước màn hình và mọi tuần công tác.
    - Tinh chỉnh độ rộng các cột thead vừa vặn 100% khung nhìn, chống tràn màn hình.
    - Thêm tính năng nhấp đúp chuột (`ondblclick`) vào dòng để sửa nhanh và bổ sung 3 nút `✏️ Sửa`, `📋 Nhân bản`, `🗑️ Xóa` trong modal chi tiết.
+8. [x] **Bảo mật API AI Gemini vào .env & Ẩn các khu vực quản lý dữ liệu/AI trên UI:**
+   - Ẩn hoàn toàn nút "Khôi phục dữ liệu" trên thanh navbar.
+   - Ẩn toàn bộ khối "💾 Quản Lý Dữ Liệu & Sao Lưu (JSON Backup)" và "✨ Cấu Hình Trí Tuệ Nhân Tạo (Google Gemini API)" trong tab Cài đặt hệ thống.
+   - Lưu trữ `GEMINI_API_KEY=[MASKED]` vào `.env` bảo mật trên cả môi trường Dev và VPS.
+   - Tích hợp nạp key tự động qua `server.py` (endpoint `/api/system/ai-config` và response login) giúp tính năng bóc tách lịch AI vẫn hoạt động ổn định và liên tục mà không làm lộ key hoặc bắt người dùng nhập tay.
+   - Cập nhật `.env.example` và `docker-compose.yml` để Docker tự động nạp biến môi trường AI khi khởi chạy.
 
 ---
 
 ## ⏳ 4. CÔNG VIỆC ĐANG THỰC HIỆN / VIỆC TIẾP THEO (PENDING BACKLOG)
 
-- [ ] **Kiểm thử toàn diện trên VPS thực tế:** Kiểm tra truy cập qua cổng `8090` và kết nối với domain `lichcongtac.easupso.com`.
+- [ ] **Đẩy commit lên GitHub & Kéo về VPS:** Hướng dẫn cập nhật `.env` trên VPS và chạy lệnh kéo mã nguồn mới.
+- [ ] **Kiểm thử toàn diện trên VPS thực tế:** Kiểm tra tính năng bóc tách lịch AI bằng key từ `.env` trên domain `lichcongtac.easupso.com`.
 - [ ] **Tối ưu bộ lọc lịch tuần:** Kiểm tra đồng bộ dữ liệu giữa bản Desktop (`index.html`), Khách (`guest.html`) và Mobile (`mobile.html`).
-- [ ] **Kiểm tra xuất file Word (.docx / .doc):** Xác nhận định dạng văn bản hành chính theo đúng chuẩn Nghị định 30/2020/NĐ-CP trên các phiên bản Word khác nhau.
-- [ ] **Định kỳ kiểm tra sao lưu (Backup):** Đảm bảo cơ chế tự động backup cơ sở dữ liệu hoạt động định kỳ và lưu trữ an toàn.
+
 
 ---
 
