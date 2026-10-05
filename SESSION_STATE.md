@@ -9,8 +9,8 @@
 
 - **Tên dự án:** Cổng Thông tin Điều hành - Lịch Công tác tuần UBND Xã Ea Súp
 - **Môi trường:** Phát triển cục bộ (Local Windows Dev) & Máy chủ VPS (CasaOS / Docker)
-- **Nhánh Git hiện tại:** `main` (Clean working tree)
-- **Commit mới nhất:** `816c44c` (*feat: hien thi thu trong tuan sau buoi (vi du Sang thu hai: 07h30) va to mau do cho noi dung cuoc hop*)
+- **Commit mới nhất:** `04c75a5` (*fix: khac phuc loi giao dien khuyet cac nut thao tac chinh sua ben phai bang va thanh dieu huong*)
+- **Trạng thái GitHub:** Đã push đồng bộ 100% lên `origin/main` (https://github.com/lehanhkt01-gif/lich-cong-tac-tuan)
 - **Trạng thái hệ thống:** Hoạt động ổn định (Backend Python `server.py` + Frontend SPA + Docker Compose Nginx:8090)
 
 ---
