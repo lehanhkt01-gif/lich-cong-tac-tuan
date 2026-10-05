@@ -1192,20 +1192,32 @@ body {
 }
 
 /* Actions Column */
-.col-actions-cell {
-    width: 110px;
+.col-actions-header {
+    width: 140px;
+    min-width: 140px;
     text-align: center;
+    white-space: nowrap;
+}
+
+.col-actions-cell {
+    width: 140px;
+    min-width: 140px;
+    text-align: center;
+    white-space: nowrap;
+    padding: 8px 6px !important;
 }
 
 .action-buttons-group {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 4px;
+    flex-wrap: nowrap;
 }
 
 .btn-action-icon {
-    width: 28px;
-    height: 28px;
+    width: 29px;
+    height: 29px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-color);
     background-color: #FFFFFF;
@@ -1214,7 +1226,7 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 13.5px;
     transition: var(--transition);
 }
 
@@ -1222,12 +1234,26 @@ body {
     background-color: var(--bg-subtle);
     color: var(--gov-primary);
     border-color: var(--gov-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.btn-action-icon.btn-view:hover {
+    background-color: #F8FAFC;
+    color: #0F172A;
+    border-color: #94A3B8;
 }
 
 .btn-action-icon.btn-edit:hover {
     background-color: #EFF6FF;
     color: #1D4ED8;
     border-color: #93C5FD;
+}
+
+.btn-action-icon.btn-duplicate:hover {
+    background-color: #F0FDF4;
+    color: #15803D;
+    border-color: #86EFAC;
 }
 
 .btn-action-icon.btn-delete:hover {

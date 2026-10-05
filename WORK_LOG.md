@@ -6,6 +6,23 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-05
 
+### 🔹 Phiên 04 (23:25 - 23:45) | Khắc Phục Lỗi Giao Diện Khuyết Phần Chỉnh Sửa Phía Bên Phải
+- **Mục tiêu:** Xử lý triệt để hiện tượng cột Thao tác và các nút chỉnh sửa phía bên phải màn hình bị khuyết hoặc biến mất khi xem ở Chế độ Khách (chưa đăng nhập).
+- **Nguyên nhân kỹ thuật:**
+  - Logic cũ trong `js/app.js` dùng `${canEdit ? ... : ''}` khiến khi `canEdit = false`, các nút Sửa (✏️), Nhân bản (📋), Xóa (🗑️) bị ẩn hoàn toàn, chỉ còn lại icon Xem (👁️).
+  - Các nút hành động chính phía bên phải (`+ THÊM MỤC CÔNG TÁC`, `➕ Lập Lịch Tuần Mới`, `✉️ GỬI EMAIL THÔNG BÁO`, `💾 CẬP NHẬT & XUẤT BẢN`) bị gán class `auth-require-edit` và ẩn bằng `display: none` khi chưa đăng nhập.
+  - Cột `Thao tác` trong CSS có độ rộng `110px` quá hẹp so với nhóm 4 nút thao tác.
+  - Trong `index.html` có 2 modal cùng mang `id="modalLogin"`.
+- **Giải pháp đã thực hiện:**
+  - `js/app.js`: Luôn render đầy đủ 4 nút thao tác (👁️ Xem, ✏️ Sửa, 📋 Nhân bản, 🗑️ Xóa). Bổ sung cơ chế `pendingAction`: Nếu chưa đăng nhập, khi bấm nút chỉnh sửa sẽ mở Modal Đăng Nhập, sau khi đăng nhập thành công tự động kích hoạt ngay hành động mà người dùng vừa chọn.
+  - `index.html`: Gỡ bỏ `auth-require-edit` khỏi các nút thao tác chính bên phải, gán các hàm điều phối click an toàn (`handleCreateItemClick`, `handleCreateNewWeekClick`, v.v.). Xóa bỏ modalLogin trùng lặp cũ, giữ modal chuẩn Bitwarden có logo.
+  - `css/style.css`: Nâng độ rộng cột Thao tác lên `140px`, bổ sung `white-space: nowrap`, căn giữa và hiệu ứng hover sắc nét.
+  - `js/guest.js`: Bổ sung nút Sửa ✏️ chuyển tiếp sang `index.html?editItem=...`.
+- **Tệp thay đổi:** `index.html`, `js/app.js`, `js/guest.js`, `css/style.css`.
+- **Kết quả:** Giao diện hiển thị đầy đủ, không còn bị khuyết phần chỉnh sửa ở phía bên phải, trải nghiệm người dùng mượt mà và trực quan.
+
+---
+
 ### 🔹 Phiên 03 (23:10 - 23:25) | Khởi tạo Hệ thống Quản lý Bối cảnh & Bảo mật Phiên
 - **Mục tiêu:** Thiết lập bộ tệp lưu trữ và theo dõi diễn biến quá trình tác nghiệp, chống quên phiên khi khởi động lại, bảo đảm an toàn dữ liệu và bảo mật thông tin.
 - **Các tệp được khởi tạo:**

@@ -341,7 +341,8 @@ const GuestApp = {
                             </td>
                             <td class="col-actions-cell">
                                 <div class="action-buttons-group">
-                                    <button class="btn-action-icon" title="Xem chi tiết cuộc họp" onclick="GuestApp.viewItemDetail('${item.id}')">👁️</button>
+                                    <button class="btn-action-icon btn-view" title="Xem chi tiết cuộc họp" onclick="GuestApp.viewItemDetail('${item.id}')">👁️</button>
+                                    <button class="btn-action-icon btn-edit" title="Chỉnh sửa công tác (Chuyển sang Quản trị)" onclick="window.location.href='index.html?editItem=${item.id}'">✏️</button>
                                 </div>
                             </td>
                         </tr>

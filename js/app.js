@@ -11,6 +11,7 @@ const App = {
     activeTab: "schedule",
     currentSchedule: null,
     editingItemId: null,
+    pendingAction: null,
 
     // AI Extractor State
     aiSelectedFile: null,
@@ -37,17 +38,11 @@ const App = {
         this.setupEventListeners();
         this.setupAuthUI();
         this.renderAll();
-
-        // Kiểm tra thông báo flash sau khi reload trang
-        const flashToastRaw = sessionStorage.getItem("flashToast");
-        if (flashToastRaw) {
-            sessionStorage.removeItem("flashToast");
-            try {
-                const flashToast = JSON.parse(flashToastRaw);
-                setTimeout(() => {
-                    this.showToast(flashToast.message, flashToast.type || "success");
-                }, 300);
-            } catch (e) {}
+        // Kiểm tra tham số URL mở modal sửa hoặc chuyển tuần
+        const urlParams = new URLSearchParams(window.location.search);
+        const editItemId = urlParams.get("editItem");
+        if (editItemId) {
+            setTimeout(() => this.openEditItemModal(editItemId), 400);
         }
     },
 
@@ -130,15 +125,7 @@ const App = {
             if (dropRole) dropRole.textContent = `● ${user.roleName}`;
         }
 
-        // Ẩn/hiện các nút Thêm, Sửa, Xóa, Cài Đặt theo quyền
-        document.querySelectorAll(".auth-require-edit").forEach(el => {
-            el.style.display = canEdit ? "" : "none";
-        });
-
-        document.querySelectorAll(".auth-require-delete").forEach(el => {
-            el.style.display = canDelete ? "" : "none";
-        });
-
+        // Chỉ ẩn các mục cấu hình quản trị đặc thù, giữ nguyên các nút thao tác để tránh khuyết giao diện
         document.querySelectorAll(".auth-require-admin").forEach(el => {
             el.style.display = isAdmin ? "" : "none";
         });
@@ -488,10 +475,10 @@ const App = {
                             </td>
                             <td class="col-actions-cell">
                                 <div class="action-buttons-group">
-                                    <button class="btn-action-icon" title="Xem chi tiết" onclick="App.viewItemDetail('${item.id}')">👁️</button>
-                                    ${canEdit ? `<button class="btn-action-icon btn-edit" title="Sửa công tác" onclick="App.openEditItemModal('${item.id}')">✏️</button>` : ''}
-                                    ${canEdit ? `<button class="btn-action-icon" title="Nhân bản việc này" onclick="App.duplicateItem('${item.id}')">📋</button>` : ''}
-                                    ${canDelete ? `<button class="btn-action-icon btn-delete" title="Xóa" onclick="App.deleteItem('${item.id}')">🗑️</button>` : ''}
+                                    <button class="btn-action-icon btn-view" title="Xem chi tiết cuộc họp" onclick="App.viewItemDetail('${item.id}')">👁️</button>
+                                    <button class="btn-action-icon btn-edit" title="Chỉnh sửa công tác ${canEdit ? '' : '(Yêu cầu đăng nhập)'}" onclick="App.openEditItemModal('${item.id}')">✏️</button>
+                                    <button class="btn-action-icon btn-duplicate" title="Nhân bản việc này ${canEdit ? '' : '(Yêu cầu đăng nhập)'}" onclick="App.duplicateItem('${item.id}')">📋</button>
+                                    <button class="btn-action-icon btn-delete" title="Xóa công tác ${canDelete ? '' : '(Yêu cầu đăng nhập quản trị)'}" onclick="App.deleteItem('${item.id}')">🗑️</button>
                                 </div>
                             </td>
                         </tr>
@@ -513,11 +500,46 @@ const App = {
     },
 
     // =========================================================================
+    // ĐIỀU PHỐI THAO TÁC CHỈNH SỬA & HÀNH ĐỘNG PHÍA BÊN PHẢI (AUTH-GUARDED)
+    // =========================================================================
+    handleCreateItemClick() {
+        if (!AuthService.canEdit()) {
+            this.pendingAction = { type: 'create' };
+            this.openLoginModal("Vui lòng đăng nhập tài khoản Quản trị để thêm mục công tác mới!");
+            return;
+        }
+        this.openEditItemModal();
+    },
+
+    handleCreateNewWeekClick() {
+        if (!AuthService.canEdit()) {
+            this.pendingAction = { type: 'newWeek' };
+            this.openLoginModal("Vui lòng đăng nhập tài khoản Quản trị để lập lịch tuần mới!");
+            return;
+        }
+        this.openCreateWeekModal();
+    },
+
+    handleNotifyEmailClick() {
+        if (!AuthService.canEdit()) {
+            this.pendingAction = { type: 'email' };
+            this.openLoginModal("Vui lòng đăng nhập tài khoản Quản trị để gửi email thông báo!");
+            return;
+        }
+        this.openEmailModal();
+    },
+
+    handleSavePublishClick() {
+        this.handleSaveAndPublish();
+    },
+
+    // =========================================================================
     // MODAL THÊM / SỬA MỤC CÔNG TÁC
     // =========================================================================
     openEditItemModal(itemId = null, prefillDay = null) {
         if (!AuthService.canEdit()) {
-            this.openLoginModal("Vui lòng đăng nhập tài khoản để thêm hoặc chỉnh sửa lịch công tác!");
+            this.pendingAction = { type: 'edit', itemId, prefillDay };
+            this.openLoginModal("Vui lòng đăng nhập tài khoản Quản trị để thêm hoặc chỉnh sửa lịch công tác!");
             return;
         }
 
@@ -745,7 +767,8 @@ const App = {
     duplicateItem(itemId) {
         try {
             if (!AuthService.canEdit()) {
-                this.openLoginModal("Vui lòng đăng nhập tài khoản để nhân bản mục công tác!");
+                this.pendingAction = { type: 'duplicate', itemId };
+                this.openLoginModal("Vui lòng đăng nhập tài khoản Quản trị để nhân bản mục công tác!");
                 return;
             }
 
@@ -785,7 +808,8 @@ const App = {
     deleteItem(itemId) {
         try {
             if (!AuthService.canDelete()) {
-                this.openLoginModal("Chỉ Super Admin (Lãnh đạo đơn vị) mới có quyền xóa mục công tác!");
+                this.pendingAction = { type: 'delete', itemId };
+                this.openLoginModal("Chỉ Quản trị viên (Lãnh đạo đơn vị) mới có quyền xóa mục công tác. Vui lòng đăng nhập!");
                 return;
             }
 
@@ -1159,7 +1183,8 @@ const App = {
     // =========================================================================
     handleSaveAndPublish() {
         if (!AuthService.canPublish()) {
-            alert("Chỉ Lãnh đạo hoặc Chánh/Phó Văn phòng (Super Admin) mới có quyền duyệt xuất bản lịch!");
+            this.pendingAction = { type: 'publish' };
+            this.openLoginModal("Chỉ Lãnh đạo hoặc Chánh/Phó Văn phòng mới có quyền duyệt xuất bản lịch. Vui lòng đăng nhập!");
             return;
         }
 
@@ -1528,6 +1553,25 @@ const App = {
                 this.closeModal("modalLogin");
                 passwordInput.value = "";
                 this.showToast(`Đăng nhập thành công! Chào mừng đồng chí ${res.user.fullName}.`, "success");
+
+                // Cập nhật lại giao diện quyền và render bảng
+                this.updateUIPermissions();
+                this.renderAll();
+
+                // Tự động kích hoạt tác vụ người dùng vừa bấm trước khi đăng nhập
+                if (this.pendingAction) {
+                    const act = this.pendingAction;
+                    this.pendingAction = null;
+                    setTimeout(() => {
+                        if (act.type === 'edit') this.openEditItemModal(act.itemId, act.prefillDay);
+                        else if (act.type === 'duplicate') this.duplicateItem(act.itemId);
+                        else if (act.type === 'delete') this.deleteItem(act.itemId);
+                        else if (act.type === 'create') this.openEditItemModal();
+                        else if (act.type === 'newWeek') this.openCreateWeekModal();
+                        else if (act.type === 'email') this.openEmailModal();
+                        else if (act.type === 'publish') this.handleSaveAndPublish();
+                    }, 350);
+                }
             } else {
                 if (errAlert) {
                     errAlert.innerHTML = `⚠️ ${res.message}`;
