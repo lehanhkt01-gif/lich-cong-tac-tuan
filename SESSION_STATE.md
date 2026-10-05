@@ -1,0 +1,80 @@
+# TRẠNG THÁI PHIÊN LÀM VIỆC HIỆN TẠI (ACTIVE SESSION STATE)
+> **Tài liệu theo dõi trạng thái tác nghiệp thời gian thực**  
+> *Lần cập nhật cuối: 2026-10-05 23:15 (Giờ Việt Nam - UTC+7)*  
+> *Dành cho việc khôi phục ngữ cảnh tức thì khi khởi động lại hệ thống hoặc mở phiên mới.*
+
+---
+
+## 📌 1. TỔNG QUAN HIỆN TRẠNG (CURRENT STATUS)
+
+- **Tên dự án:** Cổng Thông tin Điều hành - Lịch Công tác tuần UBND Xã Ea Súp
+- **Môi trường:** Phát triển cục bộ (Local Windows Dev) & Máy chủ VPS (CasaOS / Docker)
+- **Nhánh Git hiện tại:** `main` (Clean working tree)
+- **Commit mới nhất:** `816c44c` (*feat: hien thi thu trong tuan sau buoi (vi du Sang thu hai: 07h30) va to mau do cho noi dung cuoc hop*)
+- **Trạng thái hệ thống:** Hoạt động ổn định (Backend Python `server.py` + Frontend SPA + Docker Compose Nginx:8090)
+
+---
+
+## ⚙️ 2. THÔNG SỐ VẬN HÀNH & HẠ TẦNG (INFRASTRUCTURE & PORTS)
+
+| Dịch vụ / Thành phần | Cổng / Cấu hình | Ghi chú vận hành quan trọng |
+| :--- | :--- | :--- |
+| **Nginx Web Server** | `8090:80` | Đã đổi sang cổng `8090` để tránh xung đột cổng 80 của CasaOS / NPM trên VPS |
+| **Backend API (Python)** | `5000` | Chạy qua `server.py` (REST API + JWT Bearer Auth) |
+| **Cơ sở dữ liệu** | PostgreSQL 16 (`5432`) / SQLite fallback | Chạy PostgreSQL qua Docker, fallback file cục bộ tại `data/` |
+| **Uploads & Backups** | `data/uploads/`, `data/backups/` | Đã cấu hình `.gitignore` bảo vệ file tải lên và sao lưu nhạy cảm |
+
+> ⚠️ **Lưu ý bảo mật:** Tuyệt đối không ghi mật khẩu DB hay JWT Secret vào tệp này. Đọc từ file `.env` cục bộ.
+
+---
+
+## 🚀 3. CÔNG VIỆC VỪA HOÀN THÀNH GẦN NHẤT (RECENTLY COMPLETED)
+
+1. [x] **Hiển thị thứ trong tuần sau buổi & Tô màu đỏ nội dung:**
+   - Cập nhật hiển thị thời gian: ví dụ `Sáng thứ hai: 07h30`, `Chiều thứ ba: 14h00`.
+   - Tô màu đỏ nổi bật cho cột nội dung cuộc họp để lãnh đạo dễ nhận diện.
+2. [x] **Sửa lỗi cú pháp async trên Mobile (`mobile.html` / `app.js`):**
+   - Khắc phục lỗi `handleMobileLoginSubmit` khiến giao diện mobile bị đơ khi bấm đăng nhập.
+3. [x] **Tối ưu hạ tầng mạng Docker Compose:**
+   - Điều chỉnh cổng Nginx sang `8090`.
+   - Gỡ bỏ Dozzle khỏi compose mặc định để tránh tranh chấp tài nguyên và cổng trên VPS CasaOS.
+4. [x] **Thiết lập hệ thống lưu trữ & theo dõi phiên tác nghiệp:**
+   - Tạo bộ quy tắc `AGENTS.md` nạp tự động mỗi khi khởi động lại phiên.
+   - Tạo `SESSION_STATE.md`, `WORK_LOG.md`, `SYSTEM_ARCHITECTURE.md`, `SECURITY_GUIDELINES.md`.
+
+---
+
+## ⏳ 4. CÔNG VIỆC ĐANG THỰC HIỆN / VIỆC TIẾP THEO (PENDING BACKLOG)
+
+- [ ] **Kiểm thử toàn diện trên VPS thực tế:** Kiểm tra truy cập qua cổng `8090` và kết nối với domain `lichcongtac.easupso.com`.
+- [ ] **Tối ưu bộ lọc lịch tuần:** Kiểm tra đồng bộ dữ liệu giữa bản Desktop (`index.html`), Khách (`guest.html`) và Mobile (`mobile.html`).
+- [ ] **Kiểm tra xuất file Word (.docx / .doc):** Xác nhận định dạng văn bản hành chính theo đúng chuẩn Nghị định 30/2020/NĐ-CP trên các phiên bản Word khác nhau.
+- [ ] **Định kỳ kiểm tra sao lưu (Backup):** Đảm bảo cơ chế tự động backup cơ sở dữ liệu hoạt động định kỳ và lưu trữ an toàn.
+
+---
+
+## 🛠️ 5. LỆNH VẬN HÀNH NHANH (QUICK COMMANDS)
+
+### Chạy kiểm thử Backend cục bộ:
+```powershell
+python server.py
+# Truy cập giao diện tại: http://localhost:5000/
+```
+
+### Quản lý Docker trên VPS:
+```bash
+# Khởi động dịch vụ (chạy ngầm)
+docker compose up -d
+
+# Xem log các container
+docker compose logs -f app nginx
+
+# Khởi động lại sau khi pull mã nguồn mới
+docker compose down && docker compose up -d --build
+```
+
+### Kiểm tra Git:
+```powershell
+git status
+git log -n 3 --oneline
+```
