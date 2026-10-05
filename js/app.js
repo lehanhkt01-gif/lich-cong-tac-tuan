@@ -455,7 +455,7 @@ const App = {
                     ` : `<span class="no-attachment-tag">—</span>`;
 
                     html += `
-                        <tr class="item-row" data-item-id="${item.id}">
+                        <tr class="item-row" data-item-id="${item.id}" ondblclick="App.openEditItemModal('${item.id}')" title="Nhấp đúp chuột để chỉnh sửa nhanh mục công tác này">
                             <td class="col-time-cell">
                                 <span class="time-pill">${item.time}</span>
                             </td>
@@ -895,6 +895,17 @@ const App = {
                 ` : ''}
             </div>
         `;
+
+        const actionArea = document.getElementById("viewDetailActionButtons");
+        if (actionArea) {
+            const canEdit = AuthService.canEdit();
+            const canDelete = AuthService.canDelete();
+            actionArea.innerHTML = `
+                ${canEdit ? `<button type="button" class="btn-primary-create" style="padding: 7px 14px; font-size: 13px;" onclick="App.closeModal('modalViewItemDetail'); App.openEditItemModal('${item.id}');">✏️ Chỉnh Sửa</button>` : ''}
+                ${canEdit ? `<button type="button" class="btn-bottom" style="padding: 7px 14px; font-size: 13px; background: #F0FDF4; color: #15803D; border: 1px solid #86EFAC;" onclick="App.closeModal('modalViewItemDetail'); App.duplicateItem('${item.id}');">📋 Nhân Bản</button>` : ''}
+                ${canDelete ? `<button type="button" class="btn-bottom" style="padding: 7px 14px; font-size: 13px; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA;" onclick="App.closeModal('modalViewItemDetail'); App.deleteItem('${item.id}');">🗑️ Xóa</button>` : ''}
+            `;
+        }
 
         this.openModal("modalViewItemDetail");
     },

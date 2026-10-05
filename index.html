@@ -311,14 +311,14 @@
                     <table class="schedule-table" id="mainScheduleTable">
                         <thead>
                             <tr>
-                                <th style="width: 85px; text-align: center;">Giờ</th>
-                                <th style="width: 100px;">Khối</th>
-                                <th>Nội dung công tác & Địa điểm</th>
-                                <th style="width: 175px;">Lãnh đạo dự / Chủ trì</th>
-                                <th style="width: 220px;">Thành phần tham dự / Tham mưu</th>
-                                <th style="width: 100px; text-align: center;">Phương tiện</th>
-                                <th style="width: 120px; text-align: center;">Đính kèm</th>
-                                <th style="width: 135px; text-align: center;" class="col-actions-header">Thao tác</th>
+                                <th style="width: 75px; text-align: center;">Giờ</th>
+                                <th style="width: 80px; text-align: center;">Khối</th>
+                                <th style="min-width: 260px;">Nội dung công tác & Địa điểm</th>
+                                <th style="width: 160px;">Lãnh đạo dự / Chủ trì</th>
+                                <th style="width: 190px;">Thành phần tham dự / Tham mưu</th>
+                                <th style="width: 85px; text-align: center;">Phương tiện</th>
+                                <th style="width: 80px; text-align: center;">Đính kèm</th>
+                                <th style="width: 125px; text-align: center;" class="col-actions-header">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="scheduleTableBody">
@@ -787,9 +787,12 @@
             <div class="modal-body" id="viewDetailContent">
                 <!-- Render chi tiết -->
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <button type="button" class="btn-bottom btn-history-audit"
                     onclick="App.closeModal('modalViewItemDetail')">Đóng</button>
+                <div id="viewDetailActionButtons" style="display: flex; gap: 8px;">
+                    <!-- Render động nút Sửa, Nhân bản, Xóa theo quyền -->
+                </div>
             </div>
         </div>
     </div>

@@ -1192,32 +1192,47 @@ body {
 }
 
 /* Actions Column */
+/* Actions Column - Ghim cố định ở mép phải (Sticky Right) */
 .col-actions-header {
-    width: 140px;
-    min-width: 140px;
+    width: 125px;
+    min-width: 125px;
     text-align: center;
     white-space: nowrap;
+    position: sticky !important;
+    right: 0 !important;
+    background: linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%) !important;
+    z-index: 15;
+    box-shadow: -3px 0 8px rgba(0, 0, 0, 0.08);
 }
 
 .col-actions-cell {
-    width: 140px;
-    min-width: 140px;
+    width: 125px;
+    min-width: 125px;
     text-align: center;
     white-space: nowrap;
-    padding: 8px 6px !important;
+    padding: 6px 4px !important;
+    position: sticky !important;
+    right: 0 !important;
+    background-color: #FFFFFF;
+    z-index: 10;
+    box-shadow: -3px 0 8px rgba(0, 0, 0, 0.08);
+}
+
+.schedule-table tbody tr:hover .col-actions-cell {
+    background-color: #F1F5F9 !important;
 }
 
 .action-buttons-group {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 3px;
     flex-wrap: nowrap;
 }
 
 .btn-action-icon {
-    width: 29px;
-    height: 29px;
+    width: 27px;
+    height: 27px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-color);
     background-color: #FFFFFF;
@@ -1226,7 +1241,7 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 13.5px;
+    font-size: 13px;
     transition: var(--transition);
 }
 

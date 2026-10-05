@@ -47,6 +47,10 @@
 6. [x] **Ẩn hoàn toàn 2 nút khi ở Chế độ Khách & Sửa lỗi nút Đăng nhập bị đơ:**
    - Ẩn hoàn toàn 2 nút "Lập Lịch Tuần Mới" và "+ THÊM MỤC CÔNG TÁC" khi chưa đăng nhập (`display: none`).
    - Sửa lỗi nút Đăng nhập bị đơ: Đóng đủ thẻ `</div>` cho `modalAIExtractor`, tách `modalLogin` ra ngoài và chuẩn hóa hàm gọi `openModal("modalLogin")`.
+7. [x] **Ghim cố định cột Thao tác (Sticky Right), tối ưu độ rộng bảng & hỗ trợ sửa/xóa:**
+   - Ghim cố định cột Thao tác mép phải (`position: sticky; right: 0;`), đảm bảo luôn hiển thị trước mắt người dùng trên mọi kích thước màn hình và mọi tuần công tác.
+   - Tinh chỉnh độ rộng các cột thead vừa vặn 100% khung nhìn, chống tràn màn hình.
+   - Thêm tính năng nhấp đúp chuột (`ondblclick`) vào dòng để sửa nhanh và bổ sung 3 nút `✏️ Sửa`, `📋 Nhân bản`, `🗑️ Xóa` trong modal chi tiết.
 
 ---
 

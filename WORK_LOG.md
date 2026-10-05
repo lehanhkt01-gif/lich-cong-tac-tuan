@@ -6,6 +6,21 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-05
 
+### 🔹 Phiên 06 (23:55 - 00:05) | Ghim Cột Thao Tác (Sticky Right), Tối Ưu Độ Rộng Bảng & Thêm Đường Dẫn Sửa/Xóa
+- **Mục tiêu:** Xử lý triệt để hiện tượng tại các tuần (như tuần 39) đã đăng nhập thành công nhưng không thấy cột Thao tác (Sửa/Xóa).
+- **Nguyên nhân kỹ thuật:**
+  - Tổng chiều rộng các cột trong bảng trước đây quá lớn (> 1400px), trong khi màn hình laptop thông thường (1280px-1366px) chỉ hiển thị được tới cột "ĐÍNH KÈM", làm cột "THAO TÁC" bị trôi ra khỏi mép phải màn hình.
+  - Cột Thao tác chưa được ghim cố định (sticky), thanh cuộn ngang dưới đáy bị thanh floating bar che lấp khiến người dùng không biết bảng bị tràn ngang.
+- **Giải pháp đã thực hiện:**
+  - `css/style.css`: Áp dụng kỹ thuật `position: sticky; right: 0;` cho `.col-actions-header` và `.col-actions-cell`. Dù màn hình có kích thước nào hay bảng có cuộn ngang ra sao, cột THAO TÁC luôn được ghim cố định ở mép phải màn hình.
+  - `index.html`: Tối ưu hóa kích thước tất cả các cột bảng (Giờ: 75px, Khối: 80px, Lãnh đạo: 160px, Thành phần: 190px, Phương tiện: 85px, Đính kèm: 80px, Thao tác: 125px) giúp bảng hiển thị vừa khít trên mọi màn hình máy tính thông thường mà không bị tràn.
+  - `js/app.js`: Bổ sung tính năng nhấp đúp chuột (`ondblclick`) vào bất kỳ dòng cuộc họp nào để mở ngay form chỉnh sửa.
+  - `js/app.js` & `index.html`: Bổ sung 3 nút hành động trực tiếp (`✏️ Chỉnh Sửa`, `📋 Nhân Bản`, `🗑️ Xóa`) ngay trong Modal "Xem chi tiết cuộc họp" (`modalViewItemDetail`).
+- **Tệp thay đổi:** `index.html`, `js/app.js`, `css/style.css`.
+- **Kết quả:** Cột Thao tác luôn hiển thị rõ ràng trước mắt người dùng trên mọi tuần công tác, hỗ trợ sửa/xóa trực quan và nhanh chóng.
+
+---
+
 ### 🔹 Phiên 05 (23:45 - 23:55) | Ẩn Hoàn Toàn 2 Nút Khi Là Khách & Khắc Phục Lỗi Nút Đăng Nhập Bị Đơ
 - **Mục tiêu:** 
   1. Ẩn hoàn toàn 2 nút "Lập Lịch Tuần Mới" và "+ THÊM MỤC CÔNG TÁC" khi người dùng ở Chế độ Khách (chưa đăng nhập).
