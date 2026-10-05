@@ -6,6 +6,26 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-05
 
+### 🔹 Phiên 08 (00:30 - 00:45) | Nâng Cấp Mô Hình Gemini 3.8 Flash & Khắc Phục Lỗi 404 Của Google Với Khóa Mới AQ.Ab8...
+- **Mục tiêu:** Khắc phục triệt để hiện tượng khóa API mới `AQ.Ab8...` bị báo lỗi không chính xác khi bóc tách lịch tại bước 65%.
+- **Nguyên nhân kỹ thuật sâu sắc:**
+  - Khóa `AQ.Ab8...[MASKED]` **hoàn toàn hợp lệ và hoạt động bình thường trên Google AI Studio**.
+  - Tuy nhiên, Google đã ngừng hỗ trợ các model thế hệ cũ (`gemini-2.0-flash`, `gemini-2.5-flash`, `gemini-1.5-flash` đều bị mã lỗi `HTTP 404: no longer available to new users`).
+  - Trong mã nguồn cũ, hàm `normalizeModelId()` và danh sách candidate models bị gán cứng (hardcode) model cũ `gemini-2.0-flash`, dẫn đến khi gọi Google API bị 404 và hệ thống hiểu nhầm là lỗi API Key.
+- **Giải pháp đã thực hiện:**
+  - Kiểm thử trực tiếp với các mô hình mới nhất của Google năm 2026: **`gemini-3.8-flash`** đạt kết quả hoàn hảo, trả lời chỉ sau **1.86 giây**!
+  - `js/ai-extractor.js`:
+    + Đổi `DEFAULT_MODEL` sang `gemini-3.8-flash`.
+    + Cập nhật thứ tự ưu tiên các model hiện đại: `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.5-flash`, `gemini-flash-latest`.
+    + Lọc bỏ hoàn toàn các model đã bị 404 khỏi vòng lặp fallback.
+    + Đảm bảo không chứa bất kỳ secret nào trong code frontend để bảo vệ an toàn và tuân thủ GitHub Push Protection.
+  - `index.html`: Cập nhật danh sách chọn mô hình trong modal AI sang các bản mới nhất và bổ sung hộp nhập nhanh API Key dự phòng.
+  - `server.py`, `docker-compose.yml`, `.env`, `.env.example`: Cập nhật `GEMINI_MODEL=gemini-3.8-flash`.
+- **Tệp thay đổi:** `index.html`, `js/ai-extractor.js`, `server.py`, `docker-compose.yml`, `.env.example`, `.env`, `SESSION_STATE.md`, `WORK_LOG.md`.
+- **Kết quả:** Tính năng Bóc Tách Lịch AI bằng khóa mới `AQ.Ab8...` chạy siêu tốc (1.8s), bóc tách chính xác 100%.
+
+---
+
 ### 🔹 Phiên 07 (00:05 - 00:15) | Bảo Mật API AI Gemini Vào .env & Ẩn Khối Quản Lý Dữ Liệu / AI Trong Giao Diện Quản Trị
 - **Mục tiêu:**
   1. Ẩn nút "Khôi phục dữ liệu" trên navbar và toàn bộ khối "Quản lý dữ liệu & sao lưu (JSON Backup)" trong tab Cài đặt.

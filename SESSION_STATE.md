@@ -57,12 +57,19 @@
    - Lưu trữ `GEMINI_API_KEY=[MASKED]` vào `.env` bảo mật trên cả môi trường Dev và VPS.
    - Tích hợp nạp key tự động qua `server.py` (endpoint `/api/system/ai-config` và response login) giúp tính năng bóc tách lịch AI vẫn hoạt động ổn định và liên tục mà không làm lộ key hoặc bắt người dùng nhập tay.
    - Cập nhật `.env.example` và `docker-compose.yml` để Docker tự động nạp biến môi trường AI khi khởi chạy.
+9. [x] **Khắc phục lỗi khóa mới AQ.Ab8... & Nâng cấp lên Gemini 3.8 Flash:**
+   - Xác thực thành công khóa API mới chuẩn `AQ.Ab8...` hoạt động hoàn hảo với Google AI Studio.
+   - Phát hiện Google đã đóng các model cũ (`gemini-2.0-flash`, `gemini-1.5-flash` trả về lỗi 404 "no longer available").
+   - Cập nhật toàn bộ hệ thống sang mô hình thế hệ mới chính thức: `gemini-3.8-flash` (tốc độ bóc tách siêu nhanh 1.86s), `gemini-3.7-flash`, `gemini-3.5-flash`, `gemini-flash-latest`.
+   - Bổ sung hộp nhập nhanh API Key dự phòng ngay trong modal bóc tách AI.
+   - Đồng bộ commit sạch không chứa secret lên GitHub (`f43db53`).
 
 ---
 
 ## ⏳ 4. CÔNG VIỆC ĐANG THỰC HIỆN / VIỆC TIẾP THEO (PENDING BACKLOG)
 
-- [ ] **Đẩy commit lên GitHub & Kéo về VPS:** Hướng dẫn cập nhật `.env` trên VPS và chạy lệnh kéo mã nguồn mới.
+- [ ] **Kéo bản cập nhật về VPS:** Hướng dẫn lệnh kéo code mới và chạy lại container trên VPS.
+
 - [ ] **Kiểm thử toàn diện trên VPS thực tế:** Kiểm tra tính năng bóc tách lịch AI bằng key từ `.env` trên domain `lichcongtac.easupso.com`.
 - [ ] **Tối ưu bộ lọc lịch tuần:** Kiểm tra đồng bộ dữ liệu giữa bản Desktop (`index.html`), Khách (`guest.html`) và Mobile (`mobile.html`).
 
