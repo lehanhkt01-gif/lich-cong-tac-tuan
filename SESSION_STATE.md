@@ -23,6 +23,7 @@
 | **Backend API (Python)** | `5000` | Chạy qua `server.py` (REST API + JWT Bearer Auth) |
 | **Cơ sở dữ liệu** | PostgreSQL 16 (`5432`) / SQLite fallback | Chạy PostgreSQL qua Docker, fallback file cục bộ tại `data/` |
 | **Uploads & Backups** | `data/uploads/`, `data/backups/` | Đã cấu hình `.gitignore` bảo vệ file tải lên và sao lưu nhạy cảm |
+| **Thư mục VPS** | `/opt/lich-cong-tac-tuan` | Thư mục triển khai sản xuất chính thức trên VPS Linux |
 
 > ⚠️ **Lưu ý bảo mật:** Tuyệt đối không ghi mật khẩu DB hay JWT Secret vào tệp này. Đọc từ file `.env` cục bộ.
 
