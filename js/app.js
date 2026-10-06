@@ -1795,7 +1795,7 @@ const App = {
         const modelSelect = document.getElementById("settingGeminiModel");
         if (typeof GeminiExtractorService !== "undefined") {
             if (keyInput) keyInput.value = GeminiExtractorService.getApiKey() || "";
-            if (modelSelect) modelSelect.value = GeminiExtractorService.getModel() || "gemini-2.0-flash";
+            if (modelSelect) modelSelect.value = GeminiExtractorService.getModel() || "gemini-3.8-flash";
         }
     },
 
@@ -1816,7 +1816,7 @@ const App = {
     saveGeminiSettings() {
         let key = document.getElementById("settingGeminiApiKey")?.value.trim() || "";
         key = key.replace(/^["']|["']$/g, "").trim();
-        const model = document.getElementById("settingGeminiModel")?.value || "gemini-2.0-flash";
+        const model = document.getElementById("settingGeminiModel")?.value || "gemini-3.8-flash";
         if (typeof GeminiExtractorService !== "undefined") {
             GeminiExtractorService.saveApiKey(key);
             GeminiExtractorService.saveModel(model);
@@ -1849,7 +1849,7 @@ const App = {
     async testGeminiConnection() {
         let key = document.getElementById("settingGeminiApiKey")?.value.trim() || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getApiKey() : "");
         key = key.replace(/^["']|["']$/g, "").trim();
-        const model = document.getElementById("settingGeminiModel")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-2.0-flash");
+        const model = document.getElementById("settingGeminiModel")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-3.8-flash");
         const statusEl = document.getElementById("geminiKeyStatus");
 
         if (!key) {
@@ -1943,7 +1943,7 @@ const App = {
             // Populate AI Model select if stored
             const modalModelSelect = document.getElementById("aiModalModelSelect");
             if (modalModelSelect && typeof GeminiExtractorService !== "undefined") {
-                modalModelSelect.value = GeminiExtractorService.getModel() || "gemini-2.0-flash";
+                modalModelSelect.value = GeminiExtractorService.getModel() || "gemini-3.8-flash";
             }
 
             // Reset step view
@@ -2149,6 +2149,21 @@ const App = {
         if (infoEl) infoEl.style.display = "none";
     },
 
+    cancelAiExtraction() {
+        if (typeof GeminiExtractorService !== "undefined") {
+            GeminiExtractorService.cancelExtraction();
+        }
+        this.backToAiInputStep();
+        this.showToast("Đã dừng quá trình bóc tách. Bạn có thể đổi mô hình hoặc chọn cách khác.", "info");
+    },
+
+    closeAiModal() {
+        if (typeof GeminiExtractorService !== "undefined") {
+            GeminiExtractorService.cancelExtraction();
+        }
+        this.closeModal("modalAIExtractor");
+    },
+
     backToAiInputStep() {
         const modalEl = document.getElementById("modalAIExtractor");
         const modalContainer = modalEl ? modalEl.querySelector(".ai-modal-container") : null;
@@ -2177,7 +2192,7 @@ const App = {
         }
 
         // Selected AI Model
-        const selectedModel = document.getElementById("aiModalModelSelect")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-2.0-flash");
+        const selectedModel = document.getElementById("aiModalModelSelect")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-3.8-flash");
         if (typeof GeminiExtractorService !== "undefined") {
             GeminiExtractorService.saveModel(selectedModel);
         }
@@ -2270,6 +2285,12 @@ const App = {
         } catch (err) {
             console.error("AI Extraction Error:", err);
             this.backToAiInputStep();
+
+            // Nếu người dùng chủ động bấm Dừng / Hủy / Đóng modal, không hiển thị alert lỗi
+            if (err.isAborted || err.name === "AbortError" || err.message?.includes("dừng theo yêu cầu") || err.message?.includes("Hủy bởi người dùng")) {
+                return;
+            }
+
             // Nếu lỗi do khóa API không hợp lệ, tự động mở khung nhập nhanh API Key để người dùng dán khóa mới
             if (err.message && (err.message.includes("API Key") || err.message.includes("API key") || err.message.includes("API_KEY_INVALID"))) {
                 const box = document.getElementById("aiQuickKeyInputContainer");
@@ -2277,7 +2298,7 @@ const App = {
                 const inp = document.getElementById("aiQuickKeyInput");
                 if (inp) inp.focus();
             }
-            alert("Lỗi khi bóc tách lịch bằng AI:\n" + err.message);
+            alert("Thông báo bóc tách AI:\n\n" + err.message);
         }
     },
 

@@ -11,14 +11,70 @@ const GEMINI_CONFIG_KEYS = {
 };
 
 const AVAILABLE_GEMINI_MODELS = [
-    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Khuyên dùng - Siêu Nhanh, Thông Minh & Ổn Định Nhất)", default: true },
-    { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (Bản Chuẩn Quốc Tế - Tốc Độ Cao & Ổn Định)" },
-    { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (Bản Tiêu Chuẩn Nhanh)" },
-    { id: "gemini-flash-latest", name: "Gemini Flash Latest (Bản Flash Tự Động Cập Nhật Mới Nhất)" },
-    { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (Bản Chuyên Sâu - Đọc Văn Bản Dài & Phức Tạp)" }
+    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Mặc định - Thông Minh & Đa Năng)", default: true },
+    { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (Khuyên dùng khi máy chủ bận - Ổn Định & Nhanh)" },
+    { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (Bản Tiêu Chuẩn Quốc Tế)" },
+    { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite (Siêu Tốc)" }
 ];
 
 const GeminiExtractorService = {
+    // Biến lưu trữ AbortController của tác vụ bóc tách hiện hành
+    activeAbortController: null,
+
+    // Hàm chủ động hủy bỏ tiến trình bóc tách đang chạy
+    cancelExtraction() {
+        if (this.activeAbortController) {
+            try {
+                this.activeAbortController.abort("USER_CANCEL");
+            } catch (e) {}
+            this.activeAbortController = null;
+            return true;
+        }
+        return false;
+    },
+
+    // Gọi fetch kèm cơ chế Timeout chống treo vĩnh viễn và liên kết hủy bỏ người dùng
+    async fetchWithTimeout(url, options = {}, timeoutMs = 22000) {
+        const controller = new AbortController();
+        const timeoutTimer = setTimeout(() => {
+            controller.abort("TIMEOUT");
+        }, timeoutMs);
+
+        let abortListener = null;
+        if (this.activeAbortController) {
+            abortListener = () => {
+                controller.abort("USER_CANCEL");
+            };
+            this.activeAbortController.signal.addEventListener("abort", abortListener, { once: true });
+        }
+
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutTimer);
+            return response;
+        } catch (err) {
+            clearTimeout(timeoutTimer);
+            if (err.name === "AbortError" || controller.signal.aborted) {
+                if (this.activeAbortController?.signal.aborted || controller.signal.reason === "USER_CANCEL") {
+                    const abortErr = new Error("Quá trình bóc tách đã được dừng theo yêu cầu của bạn.");
+                    abortErr.isAborted = true;
+                    throw abortErr;
+                }
+                const toErr = new Error(`Thời gian chờ phản hồi từ Google AI quá ${Math.round(timeoutMs / 1000)}s (Request Timeout).`);
+                toErr.isTimeout = true;
+                throw toErr;
+            }
+            throw err;
+        } finally {
+            if (abortListener && this.activeAbortController) {
+                this.activeAbortController.signal.removeEventListener("abort", abortListener);
+            }
+        }
+    },
+
     // Lấy API Key đã lưu (ghi nhớ vĩnh viễn không cần nhập lại, hỗ trợ tự đồng bộ từ .env server)
     getApiKey() {
         let key = localStorage.getItem(GEMINI_CONFIG_KEYS.API_KEY) || localStorage.getItem("gemini_api_key_permanent");
@@ -100,10 +156,10 @@ const GeminiExtractorService = {
         
         // Nếu có danh sách live models từ Google API
         if (Array.isArray(availableModels) && availableModels.length > 0) {
-            // Lọc bỏ các model cũ đã bị Google khai tử
-            const activeModels = availableModels.filter(x => !x.includes("2.0") && !x.includes("1.5") && x !== "gemini-2.5-flash" && !x.includes("tts") && !x.includes("robotics"));
+            // Lọc bỏ các model không phù hợp (tts, robotics, 2.0, 1.5, 404 models)
+            const activeModels = availableModels.filter(x => !x.includes("2.0") && !x.includes("1.5") && x !== "gemini-2.5-flash" && x !== "gemini-2.5-pro" && !x.includes("tts") && !x.includes("robotics") && !x.includes("image"));
             if (activeModels.includes(m)) return m;
-            for (const pref of ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest"]) {
+            for (const pref of ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.1-flash-lite"]) {
                 if (activeModels.includes(pref)) return pref;
             }
             const matchFlash = activeModels.find(x => x.includes("flash"));
@@ -113,10 +169,10 @@ const GeminiExtractorService = {
 
         // Mapping model ID mới
         if (m.includes("3.8")) return "gemini-3.8-flash";
-        if (m.includes("3.7")) return "gemini-3.7-flash";
         if (m.includes("3.5")) return "gemini-3.5-flash";
+        if (m.includes("3.7")) return "gemini-3.7-flash";
+        if (m.includes("3.1") || m.includes("lite")) return "gemini-3.1-flash-lite";
         if (m.includes("latest")) return "gemini-flash-latest";
-        if (m.includes("3.1") || m.includes("pro")) return "gemini-2.5-pro";
         return "gemini-3.8-flash";
     },
 
@@ -126,13 +182,13 @@ const GeminiExtractorService = {
         if (!key) return [];
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`;
-            const res = await fetch(url, {
+            const res = await this.fetchWithTimeout(url, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
                     "x-goog-api-key": key
                 }
-            });
+            }, 6000);
             if (res.ok) {
                 const data = await res.json();
                 if (data.models && Array.isArray(data.models)) {
@@ -187,25 +243,21 @@ const GeminiExtractorService = {
         const liveModels = await this.getSupportedModels(key);
         const userModel = this.normalizeModelId(model || this.getModel(), liveModels);
 
+        const priorityPipeline = [
+            userModel,
+            "gemini-3.5-flash",
+            "gemini-3.8-flash",
+            "gemini-3.7-flash",
+            "gemini-3.1-flash-lite"
+        ];
         let candidateModels = [];
-        const preferredFlashList = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-2.5-pro"];
         if (liveModels.length > 0) {
-            const activeLive = liveModels.filter(m => !m.includes("2.0") && !m.includes("1.5") && m !== "gemini-2.5-flash" && m !== "gemini-2.5-flash-lite" && !m.includes("tts") && !m.includes("robotics"));
-            candidateModels = [
-                userModel,
-                ...preferredFlashList.filter(p => activeLive.includes(p)),
-                ...activeLive
-            ];
-        } else {
-            candidateModels = [
-                userModel,
-                "gemini-3.8-flash",
-                "gemini-3.7-flash",
-                "gemini-3.5-flash",
-                "gemini-flash-latest"
-            ];
+            candidateModels = priorityPipeline.filter(m => liveModels.includes(m));
         }
-        const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
+        if (candidateModels.length === 0) {
+            candidateModels = priorityPipeline;
+        }
+        const uniqueModels = [...new Set(candidateModels.filter(Boolean))].slice(0, 3);
         let lastError = null;
 
         for (const m of uniqueModels) {
@@ -223,54 +275,34 @@ const GeminiExtractorService = {
                 }
             };
 
-            for (let attempt = 1; attempt <= 3; attempt++) {
-                try {
-                    const res = await fetch(endpoint, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "x-goog-api-key": key
-                        },
-                        body: JSON.stringify(payload)
-                    });
+            try {
+                const res = await this.fetchWithTimeout(endpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": key
+                    },
+                    body: JSON.stringify(payload)
+                }, 7000);
 
-                    if (res.ok) {
-                        return true;
-                    }
-
-                    const errData = await res.json().catch(() => ({}));
-                    const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
-
-                    if (res.status === 403 || (res.status === 400 && errMsg.includes("API key")) || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
-                        throw new Error("Khóa Google Gemini API Key không chính xác hoặc chưa được cấp quyền. Vui lòng kiểm tra lại khóa (chuẩn mới AQ.Ab8... hoặc AIzaSy...)!");
-                    }
-
-                    if (res.status === 404 || errMsg.includes("not found for API version") || errMsg.includes("not supported for generateContent")) {
-                        // Model không hỗ trợ hoặc không có trong project, chuyển ngay sang model kế tiếp
-                        break;
-                    }
-
-                    const isOverloaded = res.status === 503 || res.status === 429 || res.status >= 500 ||
-                        errMsg.includes("high demand") || errMsg.includes("overloaded") || errMsg.includes("spikes in demand");
-
-                    if (isOverloaded && attempt < 3) {
-                        const delay = Math.round(2000 * Math.pow(1.5, attempt - 1));
-                        console.warn(`[Test API] Máy chủ quá tải (${res.status}). Đang tạm dừng ${delay}ms để thử lại lần ${attempt + 1}/3...`);
-                        await this.sleep(delay);
-                        continue;
-                    }
-
-                    lastError = new Error(errMsg);
-                    break;
-                } catch (e) {
-                    if (e.message && (e.message.includes("không chính xác") || e.message.includes("chưa được cấp quyền"))) throw e;
-                    lastError = e;
-                    if (attempt < 3) {
-                        await this.sleep(2000);
-                        continue;
-                    }
-                    break;
+                if (res.ok) {
+                    return true;
                 }
+
+                const errData = await res.json().catch(() => ({}));
+                const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
+
+                if (res.status === 403 || (res.status === 400 && errMsg.includes("API key")) || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
+                    throw new Error("Khóa Google Gemini API Key không chính xác hoặc chưa được cấp quyền. Vui lòng kiểm tra lại khóa (chuẩn mới AQ.Ab8... hoặc AIzaSy...)!");
+                }
+
+                lastError = new Error(errMsg);
+                // Nếu 503 / 404 / 429, chuyển nhanh sang candidate kế tiếp
+                continue;
+            } catch (e) {
+                if (e.message && (e.message.includes("không chính xác") || e.message.includes("chưa được cấp quyền"))) throw e;
+                lastError = e;
+                continue;
             }
         }
 
@@ -394,14 +426,18 @@ Trả về duy nhất 1 JSON object có định dạng:
 
     // Hàm chính: Bóc tách tệp hoặc văn bản bằng Gemini API
     async extractSchedule({ file = null, rawText = "", targetWeek = null, targetYear = null, apiKey = null, model = null, onProgress = null }) {
-        let key = (apiKey || this.getApiKey() || "").trim();
+        // Khởi tạo AbortController cho phiên bóc tách
+        this.activeAbortController = new AbortController();
+
+        try {
+            let key = (apiKey || this.getApiKey() || "").trim();
         key = key.replace(/^["']|["']$/g, "").trim();
         if (!key) {
             throw new Error("Chưa cấu hình Gemini API Key! Vui lòng nhập API Key (chuẩn mới AQ.Ab8... hoặc AIzaSy...) để tiếp tục.");
         }
         this.saveApiKey(key);
 
-        const rawModelId = model || this.getModel() || "gemini-2.0-flash";
+        const rawModelId = model || this.getModel() || "gemini-3.8-flash";
 
         if (onProgress) onProgress("Đang chuẩn bị nội dung tài liệu...", 20);
 
@@ -490,50 +526,61 @@ Trả về duy nhất 1 JSON object có định dạng:
         const liveModels = await this.getSupportedModels(key);
         const userModel = this.normalizeModelId(rawModelId, liveModels);
 
-        let candidateModels = [];
-        const preferredFlashList = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest", "gemini-2.5-pro"];
-        if (liveModels.length > 0) {
-            const activeLive = liveModels.filter(m => !m.includes("2.0") && !m.includes("1.5") && m !== "gemini-2.5-flash" && m !== "gemini-2.5-flash-lite" && !m.includes("tts") && !m.includes("robotics"));
-            candidateModels = [
-                userModel,
-                ...preferredFlashList.filter(p => activeLive.includes(p)),
-                ...activeLive
-            ];
-        } else {
-            candidateModels = [
-                userModel,
-                "gemini-3.8-flash",
-                "gemini-3.7-flash",
-                "gemini-3.5-flash",
-                "gemini-flash-latest"
-            ];
-        }
-        const uniqueModels = [...new Set(candidateModels.filter(Boolean))];
+        // Pipeline mô hình ưu tiên: Mô hình người dùng chọn -> gemini-3.5-flash (ổn định nhất) -> gemini-3.7-flash -> gemini-3.8-flash -> gemini-3.1-flash-lite
+        const priorityPipeline = [
+            userModel,
+            "gemini-3.5-flash",
+            "gemini-3.7-flash",
+            "gemini-3.8-flash",
+            "gemini-3.1-flash-lite"
+        ];
 
-        if (onProgress) onProgress("Gemini AI đang nhận diện và bóc tách bảng lịch biểu...", 65);
+        let candidateModels = [];
+        if (liveModels.length > 0) {
+            candidateModels = priorityPipeline.filter(m => liveModels.includes(m));
+        }
+        if (candidateModels.length === 0) {
+            candidateModels = priorityPipeline;
+        }
+        const uniqueModels = [...new Set(candidateModels.filter(Boolean))].slice(0, 4);
+
+        if (onProgress) onProgress(`Đang gửi tài liệu tới Gemini AI (${userModel})...`, 65);
 
         let rawJsonText = null;
         let successfulModel = null;
         let lastError = null;
 
         for (let i = 0; i < uniqueModels.length; i++) {
+            if (this.activeAbortController?.signal.aborted) {
+                const err = new Error("Quá trình bóc tách đã được dừng theo yêu cầu.");
+                err.isAborted = true;
+                throw err;
+            }
+
             const currentModel = uniqueModels[i];
             const currentEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${encodeURIComponent(key)}`;
 
             if (i > 0 && onProgress) {
-                onProgress(`Đang chuyển sang mô hình dự phòng ${currentModel}...`, 75);
+                onProgress(`Đang chuyển sang mô hình dự phòng siêu tốc: ${currentModel}...`, 72 + i * 4);
             }
 
             let modelSucceeded = false;
+            // Mỗi mô hình tối đa 2 lần gọi (1 chính + 1 retry nhanh) để chống đứng màn hình
+            const maxAttempts = 2;
 
-            // Cơ chế Exponential Backoff: Thử lại tối đa 3 lần cho mỗi mô hình khi gặp lỗi quá tải
-            for (let attempt = 1; attempt <= 3; attempt++) {
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                if (this.activeAbortController?.signal.aborted) {
+                    const err = new Error("Quá trình bóc tách đã được dừng theo yêu cầu.");
+                    err.isAborted = true;
+                    throw err;
+                }
+
                 try {
                     if (attempt > 1 && onProgress) {
-                        onProgress(`Đang tự động thử lại ngầm lần ${attempt}/3 với mô hình ${currentModel}...`, 70 + attempt * 2);
+                        onProgress(`Mô hình ${currentModel} đang bận, thử lại nhanh (lần ${attempt}/${maxAttempts})...`, 72 + i * 4);
                     }
 
-                    // Thử 1: Cấu hình Structured Output JSON Schema
+                    // Cấu hình Structured Output JSON Schema
                     const structuredBody = {
                         contents: contents,
                         generationConfig: {
@@ -570,14 +617,15 @@ Trả về duy nhất 1 JSON object có định dạng:
                         }
                     };
 
-                    let res = await fetch(currentEndpoint, {
+                    // Gọi fetch với Timeout 22 giây chống đứng màn hình
+                    let res = await this.fetchWithTimeout(currentEndpoint, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
                             "x-goog-api-key": key
                         },
                         body: JSON.stringify(structuredBody)
-                    });
+                    }, 22000);
 
                     // Nếu 400 (model không hỗ trợ schema), gửi lại không kèm schema
                     if (!res.ok && res.status === 400) {
@@ -589,14 +637,14 @@ Trả về duy nhất 1 JSON object có định dạng:
                                 maxOutputTokens: 8192
                             }
                         };
-                        res = await fetch(currentEndpoint, {
+                        res = await this.fetchWithTimeout(currentEndpoint, {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
                                 "x-goog-api-key": key
                             },
                             body: JSON.stringify(fallbackBody)
-                        });
+                        }, 22000);
                     }
 
                     if (res.ok) {
@@ -614,47 +662,57 @@ Trả về duy nhất 1 JSON object có định dạng:
                     const errData = await res.json().catch(() => ({}));
                     const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
 
-                    // Nếu lỗi do API Key không hợp lệ, dừng ngay vì các model khác cũng sẽ lỗi API Key
+                    // Lỗi API Key không hợp lệ -> dừng toàn bộ ngay lập tức
                     if (res.status === 403 || (res.status === 400 && errMsg.includes("API key")) || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
                         throw new Error(`Máy chủ Google AI phản hồi: "${errMsg}". Khóa API Key hiện tại trong .env không chính xác, đã hết hạn hoặc chưa được kích hoạt trên Google AI Studio. Vui lòng tạo khóa mới tại aistudio.google.com!`);
                     }
 
-                    // Nếu 404 (model không tìm thấy hoặc không hỗ trợ trong project), bỏ qua ngay sang model kế tiếp
+                    // Lỗi 404 (mô hình không tìm thấy) -> Bỏ qua ngay sang model kế tiếp
                     if (res.status === 404 || errMsg.includes("not found for API version") || errMsg.includes("not supported for generateContent")) {
-                        console.warn(`Mô hình ${currentModel} không hỗ trợ hoặc không khả dụng (404), chuyển ngay sang mô hình kế tiếp...`);
+                        console.warn(`Mô hình ${currentModel} không hỗ trợ (404), chuyển ngay sang mô hình kế tiếp...`);
                         lastError = new Error(errMsg);
                         break;
                     }
 
-                    // Kiểm tra lỗi quá tải / bận máy chủ / rate limit
+                    // Quá tải / bận máy chủ (503 / 429 / 500 / high demand)
                     const isOverloaded = res.status === 503 || res.status === 429 || res.status >= 500 ||
                         errMsg.includes("high demand") || errMsg.includes("overloaded") || errMsg.includes("spikes in demand") || errMsg.includes("temporarily");
 
-                    if (isOverloaded && attempt < 3) {
-                        // Exponential Backoff: lần 1 dừng 2s (2000ms), lần 2 dừng 3s (3000ms)
-                        const delay = Math.round(2000 * Math.pow(1.5, attempt - 1));
-                        console.warn(`[Exponential Backoff] Máy chủ quá tải (${res.status}: ${errMsg}). Tạm dừng ${delay}ms và ngầm gọi lại lần ${attempt + 1}/3...`);
-                        if (onProgress) {
-                            onProgress(`Máy chủ AI đang quá tải cục bộ, hệ thống đang tạm dừng ${Math.round(delay / 1000)}s rồi tự động gọi lại lần ${attempt + 1}/3...`, 70 + attempt * 2);
+                    if (isOverloaded) {
+                        lastError = new Error(errMsg);
+                        if (attempt < maxAttempts) {
+                            if (onProgress) onProgress(`Mô hình ${currentModel} đang quá tải (503), thử lại nhanh sau 1s...`, 72 + i * 4);
+                            await this.sleep(1000);
+                            continue;
                         }
-                        await this.sleep(delay);
-                        continue;
+                        // Nếu đã thử 2 lần vẫn quá tải, chuyển ngay lập tức sang mô hình dự phòng tiếp theo
+                        console.warn(`Mô hình ${currentModel} quá tải (503). Tự động chuyển ngay sang mô hình dự phòng tiếp theo...`);
+                        if (i < uniqueModels.length - 1 && onProgress) {
+                            onProgress(`Mô hình ${currentModel} quá tải, tự động chuyển ngay sang ${uniqueModels[i + 1]}...`, 74 + i * 4);
+                        }
+                        break;
                     }
 
-                    console.warn(`Mô hình ${currentModel} gặp lỗi (${res.status}): ${errMsg}.`);
                     lastError = new Error(errMsg);
                     break;
                 } catch (err) {
+                    if (err.isAborted) throw err;
                     if (err.message && (err.message.includes("không chính xác") || err.message.includes("chưa được cấp quyền"))) throw err;
-                    console.warn(`Lỗi khi gọi mô hình ${currentModel} (Lần ${attempt}/3):`, err.message);
+
+                    console.warn(`Lỗi khi gọi mô hình ${currentModel} (Lần ${attempt}/${maxAttempts}):`, err.message);
                     lastError = err;
 
-                    if (attempt < 3) {
-                        const delay = Math.round(2000 * Math.pow(1.5, attempt - 1));
-                        if (onProgress) {
-                            onProgress(`Mất kết nối hoặc quá tải, tạm dừng ${Math.round(delay / 1000)}s rồi tự động thử lại lần ${attempt + 1}/3...`, 70 + attempt * 2);
+                    if (err.isTimeout) {
+                        // Request timeout (>22s): không chờ thêm trên model này, chuyển ngay sang model kế tiếp
+                        console.warn(`Mô hình ${currentModel} phản hồi quá lâu (>22s). Chuyển ngay sang mô hình kế tiếp...`);
+                        if (i < uniqueModels.length - 1 && onProgress) {
+                            onProgress(`Mô hình ${currentModel} phản hồi chậm, tự động chuyển sang ${uniqueModels[i + 1]}...`, 74 + i * 4);
                         }
-                        await this.sleep(delay);
+                        break;
+                    }
+
+                    if (attempt < maxAttempts) {
+                        await this.sleep(1000);
                         continue;
                     }
                     break;
@@ -668,8 +726,10 @@ Trả về duy nhất 1 JSON object có định dạng:
 
         if (!rawJsonText) {
             let msg = lastError ? lastError.message : "Gemini AI không trả về dữ liệu phù hợp.";
-            if (msg.includes("high demand") || msg.includes("overloaded")) {
-                msg = "Hệ thống máy chủ Google AI đang trong thời điểm quá tải cục bộ. Vui lòng bấm thử lại lần nữa.";
+            if (msg.includes("high demand") || msg.includes("overloaded") || msg.includes("503")) {
+                msg = "Hệ thống máy chủ Google AI đang trong thời điểm quá tải lưu lượng tạm thời. Bạn có thể chọn mô hình 'Gemini 3.5 Flash' (ổn định cao) trong danh sách hoặc chuyển sang tab 'Dán trực tiếp văn bản' để xử lý ngay.";
+            } else if (msg.includes("Timeout") || msg.includes("timeout")) {
+                msg = "Đường truyền kết nối tới Google AI bị chậm hoặc quá thời gian chờ (Timeout). Vui lòng thử lại với mô hình 'Gemini 3.5 Flash' hoặc dán văn bản trực tiếp.";
             } else if (msg.includes("quota") || msg.includes("RESOURCE_EXHAUSTED")) {
                 msg = "Khóa API đã hết hạn mức sử dụng (Quota Exceeded). Vui lòng thử lại sau 1 phút hoặc lấy khóa mới tại Google AI Studio.";
             }
@@ -691,14 +751,17 @@ Trả về duy nhất 1 JSON object có định dạng:
 
         if (onProgress) onProgress("Hoàn tất bóc tách thành công!", 100);
 
-        return {
-            detectedWeek: parsedResult.detectedWeek || targetWeek || null,
-            detectedYear: parsedResult.detectedYear || targetYear || 2026,
-            detectedTitle: parsedResult.detectedTitle || `Lịch công tác tuần ${targetWeek || ''} năm ${targetYear || 2026}`,
-            items: sanitizedItems,
-            rawCount: sanitizedItems.length,
-            modelUsed: successfulModel || modelId
-        };
+            return {
+                detectedWeek: parsedResult.detectedWeek || targetWeek || null,
+                detectedYear: parsedResult.detectedYear || targetYear || 2026,
+                detectedTitle: parsedResult.detectedTitle || `Lịch công tác tuần ${targetWeek || ''} năm ${targetYear || 2026}`,
+                items: sanitizedItems,
+                rawCount: sanitizedItems.length,
+                modelUsed: successfulModel || userModel
+            };
+        } finally {
+            this.activeAbortController = null;
+        }
     },
 
     // Bộ giải mã và sửa lỗi JSON đa tầng chống gãy cú pháp

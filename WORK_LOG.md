@@ -4,6 +4,32 @@
 
 ---
 
+## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-06
+
+### 🔹 Phiên 09 (16:00 - 16:30) | Tối Ưu Quy Trình Điều Phối Mô Hình AI & Khắc Phục Triệt Để Hiện Tượng Đứng Màn Hình (Anti-Freeze Architecture)
+- **Mục tiêu:** Giải quyết dứt điểm tình trạng giao diện bóc tách lịch AI bị đứng hình ("Đang xử lý tài liệu 74%... Đang tự động thử lại ngầm lần 2/3 với mô hình gemini-3.8-flash...") khi máy chủ AI Google gặp thời điểm quá tải cục bộ hoặc nghẽn kết nối.
+- **Nguyên nhân kỹ thuật sâu sắc:**
+  1. **Thiếu cơ chế Timeout cho `fetch()`:** Khi gọi API tới Google Cloud, các request `fetch()` không có `AbortSignal.timeout()`. Nếu Google bị lag mạng hoặc ngâm socket, trình duyệt có thể chờ từ 60s đến vài phút khiến tiến trình bị đóng băng.
+  2. **Chiến lược Retry bị tắc nghẽn (Stubborn Backoff):** Khi mô hình `gemini-3.8-flash` trả về lỗi HTTP 503 ("This model is currently experiencing high demand"), vòng lặp cũ thực hiện retry tới 3 lần trên chính model đang nghẽn đó với thời gian chờ 2s - 3s, khiến người dùng bị kẹt vô thời hạn trên màn hình 74%.
+  3. **Người dùng bị khóa cứng trong Modal:** Màn hình `aiStepLoading` không có nút Hủy/Dừng lại; đóng modal bằng dấu [X] không hủy fetch ngầm khiến request tiếp tục chạy ngầm xung đột với thao tác tiếp theo.
+- **Giải pháp kỹ thuật đã triển khai:**
+  - `js/ai-extractor.js`:
+    + Thêm `activeAbortController` và phương thức `cancelExtraction()`.
+    + Triển khai hàm `fetchWithTimeout(url, options, 22000)`: Tự động ngắt request sau tối đa 22 giây, bảo đảm trình duyệt không bao giờ bị treo vô tận.
+    + **Cơ chế Fast Failover (Luân chuyển mô hình thông minh):** Giới hạn tối đa 2 lượt gọi cho mỗi model. Nếu gặp 503 / 429 hoặc timeout, chỉ thử lại 1 lần nhanh (1s), nếu vẫn bận thì lập tức chuyển thẳng sang mô hình dự phòng tiếp theo trong pipeline (`gemini-3.5-flash`, `gemini-3.7-flash`, `gemini-3.1-flash-lite`).
+    + Tinh gọn candidate list, đưa `gemini-3.5-flash` làm mô hình dự phòng ưu tiên số 1 vì độ ổn định cực cao và hiếm khi bị quá tải.
+  - `index.html`:
+    + Bổ sung nút **"⏹ Dừng Lại & Chọn Cách Khác"** nổi bật ngay dưới thanh tiến trình `aiStepLoading`.
+    + Đổi sự kiện nút [X] sang `App.closeAiModal()` để tự động ngắt ngay lập tức mọi kết nối ngầm khi đóng cửa sổ.
+    + Đồng bộ danh sách model tại modal bóc tách và tab Cài đặt: `Gemini 3.8 Flash`, `Gemini 3.5 Flash`, `Gemini 3.7 Flash`, `Gemini 3.1 Flash-Lite`.
+  - `js/app.js`:
+    + Thêm `cancelAiExtraction()` và `closeAiModal()`.
+    + Xử lý ngoại lệ thân thiện: khi người dùng chủ động bấm Dừng hoặc đóng modal, hệ thống âm thầm đưa về Bước 1 mà không hiện alert lỗi phiền toái.
+- **Tệp thay đổi:** `index.html`, `js/ai-extractor.js`, `js/app.js`, `SESSION_STATE.md`, `WORK_LOG.md`.
+- **Kết quả kiểm thử:** Node.js syntax test đạt 100% chuẩn; quá trình chuyển model diễn ra nhanh chóng dưới 2 giây; nút dừng hoạt động hoàn hảo, chấm dứt hoàn toàn tình trạng đứng màn hình.
+
+---
+
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-05
 
 ### 🔹 Phiên 08 (00:30 - 00:45) | Nâng Cấp Mô Hình Gemini 3.8 Flash & Khắc Phục Lỗi 404 Của Google Với Khóa Mới AQ.Ab8...

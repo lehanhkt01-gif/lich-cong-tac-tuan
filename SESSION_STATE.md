@@ -63,6 +63,11 @@
    - Cập nhật toàn bộ hệ thống sang mô hình thế hệ mới chính thức: `gemini-3.8-flash` (tốc độ bóc tách siêu nhanh 1.86s), `gemini-3.7-flash`, `gemini-3.5-flash`, `gemini-flash-latest`.
    - Bổ sung hộp nhập nhanh API Key dự phòng ngay trong modal bóc tách AI.
    - Đồng bộ commit sạch không chứa secret lên GitHub (`f43db53`).
+10. [x] **Tối ưu quy trình điều phối mô hình & Xử lý triệt để đứng màn hình khi bóc tách tài liệu (Anti-Freeze Architecture):**
+   - **Cơ chế Timeout chủ động (AbortController):** Thiết lập trần timeout 22 giây cho mỗi lệnh fetch qua hàm `fetchWithTimeout()`. Không còn hiện tượng trình duyệt ngâm kết nối vô hạn làm đứng màn hình.
+   - **Cơ chế Fast Failover (Luân chuyển mô hình thông minh):** Thay vì retry mù quáng 3 lần kéo dài hàng chục giây trên model đang gặp lỗi 503 (High demand) hoặc timeout, hệ thống chỉ thử lại 1 lần nhanh (1s), nếu vẫn bận thì lập tức chuyển sang mô hình dự phòng tiếp theo (`gemini-3.5-flash`, `gemini-3.7-flash`, `gemini-3.1-flash-lite`).
+   - **Quyền kiểm soát cho người dùng:** Bổ sung nút **"⏹ Dừng Lại & Chọn Cách Khác"** nổi bật ngay dưới thanh tiến trình `aiStepLoading`; tích hợp `cancelExtraction()` khi đóng modal bằng nút [X] giúp ngắt ngay lập tức tác vụ ngầm.
+   - **Xử lý ngoại lệ thân thiện:** Người dùng chủ động dừng không bị hiện alert lỗi; thông báo hướng dẫn chuyển sang model 3.5 Flash hoặc dán văn bản trực tiếp khi toàn bộ mạng AI Google bị nghẽn tải.
 
 ---
 
