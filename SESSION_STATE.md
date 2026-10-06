@@ -71,8 +71,9 @@
 11. [x] **Khắc phục lỗi nút [X], Hủy Bỏ bị đơ; xóa thông báo bắt đổi API Key & Chạy mượt mà 100% với Gemini 3.5 Flash:**
    - **Xử lý triệt để nút [X] & Hủy Bỏ bị đơ:** Bổ sung hàm inline toàn cục `window.closeAiExtractorModal()` độc lập trong `index.html`. Hỗ trợ phím Escape và bấm ra ngoài nền mờ backdrop để đóng modal lập tức mà không bao giờ bị đơ.
    - **Xóa bỏ tình trạng tự bung khung đòi đổi API Key:** Loại bỏ logic tự động mở `aiQuickKeyInputContainer` khi gặp lỗi bận máy chủ hoặc đường truyền. Khóa API trong `.env` (`AQ.Ab8...`) được bảo toàn và sử dụng xuyên suốt.
-   - **Cấu hình mô hình chuẩn Gemini 3.5 Flash:** Đặt `Gemini 3.5 Flash` làm mô hình mặc định hàng đầu (ổn định, không bị nghẽn demand spike, thời gian xử lý siêu tốc 1.4s).
+   - **Cấu hình mô hình chuẩn Gemini 3.5 Flash:** Đặt `Gemini 3.5 Flash` làm mô hình mặc định hàng đầu (ổn định, không bị nghẽn demand spike, thời gian xử lý siêu tốc 1.4s). Cập nhật cả trong `docker-compose.yml` và `.env.example`.
    - **Tối ưu hóa bóc tách tệp PDF/Ảnh:** Loại bỏ `responseSchema` đối với tệp nhị phân để khắc phục triệt để lỗi Google API HTTP 400 INVALID_ARGUMENT, bảo đảm bóc tách trích xuất thành công 100%.
+   - **Đồng bộ commit sạch lên GitHub:** Commit `341d294`.
 
 ---
 
