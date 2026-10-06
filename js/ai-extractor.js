@@ -7,12 +7,12 @@
 const GEMINI_CONFIG_KEYS = {
     API_KEY: "easup_gemini_api_key",
     MODEL: "easup_gemini_model",
-    DEFAULT_MODEL: "gemini-3.8-flash"
+    DEFAULT_MODEL: "gemini-3.5-flash"
 };
 
 const AVAILABLE_GEMINI_MODELS = [
-    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Mặc định - Thông Minh & Đa Năng)", default: true },
-    { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (Khuyên dùng khi máy chủ bận - Ổn Định & Nhanh)" },
+    { id: "gemini-3.5-flash", name: "Gemini 3.5 Flash (Khuyên dùng - Ổn Định Cao & Phản Hồi Tức Thì)", default: true },
+    { id: "gemini-3.8-flash", name: "Gemini 3.8 Flash (Thông Minh & Đa Năng - Có thể bận giờ cao điểm)" },
     { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash (Bản Tiêu Chuẩn Quốc Tế)" },
     { id: "gemini-3.1-flash-lite", name: "Gemini 3.1 Flash-Lite (Siêu Tốc)" }
 ];
@@ -151,7 +151,7 @@ const GeminiExtractorService = {
 
     // Chuẩn hóa Model ID sang các mô hình chính thức mới nhất của Google AI Studio (2026)
     normalizeModelId(modelId, availableModels = []) {
-        if (!modelId) return "gemini-3.8-flash";
+        if (!modelId) return "gemini-3.5-flash";
         let m = modelId.trim().toLowerCase();
         
         // Nếu có danh sách live models từ Google API
@@ -159,21 +159,21 @@ const GeminiExtractorService = {
             // Lọc bỏ các model không phù hợp (tts, robotics, 2.0, 1.5, 404 models)
             const activeModels = availableModels.filter(x => !x.includes("2.0") && !x.includes("1.5") && x !== "gemini-2.5-flash" && x !== "gemini-2.5-pro" && !x.includes("tts") && !x.includes("robotics") && !x.includes("image"));
             if (activeModels.includes(m)) return m;
-            for (const pref of ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-3.7-flash", "gemini-3.1-flash-lite"]) {
+            for (const pref of ["gemini-3.5-flash", "gemini-3.8-flash", "gemini-3.7-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"]) {
                 if (activeModels.includes(pref)) return pref;
             }
             const matchFlash = activeModels.find(x => x.includes("flash"));
             if (matchFlash) return matchFlash;
-            return activeModels[0] || "gemini-3.8-flash";
+            return activeModels[0] || "gemini-3.5-flash";
         }
 
         // Mapping model ID mới
-        if (m.includes("3.8")) return "gemini-3.8-flash";
         if (m.includes("3.5")) return "gemini-3.5-flash";
+        if (m.includes("3.8")) return "gemini-3.8-flash";
         if (m.includes("3.7")) return "gemini-3.7-flash";
         if (m.includes("3.1") || m.includes("lite")) return "gemini-3.1-flash-lite";
         if (m.includes("latest")) return "gemini-flash-latest";
-        return "gemini-3.8-flash";
+        return "gemini-3.5-flash";
     },
 
     // Lấy danh sách các mô hình thực tế mà Google API Key này có quyền gọi (ModelService.ListModels)
@@ -526,13 +526,21 @@ Trả về duy nhất 1 JSON object có định dạng:
         const liveModels = await this.getSupportedModels(key);
         const userModel = this.normalizeModelId(rawModelId, liveModels);
 
-        // Pipeline mô hình ưu tiên: Mô hình người dùng chọn -> gemini-3.5-flash (ổn định nhất) -> gemini-3.7-flash -> gemini-3.8-flash -> gemini-3.1-flash-lite
+        // Phát hiện tệp nhị phân (PDF hoặc Ảnh) để tối ưu payload tương thích Google API
+        const isBinaryFile = !!file && (
+            file.name.toLowerCase().endsWith('.pdf') ||
+            file.type === "application/pdf" ||
+            file.type.startsWith("image/") ||
+            /\.(jpg|jpeg|png|webp|bmp)$/i.test(file.name)
+        );
+
+        // Pipeline mô hình ưu tiên: Mô hình chọn -> gemini-3.5-flash (ổn định nhất) -> gemini-3.8-flash -> gemini-3.7-flash -> gemini-flash-latest
         const priorityPipeline = [
-            userModel,
+            userModel || "gemini-3.5-flash",
             "gemini-3.5-flash",
-            "gemini-3.7-flash",
             "gemini-3.8-flash",
-            "gemini-3.1-flash-lite"
+            "gemini-3.7-flash",
+            "gemini-flash-latest"
         ];
 
         let candidateModels = [];
@@ -544,7 +552,7 @@ Trả về duy nhất 1 JSON object có định dạng:
         }
         const uniqueModels = [...new Set(candidateModels.filter(Boolean))].slice(0, 4);
 
-        if (onProgress) onProgress(`Đang gửi tài liệu tới Gemini AI (${userModel})...`, 65);
+        if (onProgress) onProgress(`Đang gửi tài liệu tới Gemini AI (${uniqueModels[0]})...`, 65);
 
         let rawJsonText = null;
         let successfulModel = null;
@@ -561,11 +569,11 @@ Trả về duy nhất 1 JSON object có định dạng:
             const currentEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${encodeURIComponent(key)}`;
 
             if (i > 0 && onProgress) {
-                onProgress(`Đang chuyển sang mô hình dự phòng siêu tốc: ${currentModel}...`, 72 + i * 4);
+                onProgress(`Đang chuyển sang mô hình dự phòng: ${currentModel}...`, 72 + i * 4);
             }
 
             let modelSucceeded = false;
-            // Mỗi mô hình tối đa 2 lần gọi (1 chính + 1 retry nhanh) để chống đứng màn hình
+            // Mỗi mô hình tối đa 1 lần nếu 503, tối đa 2 lần nếu lỗi mạng nhẹ
             const maxAttempts = 2;
 
             for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -576,75 +584,67 @@ Trả về duy nhất 1 JSON object có định dạng:
                 }
 
                 try {
-                    if (attempt > 1 && onProgress) {
-                        onProgress(`Mô hình ${currentModel} đang bận, thử lại nhanh (lần ${attempt}/${maxAttempts})...`, 72 + i * 4);
-                    }
-
-                    // Cấu hình Structured Output JSON Schema
-                    const structuredBody = {
+                    // Đối với PDF / Ảnh (nhị phân), Google API v1beta không dùng responseSchema để tránh lỗi 400 INVALID_ARGUMENT
+                    let requestBody = {
                         contents: contents,
                         generationConfig: {
                             responseMimeType: "application/json",
-                            responseSchema: {
-                                type: "OBJECT",
-                                properties: {
-                                    detectedWeek: { type: "INTEGER" },
-                                    detectedYear: { type: "INTEGER" },
-                                    detectedTitle: { type: "STRING" },
-                                    items: {
-                                        type: "ARRAY",
-                                        items: {
-                                            type: "OBJECT",
-                                            properties: {
-                                                dayOfWeek: { type: "STRING" },
-                                                date: { type: "STRING" },
-                                                time: { type: "STRING" },
-                                                bloc: { type: "STRING" },
-                                                content: { type: "STRING" },
-                                                location: { type: "STRING" },
-                                                leader: { type: "STRING" },
-                                                participants: { type: "STRING" },
-                                                vehicle: { type: "STRING" }
-                                            },
-                                            required: ["dayOfWeek", "time", "bloc", "content"]
-                                        }
-                                    }
-                                },
-                                required: ["items"]
-                            },
                             temperature: 0.1,
                             maxOutputTokens: 8192
                         }
                     };
 
-                    // Gọi fetch với Timeout 22 giây chống đứng màn hình
+                    if (!isBinaryFile) {
+                        requestBody.generationConfig.responseSchema = {
+                            type: "OBJECT",
+                            properties: {
+                                detectedWeek: { type: "INTEGER" },
+                                detectedYear: { type: "INTEGER" },
+                                detectedTitle: { type: "STRING" },
+                                items: {
+                                    type: "ARRAY",
+                                    items: {
+                                        type: "OBJECT",
+                                        properties: {
+                                            dayOfWeek: { type: "STRING" },
+                                            date: { type: "STRING" },
+                                            time: { type: "STRING" },
+                                            bloc: { type: "STRING" },
+                                            content: { type: "STRING" },
+                                            location: { type: "STRING" },
+                                            leader: { type: "STRING" },
+                                            participants: { type: "STRING" },
+                                            vehicle: { type: "STRING" }
+                                        },
+                                        required: ["dayOfWeek", "time", "bloc", "content"]
+                                    }
+                                }
+                            },
+                            required: ["items"]
+                        };
+                    }
+
+                    // Gọi fetch với Timeout 20 giây chống đứng màn hình
                     let res = await this.fetchWithTimeout(currentEndpoint, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
                             "x-goog-api-key": key
                         },
-                        body: JSON.stringify(structuredBody)
-                    }, 22000);
+                        body: JSON.stringify(requestBody)
+                    }, 20000);
 
                     // Nếu 400 (model không hỗ trợ schema), gửi lại không kèm schema
-                    if (!res.ok && res.status === 400) {
-                        const fallbackBody = {
-                            contents: contents,
-                            generationConfig: {
-                                responseMimeType: "application/json",
-                                temperature: 0.1,
-                                maxOutputTokens: 8192
-                            }
-                        };
+                    if (!res.ok && res.status === 400 && requestBody.generationConfig.responseSchema) {
+                        delete requestBody.generationConfig.responseSchema;
                         res = await this.fetchWithTimeout(currentEndpoint, {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
                                 "x-goog-api-key": key
                             },
-                            body: JSON.stringify(fallbackBody)
-                        }, 22000);
+                            body: JSON.stringify(requestBody)
+                        }, 20000);
                     }
 
                     if (res.ok) {
@@ -663,11 +663,11 @@ Trả về duy nhất 1 JSON object có định dạng:
                     const errMsg = errData.error?.message || `Lỗi HTTP ${res.status}: ${res.statusText}`;
 
                     // Lỗi API Key không hợp lệ -> dừng toàn bộ ngay lập tức
-                    if (res.status === 403 || (res.status === 400 && errMsg.includes("API key")) || errMsg.includes("API key not valid") || errMsg.includes("API_KEY_INVALID")) {
-                        throw new Error(`Máy chủ Google AI phản hồi: "${errMsg}". Khóa API Key hiện tại trong .env không chính xác, đã hết hạn hoặc chưa được kích hoạt trên Google AI Studio. Vui lòng tạo khóa mới tại aistudio.google.com!`);
+                    if (res.status === 403 || (res.status === 400 && (errMsg.includes("API_KEY_INVALID") || errMsg.includes("API key not valid")))) {
+                        throw new Error(`Khóa Google Gemini API Key hiện tại không hợp lệ hoặc chưa được cấp quyền (Chi tiết: "${errMsg}"). Vui lòng kiểm tra lại khóa trong cấu hình.`);
                     }
 
-                    // Lỗi 404 (mô hình không tìm thấy) -> Bỏ qua ngay sang model kế tiếp
+                    // Lỗi 404 (mô hình không tồn tại) -> Bỏ qua ngay sang model kế tiếp
                     if (res.status === 404 || errMsg.includes("not found for API version") || errMsg.includes("not supported for generateContent")) {
                         console.warn(`Mô hình ${currentModel} không hỗ trợ (404), chuyển ngay sang mô hình kế tiếp...`);
                         lastError = new Error(errMsg);
@@ -680,15 +680,9 @@ Trả về duy nhất 1 JSON object có định dạng:
 
                     if (isOverloaded) {
                         lastError = new Error(errMsg);
-                        if (attempt < maxAttempts) {
-                            if (onProgress) onProgress(`Mô hình ${currentModel} đang quá tải (503), thử lại nhanh sau 1s...`, 72 + i * 4);
-                            await this.sleep(1000);
-                            continue;
-                        }
-                        // Nếu đã thử 2 lần vẫn quá tải, chuyển ngay lập tức sang mô hình dự phòng tiếp theo
-                        console.warn(`Mô hình ${currentModel} quá tải (503). Tự động chuyển ngay sang mô hình dự phòng tiếp theo...`);
+                        console.warn(`Mô hình ${currentModel} quá tải (503 / high demand). Chuyển ngay lập tức sang mô hình dự phòng tiếp theo...`);
                         if (i < uniqueModels.length - 1 && onProgress) {
-                            onProgress(`Mô hình ${currentModel} quá tải, tự động chuyển ngay sang ${uniqueModels[i + 1]}...`, 74 + i * 4);
+                            onProgress(`Mô hình ${currentModel} đang bận cao điểm, chuyển ngay sang ${uniqueModels[i + 1]}...`, 74 + i * 4);
                         }
                         break;
                     }

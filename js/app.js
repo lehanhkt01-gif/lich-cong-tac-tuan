@@ -1943,7 +1943,7 @@ const App = {
             // Populate AI Model select if stored
             const modalModelSelect = document.getElementById("aiModalModelSelect");
             if (modalModelSelect && typeof GeminiExtractorService !== "undefined") {
-                modalModelSelect.value = GeminiExtractorService.getModel() || "gemini-3.8-flash";
+                modalModelSelect.value = GeminiExtractorService.getModel() || "gemini-3.5-flash";
             }
 
             // Reset step view
@@ -2158,6 +2158,10 @@ const App = {
     },
 
     closeAiModal() {
+        if (typeof window.closeAiExtractorModal === "function") {
+            window.closeAiExtractorModal();
+            return;
+        }
         if (typeof GeminiExtractorService !== "undefined") {
             GeminiExtractorService.cancelExtraction();
         }
@@ -2191,8 +2195,8 @@ const App = {
             return;
         }
 
-        // Selected AI Model
-        const selectedModel = document.getElementById("aiModalModelSelect")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-3.8-flash");
+        // Selected AI Model (Mặc định gemini-3.5-flash)
+        const selectedModel = document.getElementById("aiModalModelSelect")?.value || (typeof GeminiExtractorService !== "undefined" ? GeminiExtractorService.getModel() : "gemini-3.5-flash");
         if (typeof GeminiExtractorService !== "undefined") {
             GeminiExtractorService.saveModel(selectedModel);
         }
@@ -2291,13 +2295,7 @@ const App = {
                 return;
             }
 
-            // Nếu lỗi do khóa API không hợp lệ, tự động mở khung nhập nhanh API Key để người dùng dán khóa mới
-            if (err.message && (err.message.includes("API Key") || err.message.includes("API key") || err.message.includes("API_KEY_INVALID"))) {
-                const box = document.getElementById("aiQuickKeyInputContainer");
-                if (box) box.style.display = "block";
-                const inp = document.getElementById("aiQuickKeyInput");
-                if (inp) inp.focus();
-            }
+            // TUYỆT ĐỐI KHÔNG tự tiện mở khung yêu cầu đổi API key khi lỗi bận máy chủ hoặc đường truyền
             alert("Thông báo bóc tách AI:\n\n" + err.message);
         }
     },

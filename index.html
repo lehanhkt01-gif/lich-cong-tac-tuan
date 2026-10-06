@@ -575,8 +575,8 @@
                         <div class="form-group" style="margin-bottom: 0;">
                             <label class="form-label">Mô hình AI:</label>
                             <select id="settingGeminiModel" class="form-select">
-                                <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Mặc định - Thông Minh & Đa Năng)</option>
-                                <option value="gemini-3.5-flash">Gemini 3.5 Flash (Khuyên dùng khi máy chủ bận - Ổn Định Cao & Nhanh)</option>
+                                <option value="gemini-3.5-flash" selected>Gemini 3.5 Flash (Khuyên dùng - Ổn Định Cao & Nhanh Tức Thì)</option>
+                                <option value="gemini-3.8-flash">Gemini 3.8 Flash (Thông Minh & Đa Năng - Có thể bận giờ cao điểm)</option>
                                 <option value="gemini-3.7-flash">Gemini 3.7 Flash (Bản Tiêu Chuẩn Quốc Tế)</option>
                                 <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite (Siêu Tốc)</option>
                             </select>
@@ -1087,6 +1087,53 @@
         </div>
     </div>
 
+    <script>
+        // Hàm đóng Modal Bóc Tách AI độc lập, chống đơ/treo giao diện 100%
+        window.closeAiExtractorModal = function() {
+            try {
+                if (window.GeminiExtractorService && typeof window.GeminiExtractorService.cancelExtraction === 'function') {
+                    window.GeminiExtractorService.cancelExtraction();
+                }
+            } catch (e) {
+                console.warn("Lỗi dừng tác vụ AI:", e);
+            }
+            try {
+                const modal = document.getElementById("modalAIExtractor");
+                if (modal) {
+                    modal.classList.remove("show");
+                    modal.style.display = "none";
+                }
+                document.body.style.overflow = "";
+            } catch (e) {
+                console.warn("Lỗi ẩn modal DOM:", e);
+            }
+            try {
+                if (window.App && typeof window.App.backToAiInputStep === 'function') {
+                    window.App.backToAiInputStep();
+                }
+            } catch (e) {}
+        };
+
+        // Lắng nghe phím ESC & bấm ra ngoài phông mờ để luôn luôn đóng được modal
+        document.addEventListener("keydown", function(e) {
+            if (e.key === "Escape" || e.keyCode === 27) {
+                const modal = document.getElementById("modalAIExtractor");
+                if (modal && (modal.style.display === "flex" || modal.classList.contains("show"))) {
+                    window.closeAiExtractorModal();
+                }
+            }
+        });
+        document.addEventListener("DOMContentLoaded", function() {
+            const modal = document.getElementById("modalAIExtractor");
+            if (modal) {
+                modal.addEventListener("click", function(e) {
+                    if (e.target === modal) {
+                        window.closeAiExtractorModal();
+                    }
+                });
+            }
+        });
+    </script>
     <!-- ==========================================================================
          MODAL 10: BÓC TÁCH LỊCH CÔNG TÁC TỰ ĐỘNG BẰNG GEMINI AI
          ========================================================================== -->
@@ -1103,8 +1150,8 @@
                             Word (.docx), Ảnh (.png/.jpg) hoặc Văn bản dán</div>
                     </div>
                 </div>
-                <button class="btn-close-modal" onclick="App.closeAiModal()"
-                    style="color: #fff; font-size: 18px;" title="Đóng cửa sổ (sẽ dừng tiến trình nếu đang chạy)">✕</button>
+                <button type="button" class="btn-close-modal" onclick="closeAiExtractorModal()"
+                    style="color: #fff; font-size: 18px; cursor: pointer; background: transparent; border: none; padding: 4px 8px;" title="Đóng cửa sổ (sẽ dừng tiến trình nếu đang chạy)">✕</button>
             </div>
 
             <div class="modal-body" style="padding: 16px 18px; max-height: 84vh; overflow-y: auto;">
@@ -1129,8 +1176,8 @@
                                     Mô hình AI:</label>
                                 <select id="aiModalModelSelect" class="form-select"
                                     style="font-weight: 600; font-size: 12.5px; padding: 6px 10px;">
-                                    <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash (Mặc định - Thông Minh & Đa Năng)</option>
-                                    <option value="gemini-3.5-flash">Gemini 3.5 Flash (Khuyên dùng khi máy chủ bận - Ổn Định Cao & Nhanh)</option>
+                                    <option value="gemini-3.5-flash" selected>Gemini 3.5 Flash (Khuyên dùng - Ổn Định Cao & Nhanh Tức Thì)</option>
+                                    <option value="gemini-3.8-flash">Gemini 3.8 Flash (Thông Minh & Đa Năng - Có thể bận giờ cao điểm)</option>
                                     <option value="gemini-3.7-flash">Gemini 3.7 Flash (Bản Tiêu Chuẩn Quốc Tế)</option>
                                     <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite (Siêu Tốc)</option>
                                 </select>
@@ -1226,7 +1273,7 @@
                     <!-- Nút bấm Bắt đầu bóc tách -->
                     <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
                         <button type="button" class="btn-bottom btn-history-audit"
-                            onclick="App.closeAiModal()">Hủy Bỏ</button>
+                            onclick="closeAiExtractorModal()">Hủy Bỏ</button>
                         <button type="button" id="btnStartExtractAI" class="btn-primary"
                             onclick="App.executeAiExtraction()"
                             style="background: linear-gradient(135deg, #4338CA 0%, #6366F1 100%); color: #fff; border: none; padding: 11px 24px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(79,70,229,0.35);">
@@ -1342,7 +1389,7 @@
                         </div>
                         <div style="display: flex; gap: 10px;">
                             <button type="button" class="btn-bottom btn-history-audit"
-                                onclick="App.closeAiModal()">Hủy Bỏ</button>
+                                onclick="closeAiExtractorModal()">Hủy Bỏ</button>
                             <button type="button" class="btn-primary" onclick="App.applyAIExtractedItemsToSchedule()"
                                 style="background: #16A34A; color: #fff; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(22,163,74,0.3);">
                                 <span>💾</span> Nạp Vào Lịch Tuần Ngay
@@ -1439,14 +1486,14 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20260910_02"></script>
-    <script src="js/storage.js?v=20260910_02"></script>
-    <script src="js/auth.js?v=20260910_02"></script>
-    <script src="js/audit.js?v=20260910_02"></script>
-    <script src="js/email-service.js?v=20260910_02"></script>
-    <script src="js/export-service.js?v=20260910_02"></script>
-    <script src="js/ai-extractor.js?v=20260910_02"></script>
-    <script src="js/app.js?v=20260910_02"></script>
+    <script src="js/data.js?v=20261006_03"></script>
+    <script src="js/storage.js?v=20261006_03"></script>
+    <script src="js/auth.js?v=20261006_03"></script>
+    <script src="js/audit.js?v=20261006_03"></script>
+    <script src="js/email-service.js?v=20261006_03"></script>
+    <script src="js/export-service.js?v=20261006_03"></script>
+    <script src="js/ai-extractor.js?v=20261006_03"></script>
+    <script src="js/app.js?v=20261006_03"></script>
 </body>
 
 </html>

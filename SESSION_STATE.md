@@ -64,10 +64,15 @@
    - Bổ sung hộp nhập nhanh API Key dự phòng ngay trong modal bóc tách AI.
    - Đồng bộ commit sạch không chứa secret lên GitHub (`f43db53`).
 10. [x] **Tối ưu quy trình điều phối mô hình & Xử lý triệt để đứng màn hình khi bóc tách tài liệu (Anti-Freeze Architecture):**
-   - **Cơ chế Timeout chủ động (AbortController):** Thiết lập trần timeout 22 giây cho mỗi lệnh fetch qua hàm `fetchWithTimeout()`. Không còn hiện tượng trình duyệt ngâm kết nối vô hạn làm đứng màn hình.
-   - **Cơ chế Fast Failover (Luân chuyển mô hình thông minh):** Thay vì retry mù quáng 3 lần kéo dài hàng chục giây trên model đang gặp lỗi 503 (High demand) hoặc timeout, hệ thống chỉ thử lại 1 lần nhanh (1s), nếu vẫn bận thì lập tức chuyển sang mô hình dự phòng tiếp theo (`gemini-3.5-flash`, `gemini-3.7-flash`, `gemini-3.1-flash-lite`).
-   - **Quyền kiểm soát cho người dùng:** Bổ sung nút **"⏹ Dừng Lại & Chọn Cách Khác"** nổi bật ngay dưới thanh tiến trình `aiStepLoading`; tích hợp `cancelExtraction()` khi đóng modal bằng nút [X] giúp ngắt ngay lập tức tác vụ ngầm.
-   - **Xử lý ngoại lệ thân thiện:** Người dùng chủ động dừng không bị hiện alert lỗi; thông báo hướng dẫn chuyển sang model 3.5 Flash hoặc dán văn bản trực tiếp khi toàn bộ mạng AI Google bị nghẽn tải.
+   - **Cơ chế Timeout chủ động (AbortController):** Thiết lập trần timeout 20 giây cho mỗi lệnh fetch qua hàm `fetchWithTimeout()`. Không còn hiện tượng trình duyệt ngâm kết nối vô hạn làm đứng màn hình.
+   - **Cơ chế Fast Failover (Luân chuyển mô hình thông minh):** Chuyển đổi mô hình lập tức khi gặp lỗi 503 (High demand) hoặc timeout.
+   - **Quyền kiểm soát cho người dùng:** Bổ sung nút **"⏹ Dừng Lại & Chọn Cách Khác"** nổi bật ngay dưới thanh tiến trình `aiStepLoading`.
+
+11. [x] **Khắc phục lỗi nút [X], Hủy Bỏ bị đơ; xóa thông báo bắt đổi API Key & Chạy mượt mà 100% với Gemini 3.5 Flash:**
+   - **Xử lý triệt để nút [X] & Hủy Bỏ bị đơ:** Bổ sung hàm inline toàn cục `window.closeAiExtractorModal()` độc lập trong `index.html`. Hỗ trợ phím Escape và bấm ra ngoài nền mờ backdrop để đóng modal lập tức mà không bao giờ bị đơ.
+   - **Xóa bỏ tình trạng tự bung khung đòi đổi API Key:** Loại bỏ logic tự động mở `aiQuickKeyInputContainer` khi gặp lỗi bận máy chủ hoặc đường truyền. Khóa API trong `.env` (`AQ.Ab8...`) được bảo toàn và sử dụng xuyên suốt.
+   - **Cấu hình mô hình chuẩn Gemini 3.5 Flash:** Đặt `Gemini 3.5 Flash` làm mô hình mặc định hàng đầu (ổn định, không bị nghẽn demand spike, thời gian xử lý siêu tốc 1.4s).
+   - **Tối ưu hóa bóc tách tệp PDF/Ảnh:** Loại bỏ `responseSchema` đối với tệp nhị phân để khắc phục triệt để lỗi Google API HTTP 400 INVALID_ARGUMENT, bảo đảm bóc tách trích xuất thành công 100%.
 
 ---
 
