@@ -541,9 +541,9 @@
                     </div>
                 </div>
 
-                <!-- Cấu hình Gemini AI Extractor (Ẩn theo yêu cầu quản trị - Khóa API đã lưu vào .env an toàn) -->
+                <!-- Cấu hình Gemini AI Extractor -->
                 <div
-                    style="display: none !important; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm); grid-column: 1 / -1;">
+                    style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 20px; box-shadow: var(--shadow-sm); grid-column: 1 / -1;">
                     <h3
                         style="font-size: 15px; font-weight: 700; color: #6D28D9; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
                         <span>✨</span> Cấu Hình Trí Tuệ Nhân Tạo (Google Gemini API)
@@ -1187,23 +1187,12 @@
                             style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #E2E8F0; padding-top: 8px; flex-wrap: wrap; gap: 6px;">
                             <span id="aiModalApiKeyStatusBadge"
                                 style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0;"
-                                title="Mã API Key đã được ghi nhớ bảo mật">
-                                <span>🔑</span> <span id="aiModalApiKeyStatusText">Đã kết nối Google Gemini API (Bảo mật máy chủ)</span>
+                                title="Mã API Key đã được ghi nhớ vĩnh viễn trên trình duyệt này">
+                                <span>🔑</span> <span id="aiModalApiKeyStatusText">Đã kích hoạt API Key cố định</span>
                             </span>
-                            <button type="button" onclick="App.toggleQuickApiKey()"
-                                style="font-size: 12px; color: #4F46E5; background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 4px; padding: 3px 8px; cursor: pointer; font-weight: 600;"
-                                title="Nhấp vào đây nếu muốn dán khóa API mới">🔑 Đổi khóa API</button>
-                        </div>
-                        <!-- Khung nhập nhanh API Key khi cần cập nhật khóa mới -->
-                        <div id="aiQuickKeyInputContainer" style="display: none; margin-top: 8px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 8px 10px;">
-                            <div style="font-size: 12px; font-weight: 700; color: #92400E; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
-                                <span>Nhập khóa Google Gemini API mới (AQ.Ab8... hoặc AIzaSy...):</span>
-                                <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: #2563EB; font-weight: 600; text-decoration: underline;">Lấy khóa miễn phí ↗</a>
-                            </div>
-                            <div style="display: flex; gap: 6px;">
-                                <input type="password" id="aiQuickKeyInput" placeholder="Dán khóa API mới từ aistudio.google.com vào đây..." style="flex: 1; font-size: 12px; padding: 5px 8px; border: 1px solid #CBD5E1; border-radius: 4px; font-family: monospace;">
-                                <button type="button" onclick="App.saveQuickApiKey()" style="background: #D97706; color: #fff; border: none; border-radius: 4px; padding: 5px 12px; font-size: 12px; font-weight: 700; cursor: pointer;">Lưu Khóa</button>
-                            </div>
+                            <button type="button" onclick="App.openSettingsViewFromModal()"
+                                style="font-size: 12px; color: #4F46E5; background: none; border: none; cursor: pointer; text-decoration: underline; font-weight: 600;"
+                                title="Mở trang Cài Đặt để xem hoặc đổi khóa API">⚙️ Cài đặt API</button>
                         </div>
 
                     </div>
@@ -1486,14 +1475,14 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20261006_03"></script>
-    <script src="js/storage.js?v=20261006_03"></script>
-    <script src="js/auth.js?v=20261006_03"></script>
-    <script src="js/audit.js?v=20261006_03"></script>
-    <script src="js/email-service.js?v=20261006_03"></script>
-    <script src="js/export-service.js?v=20261006_03"></script>
-    <script src="js/ai-extractor.js?v=20261006_03"></script>
-    <script src="js/app.js?v=20261006_03"></script>
+    <script src="js/data.js?v=20261007_01"></script>
+    <script src="js/storage.js?v=20261007_01"></script>
+    <script src="js/auth.js?v=20261007_01"></script>
+    <script src="js/audit.js?v=20261007_01"></script>
+    <script src="js/email-service.js?v=20261007_01"></script>
+    <script src="js/export-service.js?v=20261007_01"></script>
+    <script src="js/ai-extractor.js?v=20261007_01"></script>
+    <script src="js/app.js?v=20261007_01"></script>
 </body>
 
 </html>

@@ -76,6 +76,12 @@
    - **Tối ưu hóa bóc tách tệp PDF/Ảnh:** Loại bỏ `responseSchema` đối với tệp nhị phân để khắc phục triệt để lỗi Google API HTTP 400 INVALID_ARGUMENT, bảo đảm bóc tách trích xuất thành công 100%.
    - **Đồng bộ commit sạch lên GitHub:** Commit `341d294`.
 
+12. [x] **Khôi phục hoàn toàn chế độ Bóc tách lịch AI hoạt động độc lập trên trình duyệt (Client-Side):**
+   - **Mở lại Cấu hình AI trong Cài đặt hệ thống:** Hiển thị lại khối "✨ Cấu Hình Trí Tuệ Nhân Tạo (Google Gemini API)" để người dùng chủ động xem, nhập khóa và kiểm tra kết nối trực tiếp.
+   - **Khôi phục nút ⚙️ Cài đặt API trong Modal:** Dễ dàng chuyển sang Cài đặt khi cần đổi hoặc cập nhật khóa.
+   - **Lưu trữ API Key vĩnh viễn trên trình duyệt:** Đọc và lưu trực tiếp qua `localStorage` (loại bỏ hoàn toàn sự phụ thuộc vào `syncKeyFromServer` và file `.env` máy chủ gây lỗi trên VPS).
+   - **Duy trì các tối ưu quan trọng:** Giữ nguyên mô hình chuẩn `Gemini 3.5 Flash`, cơ chế chống đơ nút đóng modal, và loại bỏ `responseSchema` cho PDF để bóc tách thành công 100%.
+
 ---
 
 ## ⏳ 4. CÔNG VIỆC ĐANG THỰC HIỆN / VIỆC TIẾP THEO (PENDING BACKLOG)

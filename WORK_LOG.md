@@ -4,6 +4,28 @@
 
 ---
 
+## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-07
+
+### 🔹 Phiên 11 (20:20 - 20:35) | Khôi Phục Chế Độ Bóc Tách Lịch AI Hoạt Động Độc Lập Trên Trình Duyệt (Client-Side) Như Trước Khi Sửa 2 Ngày Trước
+- **Mục tiêu:** Khôi phục lại toàn bộ cơ chế Bóc tách lịch bằng AI hoạt động trực tiếp trên trình duyệt như trước khi chỉnh sửa đưa API AI Gemini vào file `.env` máy chủ.
+- **Nguyên nhân kỹ thuật sâu sắc:**
+  - 2 ngày trước, nỗ lực đồng bộ khóa API từ `.env` của VPS (`/api/system/ai-config`) đã gián tiếp ẩn khối "Cấu Hình Trí Tuệ Nhân Tạo (Google Gemini API)" trong tab Cài đặt (`display: none !important;`) và loại bỏ nút `⚙️ Cài đặt API` trong modal.
+  - Khi triển khai trên VPS, nếu container Docker không nạp được biến môi trường hoặc người dùng chưa có phiên đăng nhập Super Admin đầy đủ, API server trả về rỗng làm mất hoặc ghi đè khóa API trong trình duyệt, khiến tính năng bóc tách lịch AI bị tê liệt.
+- **Giải pháp triển khai:**
+  - `index.html`:
+    + Mở lại hoàn toàn khối "✨ Cấu Hình Trí Tuệ Nhân Tạo (Google Gemini API)" trong Cài đặt hệ thống (bỏ `display: none !important;`).
+    + Khôi phục nút `⚙️ Cài đặt API` trong modal để người dùng dễ dàng chuyển sang tab Cài đặt kiểm tra/nhập khóa bất cứ lúc nào.
+    + Xóa bỏ khung nhập nhanh tạm bợ màu cam (`aiQuickKeyInputContainer`).
+  - `js/ai-extractor.js`:
+    + Bỏ hàm `syncKeyFromServer()`.
+    + Khôi phục `getApiKey()` và `setApiKey()` lưu và đọc trực tiếp, độc lập từ `localStorage` của trình duyệt.
+  - `js/app.js`:
+    + Bỏ các lệnh gọi `syncKeyFromServer()`.
+    + Khôi phục kiểm tra khóa từ Cài đặt hệ thống: nếu chưa có khóa, thông báo chuyển sang Cài đặt; nếu đã có khóa, hiển thị huy hiệu `Đã kích hoạt API Key` kèm nút `⚙️ Cài đặt API`.
+- **Kết quả:** Người dùng toàn quyền quản lý API Key ngay trên giao diện web, không còn phụ thuộc vào `.env` của VPS, bóc tách tài liệu trực tiếp và ổn định 100%.
+
+---
+
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-06
 
 ### 🔹 Phiên 10 (16:45 - 17:30) | Sửa Lỗi Nút Đóng/Hủy Bị Đơ, Bỏ Hộp Thoại Bắt Đổi Khóa API & Đặt Gemini 3.5 Flash Chạy Thành Công 100%
