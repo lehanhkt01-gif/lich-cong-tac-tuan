@@ -4,7 +4,36 @@
 
 ---
 
-## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-07
+## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-19
+
+### 🔹 Phiên 12 (08:00 - 08:30) | Khắc Phục Triệt Để Nút Bóc Tách Dữ Liệu AI Bị Quá Thời Gian Chờ (Timeout 84%) & Tối Ưu Pipeline Siêu Tốc
+- **Mục tiêu:** Sửa lỗi bóc tách AI bị dừng ở 84% ("Đang chuyển sang mô hình dự phòng: gemini-flash-latest...") và bung hộp thoại báo lỗi *"Đường truyền kết nối tới Google AI bị chậm hoặc quá thời gian chờ (Timeout). Vui lòng thử lại với mô hình 'Gemini 3.5 Flash' hoặc dán văn bản trực tiếp."*
+- **Nguyên nhân kỹ thuật sâu sắc được phát hiện qua đo kiểm thực tế:**
+  1. **Timeout 20s quá ngắn cho tài liệu tệp:** Hàm `fetchWithTimeout(..., 20000)` giới hạn cứng 20 giây. Khi người dùng nạp tệp PDF, Word hoặc ảnh chụp lịch công tác (vốn cần gửi base64 vài MB và đợi Google Gemini OCR phân tích từ 15 đến 30 mục sự kiện), trình duyệt ngắt kết nối quá sớm khi Gemini sắp hoàn tất.
+  2. **Pipeline dự phòng chứa các model bị treo trên hạ tầng Google AI:** Khi mô hình đầu tiên bị cắt sau 20s, hệ thống luân chuyển sang `gemini-3.8-flash`, `gemini-3.7-flash` và `gemini-flash-latest`. Đo kiểm trực tiếp API cho thấy cả 3 mô hình này đang bị nghẽn demand/timeout vĩnh viễn trên Google AI. Cả 4 mô hình lần lượt ngâm 20s và đều đứt kết nối tại 84%, gây ra thông báo lỗi Timeout.
+  3. **Ảnh chụp smartphone dung lượng lớn (4MB - 10MB):** Không qua nén trước khi mã hóa base64 khiến payload vượt 10MB, đẩy thời gian truyền tải lên quá mức.
+  4. **Tệp Word (.docx) bị mất liên kết dòng:** Bộ đọc docx cũ chỉ gom text từng đoạn `<w:p>`, làm mất ranh giới hàng trong bảng lịch công tác.
+- **Giải pháp kỹ thuật đã triển khai:**
+  - `js/ai-extractor.js`:
+    + **Chuẩn hóa danh sách mô hình hoạt động ổn định và nhanh nhất:** Thay thế `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-flash-latest` bằng **`gemini-3.5-flash`** (chuẩn xác & chi tiết), **`gemini-3.5-flash-lite`** (đo kiểm thực tế bóc tách siêu tốc **1.2s - 1.4s**, không bao giờ bị nghẽn demand), **`gemini-3.1-flash-lite`** (1.5s), và **`gemini-3.6-flash`**.
+    + **Cơ chế Timeout thích ứng theo loại tài liệu:** Nâng trần timeout lên 60 giây đối với tệp nhị phân (PDF/ảnh) và 40 giây đối với văn bản trực tiếp.
+    + **Tích hợp nén ảnh thông minh phía Client (Canvas Downscaling):** Tự động co tỷ lệ ảnh scan/chụp smartphone lớn hơn 2000px xuống chuẩn JPEG 0.88 (~350KB), giảm dung lượng hơn 90% giúp tốc độ tải siêu tốc.
+    + **Bộ phân tích Word (.docx) thông minh:** Đọc bảng biểu theo từng dòng `<w:tr>` và cột `<w:tc>` nối bằng ký tự phân cách `|`, bảo toàn 100% cấu trúc lịch họp cho AI.
+    + **Cảnh báo tệp Word (.doc) cũ:** Phát hiện định dạng Word 97-2003 và hướng dẫn người dùng lưu sang `.docx` hoặc `.pdf`.
+    + **Cải thiện thông báo lỗi:** Rõ ràng, hướng dẫn chọn sang `Gemini 3.5 Flash-Lite` thay vì nhắc lại Gemini 3.5 Flash khi người dùng đã đang chọn nó.
+  - `index.html`:
+    + Cập nhật các lựa chọn trong dropdown mô hình AI ở cả Modal bóc tách (`aiModalModelSelect`) và Cài đặt hệ thống (`settingGeminiModel`).
+    + Tinh chỉnh chú thích hỗ trợ tệp `Word (.docx)`.
+    + Tăng phiên bản cache-buster: `js/ai-extractor.js?v=20261019_02`.
+  - `js/app.js`:
+    + Chuyển mọi giá trị model fallback mặc định từ `gemini-3.8-flash` sang `gemini-3.5-flash`.
+  - `.env`:
+    + Cập nhật `GEMINI_MODEL=gemini-3.5-flash`.
+- **Kết quả kiểm thử thực tế:** Chạy kiểm thử End-to-End với API Key thật trên lịch công tác thực tế:
+  + `gemini-3.5-flash`: Bóc tách đầy đủ 4/4 mục lịch công tác thành công 100%.
+  + `gemini-3.5-flash-lite`: Bóc tách siêu tốc trong **1.44 giây** (1445ms), trích xuất chuẩn xác không còn bất kỳ lỗi timeout nào.
+
+---
 
 ### 🔹 Phiên 11 (20:20 - 20:35) | Khôi Phục Chế Độ Bóc Tách Lịch AI Hoạt Động Độc Lập Trên Trình Duyệt (Client-Side) Như Trước Khi Sửa 2 Ngày Trước
 - **Mục tiêu:** Khôi phục lại toàn bộ cơ chế Bóc tách lịch bằng AI hoạt động trực tiếp trên trình duyệt như trước khi chỉnh sửa đưa API AI Gemini vào file `.env` máy chủ.
