@@ -304,15 +304,22 @@ const GuestApp = {
                 }
             }
 
-            const isToday = this.checkIsToday(fullDateIso, dayName, s ? s.startDate : null);
+            let isToday = this.checkIsToday(fullDateIso, dayName, s ? s.startDate : null, dateStr);
+
+            // Thuộc tính style cho ngày hôm nay (Bảo đảm áp dụng 100% kể cả khi CSS bị cache trình duyệt)
+            const todayRowStyle = isToday ? `style="background: linear-gradient(90deg, #FEF08A 0%, #FEF9C3 40%, #FFFDF0 100%) !important; border-top: 2px solid #F59E0B !important; border-bottom: 2px solid #FCD34D !important;"` : '';
+            const todayContentStyle = isToday ? `style="background: transparent !important; color: #78350F !important;"` : '';
+            const todayNameStyle = isToday ? `style="color: #854D0E !important; font-weight: 900 !important;"` : '';
+            const todayDateStyle = isToday ? `style="color: #92400E !important; font-weight: 800 !important;"` : '';
+            const todayCountStyle = isToday ? `style="background-color: #D97706 !important; color: #FFFFFF !important;"` : '';
 
             html += `
-                <tr class="day-divider-row ${isToday ? 'is-today-divider' : ''}">
-                    <td colspan="8" class="day-divider-content">
-                        <span class="day-name">${dayName}</span>
-                        ${dateStr ? `<span class="day-date">(${dateStr})</span>` : ''}
-                        ${isToday ? `<span class="badge-today-pill">HÔM NAY</span>` : ''}
-                        <span class="day-item-count">${dayItems.length} cuộc họp/công việc</span>
+                <tr class="day-divider-row ${isToday ? 'is-today-divider' : ''}" ${todayRowStyle}>
+                    <td colspan="8" class="day-divider-content" ${todayContentStyle}>
+                        <span class="day-name" ${todayNameStyle}>${dayName}</span>
+                        ${dateStr ? `<span class="day-date" ${todayDateStyle}>(${dateStr})</span>` : ''}
+                        ${isToday ? `<span class="badge-today-pill" style="background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); color: #FFFFFF !important; font-size: 11px; font-weight: 800; padding: 2.5px 8.5px; border-radius: 999px; margin-left: 8px; display: inline-flex; align-items: center; letter-spacing: 0.5px; vertical-align: middle; box-shadow: 0 1px 3px rgba(220, 38, 38, 0.3);">HÔM NAY</span>` : ''}
+                        <span class="day-item-count" ${todayCountStyle}>${dayItems.length} cuộc họp/công việc</span>
                     </td>
                 </tr>
             `;
@@ -334,10 +341,13 @@ const GuestApp = {
                         </button>
                     ` : `<span class="no-attachment-tag">—</span>`;
 
+                    const todayColStyle = isToday ? `style="background-color: #FEF9C3 !important; border-right: 1px solid #FDE047 !important; border-left: 3px solid #EAB308 !important;"` : '';
+                    const todayPillStyle = isToday ? `style="background-color: #FEF08A !important; color: #78350F !important; border: 1.5px solid #EAB308 !important; font-weight: 900 !important;"` : '';
+
                     html += `
                         <tr class="item-row ${isToday ? 'is-today-item' : ''}" data-item-id="${item.id}">
-                            <td class="col-time-cell ${isToday ? 'is-today-time' : ''}">
-                                <span class="time-pill ${isToday ? 'is-today-pill' : ''}">${item.time}</span>
+                            <td class="col-time-cell ${isToday ? 'is-today-time' : ''}" ${todayColStyle}>
+                                <span class="time-pill ${isToday ? 'is-today-pill' : ''}" ${todayPillStyle}>${item.time}</span>
                             </td>
                             <td>
                                 <span class="badge-bloc ${blocBadgeClass}">${item.bloc || 'UBND'}</span>
@@ -382,28 +392,70 @@ const GuestApp = {
         return "badge-ubnd";
     },
 
-    checkIsToday(dateIsoStr, dayName, startDateStr) {
+    checkIsToday(dateIsoStr, dayName, startDateStr, dateStrDisplay) {
         const today = new Date();
-        const y = today.getFullYear();
-        const m = String(today.getMonth() + 1).padStart(2, '0');
-        const d = String(today.getDate()).padStart(2, '0');
-        const todayIso = `${y}-${m}-${d}`;
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth() + 1;
+        const currentDay = today.getDate();
+        const todayIso = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+        const todayDayMonth = `${String(currentDay).padStart(2, '0')}/${String(currentMonth).padStart(2, '0')}`;
 
+        // 1. So khớp trực tiếp YYYY-MM-DD
         if (dateIsoStr && dateIsoStr.trim() === todayIso) {
             return true;
         }
 
-        if (dateIsoStr && dateIsoStr.includes('/')) {
-            const parts = dateIsoStr.trim().split('/');
-            if (parts.length === 3) {
-                const formatted = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                if (formatted === todayIso) return true;
+        // 2. So khớp trực tiếp chuỗi hiển thị DD/MM (ví dụ "21/10" hoặc "(21/10)")
+        if (dateStrDisplay) {
+            const cleanDisplay = dateStrDisplay.replace(/[()]/g, '').trim();
+            if (cleanDisplay === todayDayMonth || cleanDisplay === `${currentDay}/${currentMonth}`) {
+                return true;
             }
         }
 
+        // 3. Trích xuất Ngày và Tháng từ chuỗi dateIsoStr (hỗ trợ YYYY-MM-DD, DD/MM/YYYY, DD/MM)
+        if (dateIsoStr) {
+            const trimmed = dateIsoStr.trim();
+            if (trimmed.includes('-')) {
+                const parts = trimmed.split('-');
+                if (parts.length === 3) {
+                    const itemM = parseInt(parts[1], 10);
+                    const itemD = parseInt(parts[2], 10);
+                    if (itemD === currentDay && itemM === currentMonth) {
+                        return true;
+                    }
+                }
+            } else if (trimmed.includes('/')) {
+                const parts = trimmed.split('/');
+                if (parts.length >= 2) {
+                    const itemD = parseInt(parts[0], 10);
+                    const itemM = parseInt(parts[1], 10);
+                    if (itemD === currentDay && itemM === currentMonth) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // 4. Tính toán từ ngày bắt đầu tuần (startDateStr) và thứ (dayName)
         if (startDateStr && dayName && typeof StorageService !== 'undefined' && StorageService.calculateDateForDay) {
             const calcIso = StorageService.calculateDateForDay(startDateStr, dayName);
-            if (calcIso === todayIso) {
+            if (calcIso) {
+                if (calcIso === todayIso) return true;
+                const cp = calcIso.split('-');
+                if (cp.length === 3) {
+                    if (parseInt(cp[2], 10) === currentDay && parseInt(cp[1], 10) === currentMonth) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // 5. So khớp Thứ trong tuần nếu hôm nay trùng với thứ đó (ví dụ "Thứ Tư")
+        const vnDayNames = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+        const todayVnDay = vnDayNames[today.getDay()];
+        if (dayName && dayName.trim().toLowerCase() === todayVnDay.toLowerCase()) {
+            if (dateStrDisplay && dateStrDisplay.includes(String(currentDay))) {
                 return true;
             }
         }

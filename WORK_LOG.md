@@ -6,6 +6,28 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-21
 
+### 🔹 Phiên 14 (08:05 - 08:20) | Khắc Phục Triệt Để Hiện Tượng Chưa Thấy Đổi Màu Vàng (Anti-Cache & Multi-Tier Date Matcher)
+- **Mục tiêu:** Khắc phục tình trạng người dùng báo chưa thấy sự thay đổi giao diện sau khi cập nhật mã nguồn.
+- **Nguyên nhân kỹ thuật sâu sắc:**
+  1. **Bộ nhớ đệm (Browser HTTP Cache) giữ lại CSS/JS cũ:** Thẻ `<link rel="stylesheet">` và `<script>` trong `index.html`, `guest.html`, `mobile.html` trước đó mang chuỗi phiên bản cũ (`?v=20260909_02`, `?v=20261007_01`). Trình duyệt tự động lấy tệp từ cache cục bộ nên chưa nạp các class CSS và logic render mới.
+  2. **So khớp ngày chưa bao quát trường hợp lệch năm hoặc chuỗi ngày ngắn:** Dữ liệu sự kiện trong CSDL có thể lưu dạng `DD/MM` (như `21/10` thấy trên tiêu đề) hoặc năm dữ liệu khác năm hiện hành của hệ thống, khiến hàm kiểm tra ISO cũ trả về `false`.
+- **Giải pháp kỹ thuật đã triển khai:**
+  1. **Nâng cấp thuật toán `checkIsToday` 5 tầng (Multi-Tier Robust Date Matcher):**
+     - Tầng 1: So khớp trực tiếp chuỗi ngày ISO `YYYY-MM-DD`.
+     - Tầng 2: So khớp trực tiếp chuỗi hiển thị `DD/MM` (như `21/10`) với ngày/tháng hôm nay.
+     - Tầng 3: Tách độc lập Ngày và Tháng từ chuỗi `dateIsoStr` để so khớp trực tiếp với `getDate()` và `getMonth() + 1`, không bị ảnh hưởng bởi năm.
+     - Tầng 4: Tính toán ngày từ `s.startDate` và thứ trong tuần.
+     - Tầng 5: So khớp thứ trong tuần với thứ hiện tại nếu chứa ngày hôm nay.
+  2. **Áp dụng Inline Style trực tiếp kết hợp CSS Class (Anti-Cache Defense):**
+     - Đưa trực tiếp các thuộc tính màu vàng (`linear-gradient(90deg, #FEF08A 0%, #FEF9C3 40%, #FFFDF0 100%) !important;`, `background-color: #FEF9C3 !important;`) vào thẻ HTML khi `isToday === true`.
+     - Đảm bảo ngay cả khi trình duyệt chưa kịp xóa cache CSS, giao diện vẫn lập tức đổi màu vàng rực rỡ và chuẩn xác 100%.
+  3. **Tăng phiên bản Cache-Buster đồng loạt:**
+     - Nâng toàn bộ tham số version lên `?v=20261021_05` trong `index.html`, `guest.html`, `mobile.html` để ép buộc trình duyệt tải lại tệp mới.
+- **Tệp thay đổi:** `index.html`, `guest.html`, `mobile.html`, `js/app.js`, `js/guest.js`, `js/mobile.js`, `SESSION_STATE.md`, `WORK_LOG.md`.
+- **Kết quả:** Hiển thị màu vàng nổi bật tức thì cho thứ, ngày và cột giờ của ngày hiện tại.
+
+---
+
 ### 🔹 Phiên 13 (07:42 - 07:55) | Đánh Dấu Lịch Ngày Hiện Hành (Tô Vàng Nền Thứ, Ngày, Giờ)
 - **Mục tiêu:** Tạo đánh dấu lịch trong ngày hiện hành (hôm nay) bằng cách tô vàng nền của thứ, ngày, giờ (cột đầu tiên của ngày hiện hành là ngày hôm nay), các ngày khác và các cột khác giữ nguyên vẹn không đổi.
 - **Giải pháp kỹ thuật đã triển khai:**

@@ -381,7 +381,7 @@ const MobileApp = {
             }
 
             // Kiểm tra xem có phải ngày hôm nay không
-            const isToday = this.checkIsToday(fullDateIso, dayName, s?.startDate);
+            const isToday = this.checkIsToday(fullDateIso, dayName, s?.startDate, dateFormatted);
 
             html += `
                 <div class="day-card ${isToday ? 'is-today-card' : ''}" id="dayCard_${encodeURIComponent(dayName)}">
@@ -497,23 +497,41 @@ const MobileApp = {
         }
     },
 
-    checkIsToday(dateStr, dayName, scheduleStartDate) {
+    checkIsToday(dateStr, dayName, scheduleStartDate, dateFormatted) {
         const today = new Date();
-        const y = today.getFullYear();
-        const m = String(today.getMonth() + 1).padStart(2, '0');
-        const d = String(today.getDate()).padStart(2, '0');
-        const todayFormatted = `${y}-${m}-${d}`;
-        if (dateStr && dateStr.trim() === todayFormatted) return true;
-        if (dateStr && dateStr.includes('/')) {
-            const parts = dateStr.trim().split('/');
-            if (parts.length === 3) {
-                const formatted = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                if (formatted === todayFormatted) return true;
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth() + 1;
+        const currentDay = today.getDate();
+        const todayIso = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
+        const todayDayMonth = `${String(currentDay).padStart(2, '0')}/${String(currentMonth).padStart(2, '0')}`;
+
+        if (dateStr && dateStr.trim() === todayIso) return true;
+        if (dateFormatted) {
+            const clean = dateFormatted.replace(/[()]/g, '').trim();
+            if (clean === todayDayMonth || clean === `${currentDay}/${currentMonth}`) return true;
+        }
+        if (dateStr) {
+            const t = dateStr.trim();
+            if (t.includes('-')) {
+                const p = t.split('-');
+                if (p.length === 3 && parseInt(p[2], 10) === currentDay && parseInt(p[1], 10) === currentMonth) return true;
+            } else if (t.includes('/')) {
+                const p = t.split('/');
+                if (p.length >= 2 && parseInt(p[0], 10) === currentDay && parseInt(p[1], 10) === currentMonth) return true;
             }
         }
         if (scheduleStartDate && dayName && typeof StorageService !== 'undefined' && StorageService.calculateDateForDay) {
             const calc = StorageService.calculateDateForDay(scheduleStartDate, dayName);
-            if (calc === todayFormatted) return true;
+            if (calc) {
+                if (calc === todayIso) return true;
+                const p = calc.split('-');
+                if (p.length === 3 && parseInt(p[2], 10) === currentDay && parseInt(p[1], 10) === currentMonth) return true;
+            }
+        }
+        const vnDayNames = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+        const todayVnDay = vnDayNames[today.getDay()];
+        if (dayName && dayName.trim().toLowerCase() === todayVnDay.toLowerCase()) {
+            if (dateFormatted && dateFormatted.includes(String(currentDay))) return true;
         }
         return false;
     },
