@@ -6,6 +6,25 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-21
 
+### 🔹 Phiên 15 (08:25 - 08:35) | Cập Nhật Logo Chính Thức (/opt/lich-cong-tac-tuan/logo lichcongtac.png) Cho Trang Chủ & Đường Link lichcongtac.easupso.com
+- **Mục tiêu:** Sử dụng ảnh `/opt/lich-cong-tac-tuan/logo lichcongtac.png` để thay thế vào logo tại trang chủ trang web và logo đường link `https://lichcongtac.easupso.com`.
+- **Giải pháp kỹ thuật đã triển khai:**
+  1. **Thay thế logo đường link (Open Graph & Social Share Preview):**
+     - Cập nhật toàn bộ các thẻ `<meta property="og:image">`, `og:image:url`, `og:image:secure_url`, `og:image:type="image/png"`, `twitter:image`, `<link rel="image_src">`, `<meta name="thumbnail">` trên cả 3 trang `index.html`, `guest.html`, `mobile.html` trỏ tới `https://lichcongtac.easupso.com/logo%20lichcongtac.png`.
+     - Đồng bộ và tạo các tệp `og-image.jpg` và `og-image.png` từ ảnh gốc để mọi trình thu thập bot (Zalo, Facebook, Viber, Telegram) đều hiển thị trọn vẹn banner logo khi chia sẻ đường link.
+  2. **Thay thế logo thanh điều hướng trang chủ (`index.html`) & trang khách (`guest.html`):**
+     - Đổi thẻ logo sang `src="logo%20lichcongtac.png"` với class `.header-main-logo`.
+     - CSS `.header-main-logo`: `height: 52px; width: auto; max-width: 100%; object-fit: contain;` đảm bảo logo banner hiển thị rõ nét, đúng tỷ lệ, không bị co ép méo mó.
+     - Cơ chế fallback an toàn qua thuộc tính `onerror`: nếu ảnh chưa tải được, tự động hiển thị logo tròn và chữ dự phòng.
+  3. **Thay thế logo ứng dụng di động (`mobile.html`):**
+     - Sử dụng class `.mobile-logo-banner` với chiều cao 38px, hiển thị gọn đẹp trên thanh app bar di động.
+  4. **Cập nhật logo modal đăng nhập quản trị (`index.html`):**
+     - Đồng bộ sang `logo%20lichcongtac.png` với kích thước `max-height: 48px; max-width: 240px;`.
+  5. **Định tuyến tại máy chủ backend (`server.py`):**
+     - Bổ sung xử lý route cho `/logo lichcongtac.png`, `/logo%20lichcongtac.png` và `/logo-lichcongtac.png` trả về MIME `image/png` kèm cache 24h, fallback sang `assets/logo-easup.png`.
+- **Tệp chỉnh sửa:** `index.html`, `guest.html`, `mobile.html`, `css/style.css`, `css/mobile.css`, `js/data.js`, `server.py`, `logo lichcongtac.png`, `og-image.jpg`, `og-image.png`, `assets/logo-lichcongtac.png`, `SESSION_STATE.md`, `WORK_LOG.md`.
+- **Kết quả:** Logo trang chủ và ảnh thumbnail chia sẻ đường link `lichcongtac.easupso.com` hiển thị chuẩn xác, chuyên nghiệp và đồng bộ 100%.
+
 ### 🔹 Phiên 14 (08:05 - 08:20) | Khắc Phục Triệt Để Hiện Tượng Chưa Thấy Đổi Màu Vàng (Anti-Cache & Multi-Tier Date Matcher)
 - **Mục tiêu:** Khắc phục tình trạng người dùng báo chưa thấy sự thay đổi giao diện sau khi cập nhật mã nguồn.
 - **Nguyên nhân kỹ thuật sâu sắc:**

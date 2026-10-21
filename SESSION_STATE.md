@@ -9,8 +9,8 @@
 
 - **Tên dự án:** Cổng Thông tin Điều hành - Lịch Công tác tuần UBND Xã Ea Súp
 - **Môi trường:** Phát triển cục bộ (Local Windows Dev) & Máy chủ VPS (CasaOS / Docker)
-- **Commit mới nhất:** `939202a` (*fix(schedule): multi-tier date matching and inline style anti-cache for today highlight*)
-- **Trạng thái GitHub:** Đã push đồng bộ 100% lên `origin/main` (https://github.com/lehanhkt01-gif/lich-cong-tac-tuan)
+- **Commit mới nhất:** Sắp commit (*feat(branding): cap nhat logo lichcongtac.png cho trang chu va link preview lichcongtac.easupso.com*)
+- **Trạng thái GitHub:** Sẵn sàng commit và push lên `origin/main` (https://github.com/lehanhkt01-gif/lich-cong-tac-tuan)
 - **Trạng thái hệ thống:** Hoạt động ổn định (Backend Python `server.py` + Frontend SPA + Docker Compose Nginx:8090)
 
 ---
@@ -88,6 +88,14 @@
    - **Cơ chế nhận diện đa tầng (Anti-Mismatch):** Hàm `checkIsToday` so khớp linh hoạt 5 lớp: chuỗi ngày ISO, chuỗi hiển thị DD/MM (`21/10`), trích xuất ngày/tháng độc lập với năm, tính toán từ `startDate` tuần, và thứ trong tuần. Hoạt động chính xác 100% trong mọi cấu trúc dữ liệu.
    - **Cơ chế chống Cache triệt để (Anti-Cache):** Áp dụng inline style trực tiếp kết hợp tăng query version `?v=20261021_05` cho tất cả các file HTML (`index.html`, `guest.html`, `mobile.html`), bảo đảm trình duyệt hiển thị ngay lập tức không bị lưu cache cũ.
    - **Giữ nguyên các ngày khác:** Các ngày khác và các cột còn lại (Khối, Nội dung, Chủ trì...) giữ nguyên 100% định dạng ban đầu.
+
+14. [x] **Cập nhật logo chính thức (`/opt/lich-cong-tac-tuan/logo lichcongtac.png`) cho Trang chủ & Đường link (`lichcongtac.easupso.com`):**
+   - **Thay thế logo đường link (Open Graph / Zalo / Facebook Preview):** Cập nhật toàn bộ các thẻ `<meta property="og:image">`, `og:image:url`, `og:image:secure_url`, `og:image:type="image/png"`, `twitter:image`, `<link rel="image_src">`, `<meta name="thumbnail">` trên `index.html`, `guest.html`, và `mobile.html` trỏ tới `https://lichcongtac.easupso.com/logo%20lichcongtac.png`.
+   - **Thay thế logo tại trang chủ (`index.html`) & trang tra cứu (`guest.html`):** Áp dụng class `.header-main-logo` với chiều cao chuẩn 52px, tỉ lệ sắc nét và cơ chế fallback an toàn về logo cũ nếu tệp ảnh chưa sẵn sàng.
+   - **Thay thế logo bản di động (`mobile.html`):** Sử dụng class `.mobile-logo-banner` tối ưu cho app bar di động.
+   - **Cập nhật logo modal đăng nhập (`index.html`):** Sử dụng `logo lichcongtac.png` đồng bộ toàn diện hệ thống.
+   - **Hỗ trợ định tuyến tại máy chủ backend (`server.py`):** Xử lý đường dẫn `/logo lichcongtac.png` và `/logo%20lichcongtac.png` với MIME type `image/png`, fallback về `assets/logo-easup.png`.
+   - **Đồng bộ ảnh sang các định dạng chuẩn:** Đã sao chép sang `logo lichcongtac.png`, `og-image.jpg`, `og-image.png`, `assets/logo-lichcongtac.png`.
 
 ---
 

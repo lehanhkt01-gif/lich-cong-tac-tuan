@@ -219,6 +219,15 @@ body.desktop-preview-mode .device-screen {
     border-radius: 50%;
 }
 
+.mobile-logo-banner {
+    max-height: 38px;
+    width: auto;
+    max-width: 220px;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
 .brand-titles {
     display: flex;
     flex-direction: column;

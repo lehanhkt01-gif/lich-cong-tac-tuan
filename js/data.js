@@ -13,7 +13,7 @@ const INITIAL_DATA = {
         address: "Trung tâm Hành chính Xã Ea Súp, Tỉnh Đắk Lắk",
         phone: "(0262) 3688.123",
         email: "ubnd.easup@daklak.gov.vn",
-        logoUrl: "assets/logo-easup.png",
+        logoUrl: "logo%20lichcongtac.png",
         portalDomain: "https://easup.daklak.gov.vn/lich-cong-tac"
     },
 

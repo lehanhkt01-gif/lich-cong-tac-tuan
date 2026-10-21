@@ -988,6 +988,23 @@ class ProductionScheduleHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(content)
                 return
 
+        # 1b. Logo Lịch Công Tác (/logo lichcongtac.png)
+        unquoted_path = urllib.parse.unquote(path)
+        if unquoted_path in ["/logo lichcongtac.png", "/logo-lichcongtac.png"]:
+            logo_path = os.path.join(BASE_DIR, "logo lichcongtac.png")
+            if not os.path.exists(logo_path):
+                logo_path = os.path.join(BASE_DIR, "assets", "logo-easup.png")
+            if os.path.exists(logo_path):
+                with open(logo_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header('Content-Type', 'image/png')
+                self.send_header('Content-Length', str(len(content)))
+                self.send_header('Cache-Control', 'public, max-age=86400')
+                self.end_headers()
+                self.wfile.write(content)
+                return
+
         # 2. API Kiểm tra trạng thái máy chủ
         if path == "/api/status":
             self.send_json({
