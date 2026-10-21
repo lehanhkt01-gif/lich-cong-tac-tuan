@@ -56,7 +56,7 @@
         rel="stylesheet">
 
     <!-- CSS Stylesheet -->
-    <link rel="stylesheet" href="css/style.css?v=20261021_07">
+    <link rel="stylesheet" href="css/style.css?v=20261021_09">
 
     <!-- JSZip for in-browser Word docx parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -288,7 +288,7 @@
                     <!-- Ô tìm kiếm tức thì -->
                     <div class="search-input-box" style="position: relative; display: flex; align-items: center;">
                         <span class="search-icon-pos">🔍</span>
-                        <input type="search" id="searchInput" name="schedule_search_query_prevent_autofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tìm nội dung, lãnh đạo, địa điểm...">
+                        <input type="search" id="searchInput" name="schedule_search_query_prevent_autofill" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" readonly onfocus="this.removeAttribute('readonly');" placeholder="Tìm nội dung, lãnh đạo, địa điểm...">
                         <button type="button" id="btnClearSearch" onclick="App.clearSearch()" style="display: none; position: absolute; right: 10px; background: transparent; border: none; cursor: pointer; color: #94A3B8; font-size: 15px; font-weight: bold; padding: 2px 6px;" title="Xóa tìm kiếm">✕</button>
                     </div>
                 </div>

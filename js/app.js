@@ -44,12 +44,20 @@ const App = {
         if (searchInput) {
             searchInput.value = "";
             this.searchQuery = "";
-            setTimeout(() => {
-                if (searchInput.value && !this.searchQuery) {
-                    searchInput.value = "";
-                    this.renderScheduleTable();
-                }
-            }, 300);
+            // Quét kiểm tra liên tục trong 1 giây đầu sau khi tải trang để xóa autofill ngầm nếu user chưa focus
+            [50, 150, 300, 600, 1000].forEach(delay => {
+                setTimeout(() => {
+                    if (document.activeElement !== searchInput && searchInput.value) {
+                        searchInput.value = "";
+                        if (this.searchQuery) {
+                            this.searchQuery = "";
+                            const btnClear = document.getElementById("btnClearSearch");
+                            if (btnClear) btnClear.style.display = "none";
+                            this.renderScheduleTable();
+                        }
+                    }
+                }, delay);
+            });
         }
 
         // Kiểm tra tham số URL mở modal sửa hoặc chuyển tuần
@@ -387,19 +395,30 @@ const App = {
         const tbody = document.getElementById("scheduleTableBody");
         if (!tbody) return;
 
-        const s = this.currentSchedule;
-        if (!s || !s.items || s.items.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="10" style="text-align: center; padding: 40px; color: #64748B;">
-                        <div style="font-size: 36px; margin-bottom: 8px;">📅</div>
-                        <div style="font-size: 15px; font-weight: 700;">Chưa có mục công tác nào trong Tuần ${this.currentWeek}/${this.currentYear}</div>
-                        <p style="font-size: 13px; margin-top: 4px;">Nhấn nút <strong>"+ Thêm Công Tác Mới"</strong> hoặc <strong>"Sao chép từ tuần trước"</strong> để bắt đầu lập lịch.</p>
-                        ${AuthService.canEdit() ? `<button onclick="App.openEditItemModal()" class="btn-primary-create" style="margin-top: 14px;">+ Thêm Mục Đầu Tiên</button>` : ''}
-                    </td>
-                </tr>
-            `;
-            return;
+        let s = this.currentSchedule;
+        if (!s) {
+            s = StorageService.getScheduleByWeek(this.currentYear, this.currentWeek);
+            this.currentSchedule = s;
+        }
+
+        // Đảm bảo s luôn có startDate và items hợp lệ để vẽ đầy đủ các ngày trong tuần
+        if (!s) {
+            const monday = StorageService.getMondayOfWeek(this.currentWeek, this.currentYear);
+            const sunday = StorageService.getSundayOfWeek(this.currentWeek, this.currentYear);
+            const pad = (n) => String(n).padStart(2, '0');
+            s = {
+                year: this.currentYear,
+                weekNumber: this.currentWeek,
+                title: `Lịch công tác tuần ${this.currentWeek} năm ${this.currentYear}`,
+                startDate: `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`,
+                endDate: `${sunday.getFullYear()}-${pad(sunday.getMonth() + 1)}-${pad(sunday.getDate())}`,
+                status: "published",
+                items: []
+            };
+            this.currentSchedule = s;
+        }
+        if (!Array.isArray(s.items)) {
+            s.items = [];
         }
 
         // Lọc theo Khối & Tìm kiếm
@@ -582,10 +601,19 @@ const App = {
             btn.classList.toggle("active", btn.getAttribute("data-bloc") === "all");
         });
 
-        // 3. Chuyển về tab Lịch Công Tác Tuần (tab 1)
+        // 3. Chuyển về tab Lịch Công Tác Tuần (view_schedule)
         if (typeof this.switchTab === "function") {
-            this.switchTab("tabSchedule");
+            this.switchTab("schedule");
         }
+
+        // Đảm bảo section view_schedule luôn luôn có class active
+        document.querySelectorAll(".view-section").forEach(sec => sec.classList.remove("active"));
+        const scheduleView = document.getElementById("view_schedule");
+        if (scheduleView) scheduleView.classList.add("active");
+
+        // Đảm bảo tab menu Lịch Công Tác Tuần có class active
+        document.querySelectorAll(".nav-tab-item").forEach(t => t.classList.remove("active"));
+        document.querySelector('.nav-tab-item[data-tab="schedule"]')?.classList.add("active");
 
         // 4. Reset về tuần hiện tại của hệ thống
         const currentInfo = StorageService.getCurrentWeekInfo(new Date());

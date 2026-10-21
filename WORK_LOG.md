@@ -6,6 +6,30 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-21
 
+### 🔹 Phiên 18 (09:20 - 09:30) | Khắc Phục Triệt Để Hiện Tượng Trắng Trang Web Khi Bấm Logo/Tiêu Đề & Giữ Nguyên Bảng Lịch Khi Chưa Có Dữ Liệu
+- **Mục tiêu:** 
+  1. Khắc phục lỗi khi người dùng nhấp vào Logo hoặc tiêu đề "LỊCH CÔNG TÁC" thì toàn bộ phần thân web bị biến mất (hiện trắng trang web).
+  2. Khắc phục triệt để lỗi Chrome tự động điền tài khoản (`hanhlehong`) vào ô tìm kiếm làm ẩn sạch dữ liệu các ngày trong tuần.
+  3. Bảo đảm khi xem bất kỳ tuần nào (kể cả tuần chưa có cuộc họp hoặc items rỗng), bảng lịch vẫn hiển thị đầy đủ 7 ngày (Thứ 2 đến Chủ nhật) với dòng Thứ Tư (Hôm nay 21/10) được tô vàng rực rỡ nổi bật.
+- **Nguyên nhân kỹ thuật sâu xa:**
+  1. **Sai tên tab trong hàm `resetToHome()`:** Trong `js/app.js` và `js/guest.js`, hàm gọi `this.switchTab("tabSchedule")`. Nhưng ID thực tế của section là `view_schedule` và data-tab là `"schedule"`. Gọi `tabSchedule` khiến hàm `switchTab` gỡ bỏ class `.active` của tất cả các `view-section` và không tìm thấy `view_tabSchedule`, dẫn đến toàn bộ nội dung biến mất, biến trang web thành màn hình trắng xóa!
+  2. **Chrome Autofill Username:** Trình duyệt Chrome phát hiện trang có form login nên tự động autofill username (`hanhlehong`) vào ô tìm kiếm đầu tiên. Bộ lọc tìm kiếm kích hoạt loại bỏ toàn bộ các ngày do không chứa chữ `hanhlehong`.
+  3. **Return sớm khi `s.items.length === 0`:** Hàm `renderScheduleTable` trước đây nếu `items.length === 0` thì lập tức `return;` sớm hiển thị 1 ô trống thay vì vẽ các ngày trong tuần, khiến Thứ Tư hôm nay không được tô vàng.
+- **Giải pháp kỹ thuật đã triển khai:**
+  1. **Sửa gọi chuyển tab chính xác:**
+     - Đổi thành `this.switchTab("schedule")`.
+     - Chủ động kích hoạt trực tiếp `view_schedule.classList.add("active")` và `.nav-tab-item[data-tab="schedule"].classList.add("active")` để phòng ngừa rủi ro.
+  2. **Đặc trị Chrome Autofill bằng `readonly` và `autocomplete="new-password"`:**
+     - Thêm `readonly onfocus="this.removeAttribute('readonly');"` vào thẻ `<input id="searchInput">` trên cả `index.html` và `guest.html`. Khi trang tải, trình duyệt coi là read-only nên tuyệt đối không bao giờ autofill tài khoản vào. Khi người dùng nhấp chuột để tìm kiếm, `onfocus` lập tức gỡ bỏ `readonly` để gõ bình thường.
+     - Trong JS: Quét kiểm tra liên tục ở các mốc [50ms, 150ms, 300ms, 600ms, 1000ms], nếu người dùng chưa focus mà có giá trị autofill thì tự động dọn sạch.
+  3. **Luôn render đầy đủ 7 ngày kể cả khi tuần chưa có lịch:**
+     - Loại bỏ return sớm khi `s.items.length === 0`.
+     - Vòng lặp duyệt 7 ngày (Thứ 2 đến Chủ nhật) luôn tính toán ngày tháng và kiểm tra `isToday` chính xác: Thứ Tư (21/10) hôm nay được tô màu vàng rực rỡ, viền hổ phách và gắn huy hiệu `HÔM NAY`.
+     - Các ngày chưa có việc hiển thị dòng `(Không có lịch công tác)` chuẩn mực, giữ nguyên cấu trúc bảng hoàn hảo.
+  4. **Tăng phiên bản Cache-buster:** Đổi sang `?v=20261021_09` trên toàn bộ các file CSS/JS.
+- **Tệp chỉnh sửa:** `index.html`, `guest.html`, `mobile.html`, `js/app.js`, `js/guest.js`, `WORK_LOG.md`, `SESSION_STATE.md`.
+- **Kết quả:** Nhấp vào logo hoặc tiêu đề lập tức nạp lại mượt mà, không bao giờ bị trắng trang hay trắng bảng. Bảng lịch tuần 42 hiển thị ngày Thứ Tư 21/10 hôm nay màu vàng rực rỡ.
+
 ### 🔹 Phiên 17 (09:10 - 09:15) | Khắc Phục Lỗi Bấm Vào Logo/Tiêu Đề Trắng Dữ Liệu & Chống Browser Autofill
 - **Mục tiêu:** Khắc phục triệt để hiện tượng khi bấm vào logo và tiêu đề hoặc khi tải trang thì bảng lịch công tác tuần bị trắng xóa dữ liệu.
 - **Nguyên nhân kỹ thuật sâu sắc:**

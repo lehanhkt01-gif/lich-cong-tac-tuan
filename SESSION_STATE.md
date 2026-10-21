@@ -1,6 +1,6 @@
 # TRẠNG THÁI PHIÊN LÀM VIỆC HIỆN TẠI (ACTIVE SESSION STATE)
 > **Tài liệu theo dõi trạng thái tác nghiệp thời gian thực**  
-> *Lần cập nhật cuối: 2026-10-19 08:30 (Giờ Việt Nam - UTC+7)*  
+> *Lần cập nhật cuối: 2026-10-21 09:30 (Giờ Việt Nam - UTC+7)*  
 > *Dành cho việc khôi phục ngữ cảnh tức thì khi khởi động lại hệ thống hoặc mở phiên mới.*
 
 ---
@@ -9,8 +9,8 @@
 
 - **Tên dự án:** Cổng Thông tin Điều hành - Lịch Công tác tuần UBND Xã Ea Súp
 - **Môi trường:** Phát triển cục bộ (Local Windows Dev) & Máy chủ VPS (CasaOS / Docker)
-- **Commit mới nhất:** `a5a06dd` (*fix(navigation): bo sung resetToHome khi click logo tieu de va chong browser autofill lam trang bang lich*)
-- **Trạng thái GitHub:** Đã push đồng bộ 100% lên `origin/main` (https://github.com/lehanhkt01-gif/lich-cong-tac-tuan)
+- **Commit mới nhất:** Sắp commit (*fix: sua triet de loi click logo trang web va chan Chrome autofill lam mat lich*)
+- **Trạng thái GitHub:** Đã sẵn sàng push lên `origin/main` (https://github.com/lehanhkt01-gif/lich-cong-tac-tuan)
 - **Trạng thái hệ thống:** Hoạt động ổn định (Backend Python `server.py` + Frontend SPA + Docker Compose Nginx:8090)
 
 ---
@@ -96,6 +96,12 @@
    - **Cập nhật logo modal đăng nhập (`index.html`):** Sử dụng `logo lichcongtac.png` đồng bộ toàn diện hệ thống.
    - **Hỗ trợ định tuyến tại máy chủ backend (`server.py`):** Xử lý đường dẫn `/logo lichcongtac.png` và `/logo%20lichcongtac.png` với MIME type `image/png`, fallback về `assets/logo-easup.png`.
    - **Đồng bộ ảnh sang các định dạng chuẩn:** Đã sao chép sang `logo lichcongtac.png`, `og-image.jpg`, `og-image.png`, `assets/logo-lichcongtac.png`.
+
+15. [x] **Khắc phục triệt để lỗi click Logo/Tiêu đề bị trắng trang & Chống Chrome Autofill làm mất lịch tuần:**
+   - **Sửa lỗi tên tab `switchTab("schedule")`:** Khắc phục lỗi sai tên tab `tabSchedule` khiến toàn bộ các section bị gỡ class `.active` dẫn đến trắng toàn bộ thân trang. Bổ sung cơ chế bảo vệ kép luôn kích hoạt trực tiếp `view_schedule.classList.add("active")`.
+   - **Đặc trị Chrome Autofill:** Bổ sung `readonly onfocus="this.removeAttribute('readonly');"` và `autocomplete="new-password"` cho thẻ `searchInput` trên cả `index.html` và `guest.html`. Chrome hoàn toàn không thể tự ý autofill tài khoản `hanhlehong` vào ô tìm kiếm làm ẩn bảng lịch.
+   - **Render trọn vẹn 7 ngày trong tuần kể cả khi tuần chưa có lịch:** Loại bỏ lệnh `return;` sớm trong `renderScheduleTable()`. Bảng lịch luôn vẽ đầy đủ 7 ngày từ Thứ Hai đến Chủ Nhật, tính đúng ngày tháng và tô màu vàng rực rỡ cho Thứ Tư (21/10) hôm nay kèm huy hiệu `HÔM NAY`.
+   - **Tăng cache-buster:** Đổi query version lên `?v=20261021_09` trên toàn bộ hệ thống.
 
 ---
 
