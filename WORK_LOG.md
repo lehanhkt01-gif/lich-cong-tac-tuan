@@ -6,6 +6,25 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-21
 
+### 🔹 Phiên 16 (08:55 - 09:05) | Cập Nhật Logo Tròn 3D Lịch Công Tác & Giữ Nguyên Các Dòng Chữ Thương Hiệu
+- **Mục tiêu:** Sử dụng hình ảnh logo mới (biểu trưng tròn 3D Lịch Công Tác gồm cuốn lịch, đồng hồ, cây bút) để thay thế logo trước đây vào đầu trang web và logo đường link website; đồng thời giữ nguyên toàn bộ các dòng chữ thương hiệu như trước.
+- **Giải pháp kỹ thuật đã triển khai:**
+  1. **Tích hợp hình ảnh logo mới:**
+     - Tệp ảnh logo 3D mới (`376x376`, PNG trong suốt) được cập nhật đồng bộ vào `assets/logo-lichcongtac.png`, `assets/logo-easup.png`, `logo lichcongtac.png`, `og-image.png`, `og-image.jpg`.
+  2. **Giao diện đầu trang web (`index.html`, `guest.html`, `mobile.html`):**
+     - Đặt logo mới vào thẻ `<img>` với class `.national-crest` (hoặc `.brand-emblem` trên mobile).
+     - CSS `.national-crest`: tinh chỉnh `object-fit: contain;` và `padding: 1px;` giúp biểu trưng tròn hiển thị trọn vẹn, sắc nét, nổi bật trên nền trắng viền vàng kim.
+     - Giữ nguyên vẹn 100% cả 3 dòng chữ:
+       + Dòng 1: `ĐẢNG ỦY, HĐND, UBND, UBMTTQ XÃ EA SÚP` (màu vàng kim).
+       + Dòng 2: `LỊCH CÔNG TÁC TUẦN` (chữ trắng đậm nổi bật).
+       + Dòng 3: `● Cổng thông tin điều hành - Quản lý lịch công tác tuần` (dấu chấm xanh lục, chữ xanh nhạt).
+  3. **Logo đường link chia sẻ (Open Graph / Zalo / Facebook):**
+     - Cập nhật `og:image`, `twitter:image`, `image_src`, `thumbnail` trỏ tới `assets/logo-lichcongtac.png?v=20261021_08`.
+  4. **Modal đăng nhập quản trị:**
+     - Cập nhật logo hình tròn 3D đồng bộ đẹp mắt.
+- **Tệp chỉnh sửa:** `index.html`, `guest.html`, `mobile.html`, `css/style.css`, `js/data.js`, các tệp ảnh logo, `SESSION_STATE.md`, `WORK_LOG.md`.
+- **Kết quả:** Logo mới hiển thị chính xác theo đúng ý người dùng, thương hiệu trang chủ giữ nguyên vẹn trang trọng và chuyên nghiệp.
+
 ### 🔹 Phiên 15 (08:25 - 08:35) | Cập Nhật Logo Chính Thức (/opt/lich-cong-tac-tuan/logo lichcongtac.png) Cho Trang Chủ & Đường Link lichcongtac.easupso.com
 - **Mục tiêu:** Sử dụng ảnh `/opt/lich-cong-tac-tuan/logo lichcongtac.png` để thay thế vào logo tại trang chủ trang web và logo đường link `https://lichcongtac.easupso.com`.
 - **Giải pháp kỹ thuật đã triển khai:**

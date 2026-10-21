@@ -97,11 +97,12 @@ body {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    object-fit: cover;
+    object-fit: contain;
     background: #FFFFFF;
     border: 2px solid #FCD34D;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
     flex-shrink: 0;
+    padding: 1px;
     transition: var(--transition);
 }
 
