@@ -9,8 +9,8 @@
 
 - **Tên dự án:** Cổng Thông tin Điều hành - Lịch Công tác tuần UBND Xã Ea Súp
 - **Môi trường:** Phát triển cục bộ (Local Windows Dev) & Máy chủ VPS (CasaOS / Docker)
-- **Commit mới nhất:** Sắp commit (*fix: sua triet de loi click logo trang web va chan Chrome autofill lam mat lich*)
-- **Trạng thái GitHub:** Đã sẵn sàng push lên `origin/main` (https://github.com/lehanhkt01-gif/lich-cong-tac-tuan)
+- **Commit mới nhất:** `f7bb707` (*fix(navigation): sua loi switchTab schedule, render day du 7 ngay va triet tieu Chrome autofill*)
+- **Trạng thái GitHub:** Đã push đồng bộ 100% lên `origin/main` (https://github.com/lehanhkt01-gif/lich-cong-tac-tuan)
 - **Trạng thái hệ thống:** Hoạt động ổn định (Backend Python `server.py` + Frontend SPA + Docker Compose Nginx:8090)
 
 ---
