@@ -9,7 +9,7 @@
 
 - **Tên dự án:** Cổng Thông tin Điều hành - Lịch Công tác tuần UBND Xã Ea Súp
 - **Môi trường:** Phát triển cục bộ (Local Windows Dev) & Máy chủ VPS (CasaOS / Docker)
-- **Commit mới nhất:** `c269143` (*feat(branding): cap nhat logo tron 3D lich cong tac va giu nguyen 3 dong chu thuong hieu*)
+- **Commit mới nhất:** `a5a06dd` (*fix(navigation): bo sung resetToHome khi click logo tieu de va chong browser autofill lam trang bang lich*)
 - **Trạng thái GitHub:** Đã push đồng bộ 100% lên `origin/main` (https://github.com/lehanhkt01-gif/lich-cong-tac-tuan)
 - **Trạng thái hệ thống:** Hoạt động ổn định (Backend Python `server.py` + Frontend SPA + Docker Compose Nginx:8090)
 
