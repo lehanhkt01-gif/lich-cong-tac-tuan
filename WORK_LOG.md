@@ -4,6 +4,35 @@
 
 ---
 
+## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-21
+
+### 🔹 Phiên 13 (07:42 - 07:55) | Đánh Dấu Lịch Ngày Hiện Hành (Tô Vàng Nền Thứ, Ngày, Giờ)
+- **Mục tiêu:** Tạo đánh dấu lịch trong ngày hiện hành (hôm nay) bằng cách tô vàng nền của thứ, ngày, giờ (cột đầu tiên của ngày hiện hành là ngày hôm nay), các ngày khác và các cột khác giữ nguyên vẹn không đổi.
+- **Giải pháp kỹ thuật đã triển khai:**
+  1. **Nhận diện ngày hiện hành chính xác (`checkIsToday`):**
+     - Bổ sung hàm `checkIsToday(dateIsoStr, dayName, startDateStr)` trong `js/app.js` và `js/guest.js`.
+     - So khớp linh hoạt theo chuỗi ngày ISO `YYYY-MM-DD`, `DD/MM/YYYY`, hoặc tự động tính toán qua `StorageService.calculateDateForDay(s.startDate, dayName)`.
+     - Đảm bảo ngay cả khi ngày đó chưa có lịch công tác nào (`dayItems.length === 0`), hệ thống vẫn xác định chính xác ngày hôm nay và hiển thị trạng thái tương ứng.
+  2. **Tô vàng nền Thứ, Ngày (Thanh tiêu đề phân cách ngày):**
+     - Gắn class `.is-today-divider` cho thẻ `<tr class="day-divider-row">`.
+     - Phủ dải màu gradient vàng ấm áp `linear-gradient(90deg, #FEF08A 0%, #FEF9C3 40%, #FFFDF0 100%)`.
+     - Viền trên dưới màu hổ phách sắc nét (`border-top: 2px solid #F59E0B; border-bottom: 2px solid #FCD34D`).
+     - Tên thứ và ngày hiển thị tông màu nâu hổ phách tương phản cao (`#854D0E`, `#92400E`).
+     - Bổ sung huy hiệu rực rỡ `<span class="badge-today-pill">HÔM NAY</span>` với hiệu ứng phát sáng nhẹ (`animation: pulseTodayGlow`).
+  3. **Tô vàng nền Giờ (Cột đầu tiên của ngày hiện hành):**
+     - Gắn class `.is-today-time` cho ô `<td class="col-time-cell">` và `.is-today-pill` cho `<span class="time-pill">`.
+     - Ô thời gian có nền vàng êm mắt `#FEF9C3`, viền nổi mép trái `3px solid #EAB308`.
+     - Pill giờ nổi bật với nền vàng đậm `#FEF08A`, viền `#EAB308`, chữ nâu đậm `#78350F`.
+  4. **Bảo toàn các ngày khác:**
+     - Các ngày còn lại trong tuần giữ nguyên 100% màu xanh lam mặc định, nền trắng và pill xanh lam tiêu chuẩn.
+  5. **Đồng bộ giao diện di động (`mobile.js`, `mobile.css`):**
+     - Nâng cấp `checkIsToday` trong `mobile.js`.
+     - Thẻ ngày hôm nay trên mobile có viền vàng `#F59E0B`, header gradient vàng ấm áp và nhãn thời gian vàng.
+- **Tệp thay đổi:** `css/style.css`, `js/app.js`, `js/guest.js`, `js/mobile.js`, `css/mobile.css`.
+- **Kết quả kiểm thử:** Đạt chuẩn 100% theo yêu cầu của lãnh đạo, bảng lịch hiển thị trực quan và nổi bật ngày công tác hiện tại.
+
+---
+
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-19
 
 ### 🔹 Phiên 12 (08:00 - 08:30) | Khắc Phục Triệt Để Nút Bóc Tách Dữ Liệu AI Bị Quá Thời Gian Chờ (Timeout 84%) & Tối Ưu Pipeline Siêu Tốc

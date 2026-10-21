@@ -283,16 +283,35 @@ const GuestApp = {
                 return;
             }
 
-            let dateStr = "";
+            // Lấy ngày tháng từ item đầu tiên hoặc tính toán chính xác
+            let fullDateIso = "";
             if (dayItems.length > 0 && dayItems[0].date) {
-                dateStr = dayItems[0].date.split('-').reverse().slice(0, 2).join('/');
+                fullDateIso = dayItems[0].date;
+            } else if (s && s.startDate) {
+                fullDateIso = StorageService.calculateDateForDay(s.startDate, dayName);
             }
 
+            let dateStr = "";
+            if (fullDateIso) {
+                if (fullDateIso.includes('-')) {
+                    const parts = fullDateIso.split('-');
+                    if (parts.length === 3) {
+                        dateStr = `${parts[2]}/${parts[1]}`;
+                    }
+                } else if (fullDateIso.includes('/')) {
+                    const parts = fullDateIso.split('/');
+                    dateStr = `${parts[0]}/${parts[1]}`;
+                }
+            }
+
+            const isToday = this.checkIsToday(fullDateIso, dayName, s ? s.startDate : null);
+
             html += `
-                <tr class="day-divider-row">
+                <tr class="day-divider-row ${isToday ? 'is-today-divider' : ''}">
                     <td colspan="8" class="day-divider-content">
                         <span class="day-name">${dayName}</span>
                         ${dateStr ? `<span class="day-date">(${dateStr})</span>` : ''}
+                        ${isToday ? `<span class="badge-today-pill">HÔM NAY</span>` : ''}
                         <span class="day-item-count">${dayItems.length} cuộc họp/công việc</span>
                     </td>
                 </tr>
@@ -300,8 +319,8 @@ const GuestApp = {
 
             if (dayItems.length === 0) {
                 html += `
-                    <tr class="item-row">
-                        <td colspan="8" style="text-align: center; color: #94A3B8; font-style: italic; padding: 10px;">
+                    <tr class="item-row ${isToday ? 'is-today-item' : ''}">
+                        <td colspan="8" style="text-align: center; color: ${isToday ? '#854D0E' : '#94A3B8'}; font-style: italic; padding: 10px; ${isToday ? 'background-color: #FEFCE8;' : ''}">
                             (Không có lịch công tác)
                         </td>
                     </tr>
@@ -316,9 +335,9 @@ const GuestApp = {
                     ` : `<span class="no-attachment-tag">—</span>`;
 
                     html += `
-                        <tr class="item-row" data-item-id="${item.id}">
-                            <td class="col-time-cell">
-                                <span class="time-pill">${item.time}</span>
+                        <tr class="item-row ${isToday ? 'is-today-item' : ''}" data-item-id="${item.id}">
+                            <td class="col-time-cell ${isToday ? 'is-today-time' : ''}">
+                                <span class="time-pill ${isToday ? 'is-today-pill' : ''}">${item.time}</span>
                             </td>
                             <td>
                                 <span class="badge-bloc ${blocBadgeClass}">${item.bloc || 'UBND'}</span>
@@ -361,6 +380,35 @@ const GuestApp = {
         if (bloc.includes("MTTQ") || bloc.includes("Thường trực")) return "badge-mttq";
         if (bloc.includes("Khác") || bloc.includes("Đoàn thể")) return "badge-khac";
         return "badge-ubnd";
+    },
+
+    checkIsToday(dateIsoStr, dayName, startDateStr) {
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const d = String(today.getDate()).padStart(2, '0');
+        const todayIso = `${y}-${m}-${d}`;
+
+        if (dateIsoStr && dateIsoStr.trim() === todayIso) {
+            return true;
+        }
+
+        if (dateIsoStr && dateIsoStr.includes('/')) {
+            const parts = dateIsoStr.trim().split('/');
+            if (parts.length === 3) {
+                const formatted = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                if (formatted === todayIso) return true;
+            }
+        }
+
+        if (startDateStr && dayName && typeof StorageService !== 'undefined' && StorageService.calculateDateForDay) {
+            const calcIso = StorageService.calculateDateForDay(startDateStr, dayName);
+            if (calcIso === todayIso) {
+                return true;
+            }
+        }
+
+        return false;
     },
 
     viewItemDetail(itemId) {

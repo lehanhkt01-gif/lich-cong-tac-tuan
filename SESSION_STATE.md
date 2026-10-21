@@ -82,6 +82,12 @@
    - **Lưu trữ API Key vĩnh viễn trên trình duyệt:** Đọc và lưu trực tiếp qua `localStorage` (loại bỏ hoàn toàn sự phụ thuộc vào `syncKeyFromServer` và file `.env` máy chủ gây lỗi trên VPS).
    - **Duy trì các tối ưu quan trọng:** Giữ nguyên mô hình chuẩn `Gemini 3.5 Flash`, cơ chế chống đơ nút đóng modal, và loại bỏ `responseSchema` cho PDF để bóc tách thành công 100%.
 
+13. [x] **Đánh dấu lịch trong ngày hiện hành (Tô vàng nền của Thứ, Ngày, Giờ):**
+   - **Tô vàng nền Thứ, Ngày (Thanh phân cách ngày):** Thiết lập class `.is-today-divider` với dải màu gradient vàng ấm áp (`#FEF08A` -> `#FEF9C3`), viền trên dưới màu hổ phách (`#F59E0B`, `#FCD34D`), tên thứ và ngày mang sắc nâu hổ phách nổi bật (`#854D0E`), bổ sung huy hiệu sinh động `HÔM NAY`.
+   - **Tô vàng nền Giờ (Cột đầu tiên của ngày hiện hành):** Các ô `td.col-time-cell` của ngày hôm nay được gắn class `.is-today-time` với nền vàng `#FEF9C3`, viền nổi mép trái `3px solid #EAB308`; pill giờ `.time-pill.is-today-pill` có nền vàng `#FEF08A`, viền `#EAB308` và chữ nâu đậm `#78350F`.
+   - **Giữ nguyên các ngày khác:** Các ngày khác và các cột còn lại (Khối, Nội dung, Chủ trì...) giữ nguyên 100% định dạng ban đầu.
+   - **Đồng bộ đa nền tảng:** Áp dụng đồng bộ trên bản Quản trị (`app.js`), Chế độ Khách (`guest.js`), Di động (`mobile.js`, `mobile.css`) và hệ thống kiểu dáng chung (`style.css`).
+
 ---
 
 ## ⏳ 4. CÔNG VIỆC ĐANG THỰC HIỆN / VIỆC TIẾP THEO (PENDING BACKLOG)

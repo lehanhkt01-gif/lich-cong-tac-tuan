@@ -362,14 +362,26 @@ const MobileApp = {
             }
 
             // Lấy ngày tháng định dạng DD/MM
-            let dateFormatted = "";
+            let fullDateIso = "";
             if (dayItems.length > 0 && dayItems[0].date) {
-                const parts = dayItems[0].date.split('-');
-                dateFormatted = `${parts[2]}/${parts[1]}`;
+                fullDateIso = dayItems[0].date;
+            } else if (s && s.startDate) {
+                fullDateIso = StorageService.calculateDateForDay(s.startDate, dayName);
+            }
+
+            let dateFormatted = "";
+            if (fullDateIso) {
+                if (fullDateIso.includes('-')) {
+                    const parts = fullDateIso.split('-');
+                    if (parts.length === 3) dateFormatted = `(${parts[2]}/${parts[1]})`;
+                } else if (fullDateIso.includes('/')) {
+                    const parts = fullDateIso.split('/');
+                    dateFormatted = `(${parts[0]}/${parts[1]})`;
+                }
             }
 
             // Kiểm tra xem có phải ngày hôm nay không
-            const isToday = this.checkIsToday(dayItems[0]?.date);
+            const isToday = this.checkIsToday(fullDateIso, dayName, s?.startDate);
 
             html += `
                 <div class="day-card ${isToday ? 'is-today-card' : ''}" id="dayCard_${encodeURIComponent(dayName)}">
@@ -485,14 +497,25 @@ const MobileApp = {
         }
     },
 
-    checkIsToday(dateStr) {
-        if (!dateStr) return false;
+    checkIsToday(dateStr, dayName, scheduleStartDate) {
         const today = new Date();
         const y = today.getFullYear();
         const m = String(today.getMonth() + 1).padStart(2, '0');
         const d = String(today.getDate()).padStart(2, '0');
         const todayFormatted = `${y}-${m}-${d}`;
-        return dateStr === todayFormatted;
+        if (dateStr && dateStr.trim() === todayFormatted) return true;
+        if (dateStr && dateStr.includes('/')) {
+            const parts = dateStr.trim().split('/');
+            if (parts.length === 3) {
+                const formatted = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                if (formatted === todayFormatted) return true;
+            }
+        }
+        if (scheduleStartDate && dayName && typeof StorageService !== 'undefined' && StorageService.calculateDateForDay) {
+            const calc = StorageService.calculateDateForDay(scheduleStartDate, dayName);
+            if (calc === todayFormatted) return true;
+        }
+        return false;
     },
 
     formatDateShort(dateStr) {

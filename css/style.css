@@ -1031,6 +1031,68 @@ body {
     margin-left: 12px;
 }
 
+/* ==========================================================================
+   ĐÁNH DẤU LỊCH TRONG NGÀY HIỆN HÀNH (HÔM NAY / CURRENT DAY)
+   Tô vàng nền của thứ, ngày & cột đầu tiên (giờ) của ngày hiện hành
+   ========================================================================== */
+
+/* 1. Thanh phân cách ngày hiện hành (Thứ, Ngày) - Nền vàng nổi bật */
+.day-divider-row.is-today-divider {
+    background: linear-gradient(90deg, #FEF08A 0%, #FEF9C3 40%, #FFFDF0 100%) !important;
+    border-top: 2px solid #F59E0B !important;
+    border-bottom: 2px solid #FCD34D !important;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.15);
+}
+
+.day-divider-row.is-today-divider .day-divider-content {
+    color: #78350F !important;
+}
+
+.day-divider-row.is-today-divider .day-name {
+    color: #854D0E !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.3px;
+}
+
+.day-divider-row.is-today-divider .day-date {
+    color: #92400E !important;
+    font-weight: 800 !important;
+}
+
+.day-divider-row.is-today-divider .day-item-count {
+    background-color: #D97706 !important;
+    color: #FFFFFF !important;
+}
+
+/* Huy hiệu [HÔM NAY] trên thanh tiêu đề ngày hiện hành */
+.badge-today-pill {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: #FFFFFF !important;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2.5px 8.5px;
+    border-radius: 999px;
+    margin-left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.3);
+    vertical-align: middle;
+    animation: pulseTodayGlow 2.5s infinite;
+}
+
+@keyframes pulseTodayGlow {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+        transform: scale(1.02);
+    }
+}
+
 /* Regular Row Items */
 .item-row {
     border-bottom: 1px solid var(--border-color);
@@ -1074,6 +1136,30 @@ body {
     border-radius: var(--radius-sm);
     display: inline-block;
     font-size: 12.5px;
+}
+
+/* 2. Cột đầu tiên (giờ) của ngày hiện hành - Tô vàng nền */
+.item-row.is-today-item .col-time-cell,
+.col-time-cell.is-today-time {
+    background-color: #FEF9C3 !important;
+    border-right: 1px solid #FDE047 !important;
+    border-left: 3px solid #EAB308 !important;
+    transition: background-color 0.15s ease;
+}
+
+.item-row.is-today-item:hover .col-time-cell,
+.item-row.is-today-item:hover .col-time-cell.is-today-time {
+    background-color: #FEF08A !important;
+}
+
+/* Pill hiển thị giờ của ngày hiện hành - Nền vàng đậm đà sắc nét */
+.item-row.is-today-item .time-pill,
+.time-pill.is-today-pill {
+    background-color: #FEF08A !important;
+    color: #78350F !important;
+    border: 1.5px solid #EAB308 !important;
+    font-weight: 900 !important;
+    box-shadow: 0 1px 2px rgba(202, 138, 4, 0.25);
 }
 
 /* Khối Badges */
@@ -2060,6 +2146,11 @@ body {
         overflow: hidden;
         border: 1px solid #BAE6FD;
         background: linear-gradient(90deg, #E0F2FE 0%, #F0F9FF 100%);
+    }
+
+    .day-divider-row.is-today-divider {
+        border: 1.5px solid #F59E0B !important;
+        background: linear-gradient(90deg, #FEF08A 0%, #FEF9C3 100%) !important;
     }
 
     .day-divider-content {
