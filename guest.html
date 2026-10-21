@@ -8,6 +8,11 @@
     <meta name="description" content="Tra cứu lịch công tác tuần điện tử UBND Xã Ea Súp, Tỉnh Đắk Lắk. Dành cho cán bộ, công chức và nhân dân tra cứu nhanh chóng.">
     <meta name="author" content="UBND Xã Ea Súp">
 
+    <!-- Chống lưu bộ nhớ đệm trình duyệt (Cache Buster) -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <!-- Open Graph / Facebook / Zalo / Telegram Link Preview -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://lichcongtac.easupso.com/guest.html">
@@ -88,8 +93,8 @@
     <header class="gov-topbar">
         <div class="topbar-container">
             <!-- Brand & Logo Xã Ea Súp -->
-            <a href="guest.html" class="brand-section" onclick="GuestApp.resetToHome(event)" title="Quay về trang chủ tra cứu và hiển thị toàn bộ lịch tuần">
-                <img src="assets/logo-lichcongtac.png?v=20261021_08" alt="Logo Lịch Công Tác" class="national-crest">
+            <a href="guest.html" class="brand-section" onclick="if(window.GuestApp && typeof GuestApp.resetToHome === 'function'){ GuestApp.resetToHome(event); } else { window.location.href='guest.html?t=' + Date.now(); }" title="Quay về trang chủ tra cứu và hiển thị toàn bộ lịch tuần">
+                <img src="assets/logo-lichcongtac.png?v=20261021_10" alt="Logo Lịch Công Tác" class="national-crest">
 
                 <div class="brand-text">
                     <span class="sub-gov-name">ĐẢNG ỦY, HĐND, UBND, UBMTTQ XÃ EA SÚP</span>
@@ -416,10 +421,10 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20261021_09"></script>
-    <script src="js/storage.js?v=20261021_09"></script>
+    <script src="js/data.js?v=20261021_10"></script>
+    <script src="js/storage.js?v=20261021_10"></script>
     <script src="js/audit.js?v=20261007_01"></script>
     <script src="js/export-service.js?v=20261007_01"></script>
-    <script src="js/guest.js?v=20261021_09"></script>
+    <script src="js/guest.js?v=20261021_10"></script>
 </body>
 </html>

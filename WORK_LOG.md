@@ -6,6 +6,21 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-21
 
+### 🔹 Phiên 19 (09:40 - 09:50) | Cưỡng Chế Xóa Cache Trình Duyệt, Bổ Sung Fallback An Toàn & Đổi Query Version v=20261021_10
+- **Mục tiêu:** Giải quyết dứt điểm tình trạng trình duyệt Chrome trên máy người dùng lưu cache phiên bản HTML/JS cũ, đảm bảo người dùng truy cập là thấy ngay giao diện mới, Thứ Tư 21/10 tô vàng và bấm logo không bao giờ bị trắng trang.
+- **Giải pháp kỹ thuật đã triển khai:**
+  1. **Thêm Meta Anti-Cache Headers trực tiếp vào `<head>` (`index.html` & `guest.html`):**
+     - `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">`
+     - `<meta http-equiv="Pragma" content="no-cache">`
+     - `<meta http-equiv="Expires" content="0">`
+  2. **Tăng phiên bản query string toàn bộ scripts lên `v=20261021_10`:**
+     - Ép buộc trình duyệt người dùng phải tải mới 100% tất cả các file `app.js`, `guest.js`, `storage.js`, `data.js`.
+  3. **Bổ sung Inline Fallback an toàn cho thẻ Logo/Tiêu đề (`.brand-section`):**
+     - Đặt inline handler: `if(window.App && typeof App.resetToHome === 'function'){ App.resetToHome(event); } else { window.location.href='index.html?t=' + Date.now(); }`
+     - Bọc toàn bộ logic `resetToHome()` trong khối `try ... catch`, đảm bảo nếu có bất kỳ lỗi không lường trước nào thì giao diện vẫn luôn giữ nguyên `view_schedule` hiển thị, tuyệt đối không thể bị trắng trang.
+- **Tệp chỉnh sửa:** `index.html`, `guest.html`, `js/app.js`, `js/guest.js`, `WORK_LOG.md`, `SESSION_STATE.md`.
+- **Kết quả:** Trình duyệt được làm mới triệt để, nạp đúng bản cập nhật mới nhất.
+
 ### 🔹 Phiên 18 (09:20 - 09:30) | Khắc Phục Triệt Để Hiện Tượng Trắng Trang Web Khi Bấm Logo/Tiêu Đề & Giữ Nguyên Bảng Lịch Khi Chưa Có Dữ Liệu
 - **Mục tiêu:** 
   1. Khắc phục lỗi khi người dùng nhấp vào Logo hoặc tiêu đề "LỊCH CÔNG TÁC" thì toàn bộ phần thân web bị biến mất (hiện trắng trang web).

@@ -451,41 +451,48 @@ const GuestApp = {
         if (e && typeof e.preventDefault === "function") {
             e.preventDefault();
         }
-        // 1. Xóa tìm kiếm
-        this.clearSearch();
+        try {
+            // 1. Xóa tìm kiếm
+            this.clearSearch();
 
-        // 2. Reset khối về "all"
-        this.currentBloc = "all";
-        document.querySelectorAll(".bloc-pill-btn").forEach(btn => {
-            btn.classList.toggle("active", btn.getAttribute("data-bloc") === "all");
-        });
+            // 2. Reset khối về "all"
+            this.currentBloc = "all";
+            document.querySelectorAll(".bloc-pill-btn").forEach(btn => {
+                btn.classList.toggle("active", btn.getAttribute("data-bloc") === "all");
+            });
 
-        // 3. Chuyển về tab Lịch Công Tác Tuần (view_schedule)
-        if (typeof this.switchTab === "function") {
-            this.switchTab("schedule");
+            // 3. Chuyển về tab Lịch Công Tác Tuần (view_schedule)
+            if (typeof this.switchTab === "function") {
+                this.switchTab("schedule");
+            }
+
+            // Đảm bảo section view_schedule luôn luôn có class active
+            document.querySelectorAll(".view-section").forEach(sec => sec.classList.remove("active"));
+            const scheduleView = document.getElementById("view_schedule");
+            if (scheduleView) scheduleView.classList.add("active");
+
+            // Đảm bảo tab menu Lịch Công Tác Tuần có class active
+            document.querySelectorAll(".nav-tab-item").forEach(t => t.classList.remove("active"));
+            document.querySelector('.nav-tab-item[data-tab="schedule"]')?.classList.add("active");
+
+            // 4. Reset về tuần hiện tại
+            const currentInfo = StorageService.getCurrentWeekInfo(new Date());
+            this.currentWeek = currentInfo.weekNumber;
+            this.currentYear = currentInfo.year;
+
+            // 5. Nạp lại và vẽ lại giao diện
+            this.populateWeekOptions();
+            this.loadCurrentSchedule();
+            this.renderAll();
+
+            // 6. Cuộn mượt lên đầu trang
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        } catch (err) {
+            console.error("Lỗi an toàn resetToHome:", err);
+            const scheduleView = document.getElementById("view_schedule");
+            if (scheduleView) scheduleView.classList.add("active");
+            document.querySelector('.nav-tab-item[data-tab="schedule"]')?.classList.add("active");
         }
-
-        // Đảm bảo section view_schedule luôn luôn có class active
-        document.querySelectorAll(".view-section").forEach(sec => sec.classList.remove("active"));
-        const scheduleView = document.getElementById("view_schedule");
-        if (scheduleView) scheduleView.classList.add("active");
-
-        // Đảm bảo tab menu Lịch Công Tác Tuần có class active
-        document.querySelectorAll(".nav-tab-item").forEach(t => t.classList.remove("active"));
-        document.querySelector('.nav-tab-item[data-tab="schedule"]')?.classList.add("active");
-
-        // 4. Reset về tuần hiện tại
-        const currentInfo = StorageService.getCurrentWeekInfo(new Date());
-        this.currentWeek = currentInfo.weekNumber;
-        this.currentYear = currentInfo.year;
-
-        // 5. Nạp lại và vẽ lại giao diện
-        this.populateWeekOptions();
-        this.loadCurrentSchedule();
-        this.renderAll();
-
-        // 6. Cuộn mượt lên đầu trang
-        window.scrollTo({ top: 0, behavior: "smooth" });
     },
 
     getBlocBadgeClass(bloc) {
