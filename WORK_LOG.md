@@ -6,6 +6,29 @@
 
 ## 📅 PHIÊN LÀM VIỆC NGÀY 2026-10-21
 
+### 🔹 Phiên 17 (09:10 - 09:15) | Khắc Phục Lỗi Bấm Vào Logo/Tiêu Đề Trắng Dữ Liệu & Chống Browser Autofill
+- **Mục tiêu:** Khắc phục triệt để hiện tượng khi bấm vào logo và tiêu đề hoặc khi tải trang thì bảng lịch công tác tuần bị trắng xóa dữ liệu.
+- **Nguyên nhân kỹ thuật sâu sắc:**
+  1. **Browser Autofill tự động điền username vào ô tìm kiếm:** Trình duyệt Chrome khi lưu mật khẩu quản trị tự động điền chuỗi tài khoản (như `hanhlehong` thấy trên ảnh) vào ô input `searchInput` trên trang. Khi ô này có giá trị, sự kiện `input` kích hoạt hàm lọc tìm kiếm; do tuần đang xem không chứa từ khóa này nên toàn bộ các ngày đều bị ẩn (`dayItems.length === 0`), dẫn đến bảng bị trắng xóa hoàn toàn.
+  2. **Thẻ Logo & Tiêu đề chưa có hàm xử lý Reset:** Thẻ `<a href="#" class="brand-section">` chỉ mang `href="#"`, khi người dùng bấm vào với kỳ vọng quay về trang chủ ban đầu thì trang web không hề xóa từ khóa tìm kiếm, không reset bộ lọc, khiến bảng vẫn tiếp tục trắng xóa.
+  3. **Thiếu giao diện Empty State khi bộ lọc rỗng:** Khi không có kết quả khớp bộ lọc, bảng trước đây gán `tbody.innerHTML = ""` làm người dùng tưởng trang web bị lỗi hoặc mất dữ liệu.
+- **Giải pháp kỹ thuật đã triển khai:**
+  1. **Bổ sung hàm `resetToHome(event)` toàn diện cho `App` và `GuestApp`:**
+     - Xóa sạch từ khóa tìm kiếm (`this.searchQuery = ""`, `searchInput.value = ""`).
+     - Đặt lại khối công tác về "Tất cả khối" (`this.currentBloc = "all"`).
+     - Chuyển về tab Lịch công tác tuần và chuyển về tuần hiện tại của hệ thống.
+     - Nạp lại dữ liệu và render lại toàn bộ bảng sạch sẽ, cuộn mượt lên đầu trang.
+     - Gắn hàm này vào sự kiện `onclick` của `.brand-section` trên cả `index.html` và `guest.html`.
+  2. **Chặn đứng triệt để Browser Autofill nhầm vào ô tìm kiếm:**
+     - Đổi sang `type="search"`, gắn `name="schedule_search_query_prevent_autofill"`, `autocomplete="off"`, `autocorrect="off"`, `spellcheck="false"`.
+     - Trong hàm `init()`, chủ động làm sạch `searchInput.value = ""` và thiết lập timeout kiểm tra lại sau 300ms.
+  3. **Bổ sung nút xóa tìm kiếm nhanh (Clear Button `✕`):**
+     - Nút `✕` tự động hiện khi có từ khóa trong ô tìm kiếm để người dùng xóa nhanh bằng 1 click.
+  4. **Hiển thị Empty State thông minh có nút khôi phục:**
+     - Khi từ khóa tìm kiếm không có kết quả, hiển thị thông báo rõ ràng "Không tìm thấy mục công tác nào khớp với từ khóa..." kèm nút bấm "🔄 Hiển Thị Lại Toàn Bộ Lịch Tuần" để người dùng khôi phục ngay lập tức.
+- **Tệp chỉnh sửa:** `index.html`, `guest.html`, `js/app.js`, `js/guest.js`, `SESSION_STATE.md`, `WORK_LOG.md`.
+- **Kết quả:** Bấm vào logo/tiêu đề lập tức làm mới và khôi phục toàn bộ dữ liệu lịch tuần, ô tìm kiếm không còn bị browser tự điền làm trắng bảng.
+
 ### 🔹 Phiên 16 (08:55 - 09:05) | Cập Nhật Logo Tròn 3D Lịch Công Tác & Giữ Nguyên Các Dòng Chữ Thương Hiệu
 - **Mục tiêu:** Sử dụng hình ảnh logo mới (biểu trưng tròn 3D Lịch Công Tác gồm cuốn lịch, đồng hồ, cây bút) để thay thế logo trước đây vào đầu trang web và logo đường link website; đồng thời giữ nguyên toàn bộ các dòng chữ thương hiệu như trước.
 - **Giải pháp kỹ thuật đã triển khai:**

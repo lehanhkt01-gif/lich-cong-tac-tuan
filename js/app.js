@@ -38,6 +38,20 @@ const App = {
         this.setupEventListeners();
         this.setupAuthUI();
         this.renderAll();
+
+        // Chống browser tự động điền (autofill) tài khoản vào ô tìm kiếm làm trắng dữ liệu
+        const searchInput = document.getElementById("searchInput");
+        if (searchInput) {
+            searchInput.value = "";
+            this.searchQuery = "";
+            setTimeout(() => {
+                if (searchInput.value && !this.searchQuery) {
+                    searchInput.value = "";
+                    this.renderScheduleTable();
+                }
+            }, 300);
+        }
+
         // Kiểm tra tham số URL mở modal sửa hoặc chuyển tuần
         const urlParams = new URLSearchParams(window.location.search);
         const editItemId = urlParams.get("editItem");
@@ -199,9 +213,12 @@ const App = {
             this.renderAll();
         });
 
-        // Search input
-        document.getElementById("searchInput")?.addEventListener("input", (e) => {
+        // Search input (Tìm kiếm tức thì)
+        const searchInputEl = document.getElementById("searchInput");
+        searchInputEl?.addEventListener("input", (e) => {
             this.searchQuery = e.target.value.toLowerCase().trim();
+            const btnClear = document.getElementById("btnClearSearch");
+            if (btnClear) btnClear.style.display = this.searchQuery ? "block" : "none";
             this.renderScheduleTable();
         });
 
@@ -520,7 +537,70 @@ const App = {
             }
         });
 
+        // Nếu không có bất kỳ mục công tác nào khớp với bộ lọc, hiển thị thông báo rỗng thân thiện
+        if (!html || html.trim() === "") {
+            html = `
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 45px 16px; background: #FAFDFB;">
+                        <div style="font-size: 36px; margin-bottom: 8px;">🔍</div>
+                        <div style="font-size: 15.5px; font-weight: 700; color: #1E293B; margin-bottom: 6px;">
+                            ${this.searchQuery ? `Không tìm thấy mục công tác nào khớp với từ khóa "${escapeHTML(this.searchQuery)}"` : 'Tuần này hiện chưa có lịch công tác hoặc khối được chọn không có dữ liệu'}
+                        </div>
+                        <div style="font-size: 13px; color: #64748B; margin-bottom: 16px;">
+                            ${this.searchQuery ? 'Vui lòng kiểm tra lại từ khóa hoặc bấm nút bên dưới để khôi phục toàn bộ lịch tuần.' : 'Vui lòng bấm nút bên dưới để quay lại xem toàn bộ lịch công tác tuần.'}
+                        </div>
+                        <button type="button" onclick="App.resetToHome(event)" style="background: #1E3A8A; color: #FFFFFF; border: none; padding: 9px 20px; border-radius: 6px; font-size: 13.5px; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(30,58,138,0.25); display: inline-flex; align-items: center; gap: 6px;">
+                            <span>🔄</span> Hiển Thị Lại Toàn Bộ Lịch Tuần
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
         tbody.innerHTML = html;
+    },
+
+    clearSearch() {
+        const input = document.getElementById("searchInput");
+        if (input) input.value = "";
+        this.searchQuery = "";
+        const btnClear = document.getElementById("btnClearSearch");
+        if (btnClear) btnClear.style.display = "none";
+        this.renderScheduleTable();
+    },
+
+    resetToHome(e) {
+        if (e && typeof e.preventDefault === "function") {
+            e.preventDefault();
+        }
+        // 1. Xóa từ khóa tìm kiếm
+        this.clearSearch();
+
+        // 2. Reset khối về "Tất cả khối"
+        this.currentBloc = "all";
+        document.querySelectorAll(".bloc-pill-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.getAttribute("data-bloc") === "all");
+        });
+
+        // 3. Chuyển về tab Lịch Công Tác Tuần (tab 1)
+        if (typeof this.switchTab === "function") {
+            this.switchTab("tabSchedule");
+        }
+
+        // 4. Reset về tuần hiện tại của hệ thống
+        const currentInfo = StorageService.getCurrentWeekInfo(new Date());
+        this.currentWeek = currentInfo.weekNumber;
+        this.currentYear = currentInfo.year;
+        sessionStorage.setItem("activeWeek", this.currentWeek);
+        sessionStorage.setItem("activeYear", this.currentYear);
+
+        // 5. Nạp lại và vẽ lại toàn bộ giao diện
+        this.populateWeekOptions();
+        this.loadCurrentSchedule();
+        this.renderAll();
+
+        // 6. Cuộn mượt lên đầu trang
+        window.scrollTo({ top: 0, behavior: "smooth" });
     },
 
     getBlocBadgeClass(bloc) {

@@ -88,7 +88,7 @@
     <header class="gov-topbar">
         <div class="topbar-container">
             <!-- Brand & Logo Xã Ea Súp -->
-            <a href="guest.html" class="brand-section" title="Cổng thông tin điều hành - Tra cứu lịch công tác tuần UBND Xã Ea Súp">
+            <a href="guest.html" class="brand-section" onclick="GuestApp.resetToHome(event)" title="Quay về trang chủ tra cứu và hiển thị toàn bộ lịch tuần">
                 <img src="assets/logo-lichcongtac.png?v=20261021_08" alt="Logo Lịch Công Tác" class="national-crest">
 
                 <div class="brand-text">
@@ -194,9 +194,10 @@
                     </div>
 
                     <!-- Ô tìm kiếm tức thì -->
-                    <div class="search-input-box" style="min-width: 340px;">
+                    <div class="search-input-box" style="min-width: 340px; position: relative; display: flex; align-items: center;">
                         <span class="search-icon-pos">🔍</span>
-                        <input type="text" id="searchInput" placeholder="Tìm kiếm nội dung, lãnh đạo, địa điểm...">
+                        <input type="search" id="searchInput" name="schedule_guest_search_no_autofill" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Tìm kiếm nội dung, lãnh đạo, địa điểm...">
+                        <button type="button" id="btnClearSearch" onclick="GuestApp.clearSearch()" style="display: none; position: absolute; right: 10px; background: transparent; border: none; cursor: pointer; color: #94A3B8; font-size: 15px; font-weight: bold; padding: 2px 6px;" title="Xóa tìm kiếm">✕</button>
                     </div>
                 </div>
 
@@ -415,10 +416,10 @@
     </div>
 
     <!-- Scripts Module -->
-    <script src="js/data.js?v=20260906_22"></script>
-    <script src="js/storage.js?v=20260906_22"></script>
-    <script src="js/audit.js?v=20260906_22"></script>
-    <script src="js/export-service.js?v=20260906_22"></script>
-    <script src="js/guest.js?v=20261021_05"></script>
+    <script src="js/data.js?v=20261021_09"></script>
+    <script src="js/storage.js?v=20261021_09"></script>
+    <script src="js/audit.js?v=20261007_01"></script>
+    <script src="js/export-service.js?v=20261007_01"></script>
+    <script src="js/guest.js?v=20261021_09"></script>
 </body>
 </html>
