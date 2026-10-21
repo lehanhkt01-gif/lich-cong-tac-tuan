@@ -13,9 +13,10 @@
      - Cập nhật toàn bộ các thẻ `<meta property="og:image">`, `og:image:url`, `og:image:secure_url`, `og:image:type="image/png"`, `twitter:image`, `<link rel="image_src">`, `<meta name="thumbnail">` trên cả 3 trang `index.html`, `guest.html`, `mobile.html` trỏ tới `https://lichcongtac.easupso.com/logo%20lichcongtac.png`.
      - Đồng bộ và tạo các tệp `og-image.jpg` và `og-image.png` từ ảnh gốc để mọi trình thu thập bot (Zalo, Facebook, Viber, Telegram) đều hiển thị trọn vẹn banner logo khi chia sẻ đường link.
   2. **Thay thế logo thanh điều hướng trang chủ (`index.html`) & trang khách (`guest.html`):**
-     - Đổi thẻ logo sang `src="logo%20lichcongtac.png"` với class `.header-main-logo`.
-     - CSS `.header-main-logo`: `height: 52px; width: auto; max-width: 100%; object-fit: contain;` đảm bảo logo banner hiển thị rõ nét, đúng tỷ lệ, không bị co ép méo mó.
-     - Cơ chế fallback an toàn qua thuộc tính `onerror`: nếu ảnh chưa tải được, tự động hiển thị logo tròn và chữ dự phòng.
+     - Đổi thẻ logo sang dùng trực tiếp đường dẫn tĩnh an toàn: `assets/logo-lichcongtac.png?v=20261021_07` (không có khoảng trắng, tránh lỗi URL encoding `%20`).
+     - Bổ sung inline style `height: 52px; width: auto; max-width: 100%; object-fit: contain; display: block;` đảm bảo logo luôn hiển thị chuẩn form ngay lập tức.
+     - Loại bỏ hoàn toàn khối `topbarDefaultBrand` cũ và sự kiện `onerror` gây hiện tượng nhảy ngược về giao diện cũ.
+     - Ghi đè tệp ảnh mới vào cả `assets/logo-easup.png` để bất kỳ nơi nào nạp logo cũ cũng tự động chuyển sang logo mới.
   3. **Thay thế logo ứng dụng di động (`mobile.html`):**
      - Sử dụng class `.mobile-logo-banner` với chiều cao 38px, hiển thị gọn đẹp trên thanh app bar di động.
   4. **Cập nhật logo modal đăng nhập quản trị (`index.html`):**

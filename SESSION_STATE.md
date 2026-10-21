@@ -9,7 +9,7 @@
 
 - **Tên dự án:** Cổng Thông tin Điều hành - Lịch Công tác tuần UBND Xã Ea Súp
 - **Môi trường:** Phát triển cục bộ (Local Windows Dev) & Máy chủ VPS (CasaOS / Docker)
-- **Commit mới nhất:** `dda7241` (*feat(branding): cap nhat logo lichcongtac.png cho trang chu va link preview lichcongtac.easupso.com*)
+- **Commit mới nhất:** `535e34d` (*fix(branding): ap dung assets/logo-lichcongtac.png truc tiep khong dung fallback va chong cache triet de*)
 - **Trạng thái GitHub:** Đã push đồng bộ 100% lên `origin/main` (https://github.com/lehanhkt01-gif/lich-cong-tac-tuan)
 - **Trạng thái hệ thống:** Hoạt động ổn định (Backend Python `server.py` + Frontend SPA + Docker Compose Nginx:8090)
 
